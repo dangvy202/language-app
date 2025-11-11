@@ -5,6 +5,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -24,7 +25,7 @@ public class CategoryLevel {
     private String description;
     
     @Column(name = "price")
-    private float price;
+    private BigDecimal price;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
