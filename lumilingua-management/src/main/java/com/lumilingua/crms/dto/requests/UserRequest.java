@@ -16,32 +16,18 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UserRequest {
     private String username;
-
     private String password;
-
     private String tokenAccount;
-
     private String email;
-
     private StatusEnum status;
-
     private String phone;
-
     private GenderEnum gender;
-
     private RoleEnum role;
-
     private String refreshToken;
-
     private String provider;
-
     private String providerId;
-
     private String avatar;
-
     private LocalDateTime lastLogin;
-
     private String walletId;
-
     private int idCategoryLevel;
 }

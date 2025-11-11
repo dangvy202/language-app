@@ -17,6 +17,10 @@ public class Result<T> {
         return new Result<>(ResultApiConstant.StatusCode.INTERNAL_SERVER_ERROR, ResultApiConstant.MessageCode.INTERNAL_SERVER_ERROR_MESSAGE, null);
     }
 
+    public static <T> Result<T> badRequestError() {
+        return new Result<>(ResultApiConstant.StatusCode.BAD_REQUEST, ResultApiConstant.MessageCode.BAD_REQUEST_MESSAGE, null);
+    }
+
     public static <T> Result<T> create(T data) {
         return new Result<>(ResultApiConstant.StatusCode.CREATED, ResultApiConstant.MessageCode.CREATED_SUCCESS, data);
     }
