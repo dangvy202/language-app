@@ -49,8 +49,38 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
     @Override
     public Result<CategoryLevelResponse> getCategoryLevelById(long id) {
         LOG.info("Get category level by id in service...");
-        CategoryLevel categoryLevel = categoryLevelRepository.findById(Long.parseLong(String.valueOf(id)))
-                .orElseThrow(() -> new RuntimeException("Unable to get CategoryLevel ID: " + id));;
+        CategoryLevel categoryLevel = categoryLevelRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Unable to get CategoryLevel ID: " + id));
         return Result.get(CategoryLevelMapper.INSTANT.toCategoryLevelResponse(categoryLevel));
+    }
+
+    @Override
+    public Result<CategoryLevelResponse> updateCategoryLevelById(long id, CategoryLevelRequest categoryLevelRequest) {
+        LOG.info("Find category level by id in service...");
+        CategoryLevel categoryLevel = categoryLevelRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Unable to get CategoryLevel ID: " + id));
+        try {
+            LOG.info("Update category level by id in service is SUCCESS!");
+            categoryLevelRepository.save(CategoryLevelMapper.INSTANT.updateCategoryLevelFromRequest(categoryLevelRequest, categoryLevel));
+            return Result.update();
+        } catch (Exception ex) {
+            LOG.error("Update category level by id in service is FAILED!");
+            return Result.serverError();
+        }
+    }
+
+    @Override
+    public Result<CategoryLevelResponse> deleteCategoryLevelById(long id) {
+        LOG.info("Find category level by id in service...");
+        CategoryLevel categoryLevel = categoryLevelRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Unable to get CategoryLevel ID: " + id));
+        try {
+            LOG.info("Delete category level by id in service is SUCCESS!");
+            categoryLevelRepository.delete(categoryLevel);
+            return Result.delete();
+        } catch (Exception ex) {
+            LOG.info("Delete category level by id in service is FAILED!");
+            return Result.serverError();
+        }
     }
 }

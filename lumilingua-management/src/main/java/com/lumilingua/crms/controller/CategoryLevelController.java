@@ -45,4 +45,24 @@ public class CategoryLevelController {
         }
         return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @PutMapping("/id")
+    public ResponseEntity<Result<CategoryLevelResponse>> updateCategoryById(@RequestParam("id") long id, @RequestBody CategoryLevelRequest categoryLevelRequest) {
+        LOG.info("Call api update category level by id '%s'".formatted("/api/v1/category-level/id?id=" + id));
+        Result<CategoryLevelResponse> result = categoryLevelService.updateCategoryLevelById(id, categoryLevelRequest);
+        if(result.code == ResultApiConstant.StatusCode.NO_CONTENT) {
+            return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @DeleteMapping("/id")
+    public ResponseEntity<Result<CategoryLevelResponse>> deleteCategoryById(@RequestParam("id") long id) {
+        LOG.info("Call api update category level by id '%s'".formatted("/api/v1/category-level/id?id=" + id));
+        Result<CategoryLevelResponse> result = categoryLevelService.deleteCategoryLevelById(id);
+        if(result.code == ResultApiConstant.StatusCode.NO_CONTENT) {
+            return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

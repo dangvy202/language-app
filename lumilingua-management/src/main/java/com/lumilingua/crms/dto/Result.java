@@ -21,6 +21,14 @@ public class Result<T> {
         return new Result<>(ResultApiConstant.StatusCode.CREATED, ResultApiConstant.MessageCode.CREATED_SUCCESS, data);
     }
 
+    public static <T> Result<T> update() {
+        return new Result<>(ResultApiConstant.StatusCode.NO_CONTENT, ResultApiConstant.MessageCode.NO_CONTENT_MESSAGE, null);
+    }
+
+    public static <T> Result<T> delete() {
+        return new Result<>(ResultApiConstant.StatusCode.NO_CONTENT, ResultApiConstant.MessageCode.NO_CONTENT_MESSAGE, null);
+    }
+
     public static <T> Result<List<T>> getAll(List<T> data) {
         return new Result<>(ResultApiConstant.StatusCode.OK, ResultApiConstant.MessageCode.SUCCESS, data);
     }

@@ -11,4 +11,6 @@ public interface CategoryLevelService {
     Result<CategoryLevelResponse> createCategoryLevel(CategoryLevelRequest request);
     Result<List<CategoryLevelResponse>> getAllCategoryLevel();
     Result<CategoryLevelResponse> getCategoryLevelById(long id);
+    Result<CategoryLevelResponse> updateCategoryLevelById(long id, CategoryLevelRequest categoryLevelRequest);
+    Result<CategoryLevelResponse> deleteCategoryLevelById(long id);
 }
