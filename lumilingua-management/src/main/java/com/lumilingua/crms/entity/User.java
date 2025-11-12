@@ -34,6 +34,9 @@ public class User {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
+
+    @Column(name = "is_active")
+    private boolean active;
     
     @Column(name = "phone")
     private String phone;

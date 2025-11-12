@@ -6,9 +6,9 @@ public enum RoleEnum {
     STAFF("STAFF"),
     ADMIN("ADMIN");
 
-    private final String staff;
+    private final String label;
 
-    RoleEnum(String staff) {
-        this.staff = staff;
+    RoleEnum(String label) {
+        this.label = label;
     }
 }
