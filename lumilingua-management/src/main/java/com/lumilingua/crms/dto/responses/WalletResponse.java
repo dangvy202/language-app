@@ -14,4 +14,7 @@ public class WalletResponse {
     private BigDecimal amountLearn;
     private BigDecimal amountTopUp;
     private boolean active;
+    private String bankName;
+    private String bankBranch;
+    private String branchIdentification;
 }

@@ -1,5 +1,6 @@
 package com.lumilingua.crms.controller;
 
+import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.UserRequest;
 import com.lumilingua.crms.dto.responses.UserResponse;
@@ -7,6 +8,7 @@ import com.lumilingua.crms.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,7 +26,10 @@ public class UserController {
     @PostMapping
     public ResponseEntity<Result<UserResponse>> userRegisterAccount(@RequestBody UserRequest userRequest) {
         LOG.info("User register account in controller by api '%s'".formatted("/api/v1/user"));
-        userService.registerAccountByCustomer(userRequest);
-        return null;
+        Result<UserResponse> result = userService.registerAccountByCustomer(userRequest);
+        if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 }

@@ -34,7 +34,7 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
             return Result.create(response);
         } catch (Exception ex) {
             LOG.error("Create category level is FAILED!");
-            return Result.serverError();
+            return Result.serverError("Create category level is FAILED!");
         }
     }
 
@@ -65,7 +65,7 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
             return Result.update();
         } catch (Exception ex) {
             LOG.error("Update category level by id in service is FAILED!");
-            return Result.serverError();
+            return Result.serverError("Update category level by id in service is FAILED!");
         }
     }
 
@@ -80,7 +80,7 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
             return Result.delete();
         } catch (Exception ex) {
             LOG.info("Delete category level by id in service is FAILED!");
-            return Result.serverError();
+            return Result.serverError("Delete category level by id in service is FAILED!");
         }
     }
 }

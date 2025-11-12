@@ -35,9 +35,11 @@ public class UserServiceImpl implements UserService {
         if(StringUtils.hasLength(userRequest.getEmail()) && StringUtils.hasLength(userRequest.getPhone())) {
             Optional<User> userByEmail = userRepository.findUserByEmail(userRequest.getEmail());
             Optional<User> userByPhone = userRepository.findUserByPhone(userRequest.getPhone());
-            if(userByEmail.isPresent() || userByPhone.isPresent()) {
-                LOG.error("Unable to register because email is exist");
-                return Result.badRequestError();
+            Optional<User> userByName = userRepository.findUserByUsername(userRequest.getUsername());
+
+            if(userByEmail.isPresent() || userByPhone.isPresent() || userByName.isPresent()) {
+                LOG.error("Unable to register because email or phone or username is exist");
+                return Result.badRequestError("Unable to register because email or phone or username is exist");
             } else {
                 userRequest.setPassword(bCryptPasswordEncoder.encode(userRequest.getPassword()));
                 User userRegister = userRepository.save(UserMapper.INSTANT.toUserEntity(userRequest));
@@ -52,7 +54,7 @@ public class UserServiceImpl implements UserService {
             }
         } else {
             LOG.error("The phone and the email is required!");
-            return Result.badRequestError();
+            return Result.badRequestError("The phone and the email is required!");
         }
     }
 }

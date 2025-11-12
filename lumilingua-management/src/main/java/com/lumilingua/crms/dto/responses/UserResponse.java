@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 public class UserResponse {
+    private long idUser;
     private String username;
     private String password;
     private String tokenAccount;

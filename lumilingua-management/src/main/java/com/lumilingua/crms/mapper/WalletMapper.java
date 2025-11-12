@@ -1,10 +1,12 @@
 package com.lumilingua.crms.mapper;
 
+import com.lumilingua.crms.dto.requests.BankRequest;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.entity.Wallet;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
@@ -17,6 +19,8 @@ public interface WalletMapper {
     @Mapping(target = "idUser", source = "user.idUser")
     @Mapping(target = "walletId", source = "walletIdRd")
     Wallet createWalletByUser(User user, String walletIdRd);
+
+    void updateBankInWallet(BankRequest request, @MappingTarget Wallet wallet);
 
     WalletResponse toWalletResponse(Wallet wallet);
 }

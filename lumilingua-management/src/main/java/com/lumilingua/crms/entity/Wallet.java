@@ -24,11 +24,29 @@ public class Wallet {
     @Column(name = "amount_topup")
     private BigDecimal amountTopUp;
 
-    @Column(name = "id_active")
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(name = "bank_branch")
+    private String bankBranch;
+
+    @Column(name = "bank_identification")
+    private String branchIdentification;
+
+    @Column(name = "bank_holder")
+    private String bankHolder;
+
+    @Column(name = "is_active")
     private boolean active;
+
+    @Column(name = "expired_voucher")
+    private LocalDateTime expiredVoucher;
 
     @Column(name = "id_user")
     private long idUser;
+
+    @Column(name = "id_voucher")
+    private long idVoucher;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
