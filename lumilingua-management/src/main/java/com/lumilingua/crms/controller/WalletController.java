@@ -30,4 +30,14 @@ public class WalletController {
         }
         return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
     }
+
+    @PutMapping("/add-voucher/{voucher-id}")
+    public ResponseEntity<Result<WalletResponse>> addVoucherInWallet (@PathVariable("voucher-id") int idVoucher, @RequestParam("wallet-id") String idWallet) {
+            LOG.info("Add voucher id '%s' in wallet address '%s' by api '%s'".formatted(idVoucher, idWallet, "/api/v1/wallet/add-voucher"));
+        Result<WalletResponse> result = walletService.addVoucherByAddressWallet(idVoucher,idWallet);
+        if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+    }
 }

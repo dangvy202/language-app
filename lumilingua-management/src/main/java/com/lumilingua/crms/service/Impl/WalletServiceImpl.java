@@ -1,12 +1,16 @@
 package com.lumilingua.crms.service.Impl;
 
+import com.lumilingua.crms.common.DateTimeUtils;
+import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.BankRequest;
+import com.lumilingua.crms.dto.responses.VoucherResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.entity.Wallet;
 import com.lumilingua.crms.mapper.WalletMapper;
 import com.lumilingua.crms.repository.WalletRepository;
+import com.lumilingua.crms.service.VoucherService;
 import com.lumilingua.crms.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.LoggerFactory;
@@ -14,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 import org.slf4j.Logger;
 
-import java.util.Optional;
+import java.util.Date;
 import java.util.UUID;
 
 @Service
@@ -24,6 +28,7 @@ public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
 
+    private final VoucherService voucherService;
 
     @Override
     public Result<WalletResponse> createWalletByUser(User user) {
@@ -52,6 +57,29 @@ public class WalletServiceImpl implements WalletService {
             return Result.update();
         } catch (Exception e) {
             String msg = "Unable to update bank information in address wallet '%s'".formatted(walletId);
+            LOG.error(msg);
+            return Result.badRequestError(msg);
+        }
+    }
+
+    @Override
+    public Result<WalletResponse> addVoucherByAddressWallet(int idVoucher, String walletId) {
+        LOG.info("Add voucher on wallet table in service...");
+        try {
+            Result<VoucherResponse> voucherResponse = voucherService.getVoucherById(idVoucher);
+            if(voucherResponse.code != ResultApiConstant.StatusCode.OK) {
+                return Result.badRequestError("The voucher is not exist!");
+            }
+            Wallet wallet = walletRepository.findById(walletId)
+                    .orElseThrow(() -> new RuntimeException("Unable to get wallet ID: " + walletId));
+            Date expiredVoucherParse = DateTimeUtils.parseAlphabetToDate(voucherResponse.getData().getExpiredVoucher());
+            wallet.setIdVoucher(Long.parseLong(String.valueOf(idVoucher)));
+            wallet.setExpiredVoucher(expiredVoucherParse);
+            walletRepository.save(wallet);
+            LOG.info("Update voucher id '%s' in address wallet id '%s'".formatted(idVoucher, walletId));
+            return Result.update();
+        } catch (Exception ex) {
+            String msg = "Unable to add voucher in address wallet '%s'".formatted(walletId);
             LOG.error(msg);
             return Result.badRequestError(msg);
         }

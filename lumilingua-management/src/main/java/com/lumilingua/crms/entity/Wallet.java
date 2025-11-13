@@ -6,8 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.Date;
 
 @Data
 @Entity
@@ -40,7 +39,7 @@ public class Wallet {
     private boolean active;
 
     @Column(name = "expired_voucher")
-    private LocalDateTime expiredVoucher;
+    private Date expiredVoucher;
 
     @Column(name = "id_user")
     private long idUser;
@@ -49,8 +48,8 @@ public class Wallet {
     private long idVoucher;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private Date createdAt;
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private Date updatedAt;
 }

@@ -6,7 +6,8 @@ import com.lumilingua.crms.enums.StatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+
 
 @Data
 @AllArgsConstructor
@@ -24,7 +25,7 @@ public class UserResponse {
     private String provider;
     private String providerId;
     private String avatar;
-    private LocalDateTime lastLogin;
+    private Date lastLogin;
     private String walletId;
     private int idCategoryLevel;
 }

@@ -8,7 +8,8 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+
 
 @Data
 @Entity
@@ -18,7 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_user")
     private long idUser;
-    
+
     @Column(name = "username", unique = true)
     private String username;
     
@@ -62,7 +63,7 @@ public class User {
     private String avatar;
     
     @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    private Date lastLogin;
     
     @Column(name = "wallet_id", unique = true)
     private String walletId;
@@ -71,8 +72,8 @@ public class User {
     private int idCategoryLevel;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private Date createdAt;
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private Date updatedAt;
 }

@@ -3,14 +3,9 @@ package com.lumilingua.crms.dto.requests;
 import com.lumilingua.crms.enums.GenderEnum;
 import com.lumilingua.crms.enums.RoleEnum;
 import com.lumilingua.crms.enums.StatusEnum;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 @AllArgsConstructor
@@ -27,7 +22,7 @@ public class UserRequest {
     private String provider;
     private String providerId;
     private String avatar;
-    private LocalDateTime lastLogin;
+    private Date lastLogin;
     private String walletId;
     private int idCategoryLevel;
 }
