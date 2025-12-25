@@ -5,6 +5,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -17,20 +18,17 @@ public class WalletPurchaseHistory {
     @Column(name = "id_wallet_purchase_history")
     private long idWalletPurchaseHistory;
 
-    @Column(name = "action")
-    private String action;
-
     @Column(name = "description")
     private String description;
 
     @Column(name = "wallet_id")
     private String walletId;
 
-    @Column(name = "amount_paid")
-    private String amountPaid;
+    @Column(name = "amount_type")
+    private String amountType;
 
-    @Column(name = "amount_refund")
-    private String amountRefund;
+    @Column(name = "amount_paid")
+    private BigDecimal amountPaid;
 
     @Column(name = "status")
     private String status;

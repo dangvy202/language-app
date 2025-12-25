@@ -58,6 +58,9 @@ public class WalletController {
     public ResponseEntity<Result<WalletPurchaseHistoryResponse>> purchasePackage(@RequestBody PurchaseRequest request) throws Exception {
         LOG.info("Purchase package id '%s' vip in wallet id '%s' by api".formatted(request.getPackageCategoryId(), request.getWalletId(), "/api/v1/wallet/purchase"));
         Result<WalletPurchaseHistoryResponse> result = walletService.purchasePackageCategory(request);
-        return null;
+        if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
     }
 }

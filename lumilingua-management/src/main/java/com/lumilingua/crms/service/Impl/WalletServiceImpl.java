@@ -15,11 +15,9 @@ import com.lumilingua.crms.entity.Wallet;
 import com.lumilingua.crms.enums.AmountEnum;
 import com.lumilingua.crms.exception.handle.InsufficientBalanceException;
 import com.lumilingua.crms.mapper.WalletMapper;
+import com.lumilingua.crms.mapper.WalletPurchaseHistoryMapper;
 import com.lumilingua.crms.mapper.WalletTransferHistoryMapper;
-import com.lumilingua.crms.repository.CategoryLevelRepository;
-import com.lumilingua.crms.repository.WalletPurchaseHistoryRepository;
-import com.lumilingua.crms.repository.WalletRepository;
-import com.lumilingua.crms.repository.WalletTransferHistoryRepository;
+import com.lumilingua.crms.repository.*;
 import com.lumilingua.crms.service.VoucherService;
 import com.lumilingua.crms.service.WalletService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +42,7 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final WalletPurchaseHistoryRepository walletPurchaseHistoryRepository;
     private final CategoryLevelRepository categoryLevelRepository;
+    private final UserRepository userRepository;
     // service
     private final VoucherService voucherService;
 
@@ -136,16 +135,45 @@ public class WalletServiceImpl implements WalletService {
                 .orElseThrow(() -> new RuntimeException("The wallet id '%s' is incorrect".formatted(request.getWalletId())));
         CategoryLevel categoryLevel = categoryLevelRepository.findById(request.getPackageCategoryId())
                 .orElseThrow(() -> new RuntimeException("The package id '%s' is incorrect".formatted(request.getPackageCategoryId())));
+        User user = userRepository.findUserByWalletId(request.getWalletId())
+                .orElseThrow(() -> new RuntimeException("The user is incorrect"));
         if(request.getAmtType() == AmountEnum.AMT_LEARN) {
             if(wallet.getAmountLearn().compareTo(categoryLevel.getPrice()) > 0) {
-
+                // set and update wallet
+                wallet.setAmountLearn(wallet.getAmountLearn().subtract(categoryLevel.getPrice()));
+                walletRepository.save(wallet);
+                // set and update user
+                user.setIdCategoryLevel(Integer.parseInt(String.valueOf(categoryLevel.getIdCategoryLevel())));
+                userRepository.save(user);
+                // set and save purchase history
+                walletPurchaseHistoryRepository.save(WalletPurchaseHistoryMapper.INSTANT.toWalletPurchaseHistory(
+                        request.getWalletId(),
+                        "The purchase for wallet '%s' was successful with package '%s'.'".formatted(request.getWalletId(), categoryLevel.getNameCategoryLevel()),
+                        "AMOUNT_LEARN", categoryLevel.getPrice(), "ACTIVE"
+                ));
+                return Result.update();
             } else {
-
+                return Result.badRequestError("Insufficient balance in wallet id '%s' to process the purchase".formatted(request.getWalletId()));
             }
         } else {
-
+            if(wallet.getAmountTopUp().compareTo(categoryLevel.getPrice()) > 0) {
+                // set and update wallet
+                wallet.setAmountTopUp(wallet.getAmountTopUp().subtract(categoryLevel.getPrice()));
+                walletRepository.save(wallet);
+                // set and update user
+                user.setIdCategoryLevel(Integer.parseInt(String.valueOf(categoryLevel.getIdCategoryLevel())));
+                userRepository.save(user);
+                // set and save purchase history
+                walletPurchaseHistoryRepository.save(WalletPurchaseHistoryMapper.INSTANT.toWalletPurchaseHistory(
+                        request.getWalletId(),
+                        "The purchase for wallet '%s' was successful with package '%s'.'".formatted(request.getWalletId(), categoryLevel.getNameCategoryLevel()),
+                        "AMOUNT_TOPUP", categoryLevel.getPrice(), "ACTIVE"
+                ));
+                return Result.update();
+            } else {
+                return Result.badRequestError("Insufficient balance in wallet id '%s' to process the purchase".formatted(request.getWalletId()));
+            }
         }
-        return null;
     }
 
     @Override
