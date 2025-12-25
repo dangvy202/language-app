@@ -3,6 +3,7 @@ package com.lumilingua.crms.controller;
 import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.BankRequest;
+import com.lumilingua.crms.dto.requests.TransferRequest;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.service.WalletService;
 import lombok.RequiredArgsConstructor;
@@ -33,11 +34,27 @@ public class WalletController {
 
     @PutMapping("/add-voucher/{voucher-id}")
     public ResponseEntity<Result<WalletResponse>> addVoucherInWallet (@PathVariable("voucher-id") int idVoucher, @RequestParam("wallet-id") String idWallet) {
-            LOG.info("Add voucher id '%s' in wallet address '%s' by api '%s'".formatted(idVoucher, idWallet, "/api/v1/wallet/add-voucher"));
+        LOG.info("Add voucher id '%s' in wallet address '%s' by api '%s'".formatted(idVoucher, idWallet, "/api/v1/wallet/add-voucher"));
         Result<WalletResponse> result = walletService.addVoucherByAddressWallet(idVoucher,idWallet);
         if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
     }
+
+    @PutMapping("/transfer")
+    public ResponseEntity<Result<WalletResponse>> fundTransferWallet(@RequestBody TransferRequest request) throws Exception {
+        LOG.info("Fund transfer wallet id '%s' to receive wallet id '%s' by api '%s'".formatted(request.getFundWalletId(), request.getReceiveWalletId(), "/api/v1/wallet/transfer"));
+        Result<WalletResponse> result = walletService.fundTransferWallet(request);
+        if(result.code == ResultApiConstant.StatusCode.NO_CONTENT) {
+            return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+    }
+
+//    @PutMapping("/paid")
+//    public ResponseEntity<Result<WalletResponse>> paidVipinWallet() {
+//        LOG.info("Paid vip in wallet address '%s' by api".formatted(idVoucher, idWallet, "/api/v1/wallet/paid"));
+//
+//    }
 }

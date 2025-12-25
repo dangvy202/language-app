@@ -4,12 +4,17 @@ import com.lumilingua.crms.common.DateTimeUtils;
 import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.BankRequest;
+import com.lumilingua.crms.dto.requests.TransferRequest;
 import com.lumilingua.crms.dto.responses.VoucherResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.entity.Wallet;
+import com.lumilingua.crms.enums.AmountEnum;
 import com.lumilingua.crms.mapper.WalletMapper;
+import com.lumilingua.crms.mapper.WalletTransferHistoryMapper;
+import com.lumilingua.crms.repository.WalletPurchaseHistoryRepository;
 import com.lumilingua.crms.repository.WalletRepository;
+import com.lumilingua.crms.repository.WalletTransferHistoryRepository;
 import com.lumilingua.crms.service.VoucherService;
 import com.lumilingua.crms.service.WalletService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +22,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import org.slf4j.Logger;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.UUID;
 
@@ -25,10 +34,61 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WalletServiceImpl implements WalletService {
     private static final Logger LOG = LoggerFactory.getLogger(WalletServiceImpl.class);
-
+    // repository
+    private final WalletTransferHistoryRepository walletTransferHistoryRepository;
     private final WalletRepository walletRepository;
-
+    private final WalletPurchaseHistoryRepository walletPurchaseHistoryRepository;
+    // service
     private final VoucherService voucherService;
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public Result<WalletResponse> fundTransferWallet(TransferRequest request) throws Exception {
+        LOG.info("Fund tranfer wallet id '%s' in service...".formatted(request.getReceiveWalletId()));
+        Wallet fundWallet = walletRepository.findWalletByIdAndLockDB(request.getFundWalletId()).orElseThrow(() -> new RuntimeException("Unable to get wallet ID: " + request.getFundWalletId()));
+        Wallet receivedWallet = walletRepository.findWalletByIdAndLockDB(request.getReceiveWalletId()).orElseThrow(() -> new RuntimeException("Unable to get wallet ID: " + request.getReceiveWalletId()));
+        if(request.getAmtType() == AmountEnum.AMT_LEARN) {
+            if(fundWallet.getAmountLearn().compareTo(request.getAmount()) >= 0) {
+                BigDecimal userFundTranfer = fundWallet.getAmountLearn().subtract(request.getAmount());
+                BigDecimal userReceivedTranfer = receivedWallet.getAmountLearn().add(request.getAmount());
+                // set and update fund wallet
+                fundWallet.setAmountLearn(userFundTranfer);
+                walletRepository.save(fundWallet);
+                // set and update received wallet
+                receivedWallet.setAmountLearn(userReceivedTranfer);
+                walletRepository.save(receivedWallet);
+                // set and save transfer history
+                walletTransferHistoryRepository.save(WalletTransferHistoryMapper.INSTANT.toWalletTransferHistory(
+                        "ACTIVE", "AMOUNT_LEARN",
+                        "The balance of wallet ID '%s' has been transferred to wallet ID '%s'.".formatted(request.getFundWalletId(), request.getReceiveWalletId()),
+                        request.getAmount(), request.getFundWalletId(),
+                        request.getReceiveWalletId()));
+                return Result.update();
+            } else {
+                throw new RuntimeException("Insufficient balance");
+            }
+        } else {
+            if(fundWallet.getAmountTopUp().compareTo(request.getAmount()) >= 0) {
+                BigDecimal userFundTranfer = fundWallet.getAmountTopUp().subtract(request.getAmount());
+                BigDecimal userReceivedTranfer = receivedWallet.getAmountTopUp().add(request.getAmount());
+                // set and update fund wallet
+                fundWallet.setAmountTopUp(userFundTranfer);
+                walletRepository.save(fundWallet);
+                // set and update received wallet
+                receivedWallet.setAmountTopUp(userReceivedTranfer);
+                walletRepository.save(receivedWallet);
+                // set and save transfer history
+                walletTransferHistoryRepository.save(WalletTransferHistoryMapper.INSTANT.toWalletTransferHistory(
+                        "ACTIVE", "AMOUNT_TOPUP",
+                        "The balance of wallet ID '%s' has been transferred to wallet ID '%s'.".formatted(request.getFundWalletId(), request.getReceiveWalletId()),
+                        request.getAmount(), request.getFundWalletId(),
+                        request.getReceiveWalletId()));
+                return Result.update();
+            } else {
+                throw new RuntimeException("Insufficient balance");
+            }
+        }
+    }
 
     @Override
     public Result<WalletResponse> createWalletByUser(User user) {

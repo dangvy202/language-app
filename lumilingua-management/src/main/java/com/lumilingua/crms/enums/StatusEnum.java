@@ -5,7 +5,10 @@ import lombok.Getter;
 @Getter
 public enum StatusEnum {
     ACTIVE("ACTIVE"),
-    INACTIVE("INACTIVE");
+    INACTIVE("INACTIVE"),
+    DELETE("DELETE"),//History
+    KEEP("KEEP");//History
+
 
 
     private final String label;
