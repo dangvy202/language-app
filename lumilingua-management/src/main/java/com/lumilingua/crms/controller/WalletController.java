@@ -3,7 +3,9 @@ package com.lumilingua.crms.controller;
 import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.BankRequest;
+import com.lumilingua.crms.dto.requests.PurchaseRequest;
 import com.lumilingua.crms.dto.requests.TransferRequest;
+import com.lumilingua.crms.dto.responses.WalletPurchaseHistoryResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.service.WalletService;
 import lombok.RequiredArgsConstructor;
@@ -52,9 +54,10 @@ public class WalletController {
         return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }
 
-//    @PutMapping("/paid")
-//    public ResponseEntity<Result<WalletResponse>> paidVipinWallet() {
-//        LOG.info("Paid vip in wallet address '%s' by api".formatted(idVoucher, idWallet, "/api/v1/wallet/paid"));
-//
-//    }
+    @PutMapping("/purchase")
+    public ResponseEntity<Result<WalletPurchaseHistoryResponse>> purchasePackage(@RequestBody PurchaseRequest request) throws Exception {
+        LOG.info("Purchase package id '%s' vip in wallet id '%s' by api".formatted(request.getPackageCategoryId(), request.getWalletId(), "/api/v1/wallet/purchase"));
+        Result<WalletPurchaseHistoryResponse> result = walletService.purchasePackageCategory(request);
+        return null;
+    }
 }

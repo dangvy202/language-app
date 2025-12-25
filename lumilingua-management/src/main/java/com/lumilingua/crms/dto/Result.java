@@ -41,4 +41,12 @@ public class Result<T> {
     public static <T> Result<T> get(T data) {
         return new Result<>(ResultApiConstant.StatusCode.OK, ResultApiConstant.MessageCode.SUCCESS, null, data);
     }
+
+    public static <T> Result<T> forbiden(String msg) {
+        return new Result<>(ResultApiConstant.StatusCode.FORBIDDEN, ResultApiConstant.MessageCode.FORBIDDEN_MESSAGE, msg, null);
+    }
+
+    public static <T> Result<T> unauthorized(String msg) {
+        return new Result<>(ResultApiConstant.StatusCode.UNAUTHORIZED, ResultApiConstant.MessageCode.UNAUTHORIZED_MESSAGE, msg, null);
+    }
 }

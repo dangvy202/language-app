@@ -4,14 +4,19 @@ import com.lumilingua.crms.common.DateTimeUtils;
 import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.BankRequest;
+import com.lumilingua.crms.dto.requests.PurchaseRequest;
 import com.lumilingua.crms.dto.requests.TransferRequest;
 import com.lumilingua.crms.dto.responses.VoucherResponse;
+import com.lumilingua.crms.dto.responses.WalletPurchaseHistoryResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
+import com.lumilingua.crms.entity.CategoryLevel;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.entity.Wallet;
 import com.lumilingua.crms.enums.AmountEnum;
+import com.lumilingua.crms.exception.handle.InsufficientBalanceException;
 import com.lumilingua.crms.mapper.WalletMapper;
 import com.lumilingua.crms.mapper.WalletTransferHistoryMapper;
+import com.lumilingua.crms.repository.CategoryLevelRepository;
 import com.lumilingua.crms.repository.WalletPurchaseHistoryRepository;
 import com.lumilingua.crms.repository.WalletRepository;
 import com.lumilingua.crms.repository.WalletTransferHistoryRepository;
@@ -38,6 +43,7 @@ public class WalletServiceImpl implements WalletService {
     private final WalletTransferHistoryRepository walletTransferHistoryRepository;
     private final WalletRepository walletRepository;
     private final WalletPurchaseHistoryRepository walletPurchaseHistoryRepository;
+    private final CategoryLevelRepository categoryLevelRepository;
     // service
     private final VoucherService voucherService;
 
@@ -65,7 +71,7 @@ public class WalletServiceImpl implements WalletService {
                         request.getReceiveWalletId()));
                 return Result.update();
             } else {
-                throw new RuntimeException("Insufficient balance");
+                return Result.badRequestError("Insufficient balance");
             }
         } else {
             if(fundWallet.getAmountTopUp().compareTo(request.getAmount()) >= 0) {
@@ -85,7 +91,7 @@ public class WalletServiceImpl implements WalletService {
                         request.getReceiveWalletId()));
                 return Result.update();
             } else {
-                throw new RuntimeException("Insufficient balance");
+                return Result.badRequestError("Insufficient balance");
             }
         }
     }
@@ -120,6 +126,26 @@ public class WalletServiceImpl implements WalletService {
             LOG.error(msg);
             return Result.badRequestError(msg);
         }
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public Result<WalletPurchaseHistoryResponse> purchasePackageCategory(PurchaseRequest request) throws Exception {
+        LOG.info("Purchase package id '%s' by wallet id '%s' in service".formatted(request.getPackageCategoryId(), request.getWalletId()));
+        Wallet wallet = walletRepository.findById(request.getWalletId())
+                .orElseThrow(() -> new RuntimeException("The wallet id '%s' is incorrect".formatted(request.getWalletId())));
+        CategoryLevel categoryLevel = categoryLevelRepository.findById(request.getPackageCategoryId())
+                .orElseThrow(() -> new RuntimeException("The package id '%s' is incorrect".formatted(request.getPackageCategoryId())));
+        if(request.getAmtType() == AmountEnum.AMT_LEARN) {
+            if(wallet.getAmountLearn().compareTo(categoryLevel.getPrice()) > 0) {
+
+            } else {
+
+            }
+        } else {
+
+        }
+        return null;
     }
 
     @Override
