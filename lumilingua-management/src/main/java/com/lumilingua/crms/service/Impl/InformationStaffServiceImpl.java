@@ -2,7 +2,6 @@ package com.lumilingua.crms.service.Impl;
 
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.InformationStaffRequest;
-import com.lumilingua.crms.dto.responses.ExperiencedStaffResponse;
 import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.entity.ExperiencedStaff;
 import com.lumilingua.crms.entity.InformationStaff;
@@ -52,7 +51,29 @@ public class InformationStaffServiceImpl implements InformationStaffService {
     }
 
     @Override
+    @Transactional
+    public Result<InformationStaffResponse> deleteInformationStaff(InformationStaffRequest request) {
+        LOG.info("Delete information staff in service...");
+        Optional<User> user = userRepository.findUserByEmail(request.getEmail());
+        if(user.isEmpty()) {
+            return Result.badRequestError("The Email does NOT exists");
+        }
+        Optional<InformationStaff> informationStaff = informationStaffRepository.findInformationStaffByIdUser(user.get().getIdUser());
+        if(informationStaff.isEmpty()) {
+            return Result.badRequestError("The Information Staff does NOT exists");
+        }
+        List<ExperiencedStaff> experiencedStaff = experiencedStaffRepository.findExperiencedStaffByIdInformationStaff(informationStaff.get().getIdInformationStaff());
+        if(experiencedStaff.isEmpty()) {
+            return Result.badRequestError("The Experienced Staff does NOT exists");
+        }
+        informationStaffRepository.delete(informationStaff.get());
+        experiencedStaffRepository.deleteAll(experiencedStaff);
+        return Result.delete();
+    }
+
+    @Override
     public Result<InformationStaffResponse> activeContractStaff(long id) {
+        LOG.info("Active information staff account in service...");
         Optional<InformationStaff> informationStaff = informationStaffRepository.findById(id);
         if(informationStaff.isEmpty()) {
             return Result.badRequestError("The information staff does NOT exists");

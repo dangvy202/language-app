@@ -39,4 +39,14 @@ public class InformationStaffController {
         }
         return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
     }
+
+    @DeleteMapping
+    public ResponseEntity<Result<InformationStaffResponse>> deleteInformationStaff(@RequestBody InformationStaffRequest request) {
+        LOG.info("Call api delete information staff by api '%s'".formatted("/api/v1/information-staff"));
+        Result<InformationStaffResponse> result = service.deleteInformationStaff(request);
+        if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+    }
 }
