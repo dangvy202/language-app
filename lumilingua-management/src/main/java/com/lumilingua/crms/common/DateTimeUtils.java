@@ -37,9 +37,7 @@ public class DateTimeUtils {
         if (unit == null) {
             throw new IllegalArgumentException("The feature is not support : " + unitStr);
         }
-
         LocalDateTime future = LocalDateTime.now().plus(amount, unit);
-
         return Date.from(future.atZone(ZoneId.systemDefault()).toInstant());
     }
 }
