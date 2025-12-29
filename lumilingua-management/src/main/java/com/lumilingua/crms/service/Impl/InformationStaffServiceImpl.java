@@ -72,6 +72,24 @@ public class InformationStaffServiceImpl implements InformationStaffService {
     }
 
     @Override
+    public Result<InformationStaffResponse> getInformationStaffByEmail(InformationStaffRequest request) {
+        LOG.info("Get information staff in service...");
+        Optional<User> user = userRepository.findUserByEmail(request.getEmail());
+        if(user.isEmpty()) {
+            return Result.badRequestError("The Email does NOT exists");
+        }
+        Optional<InformationStaff> informationStaff = informationStaffRepository.findInformationStaffByIdUser(user.get().getIdUser());
+        if(informationStaff.isEmpty()) {
+            return Result.badRequestError("The Information Staff does NOT exists");
+        }
+        List<ExperiencedStaff> experiencedStaff = experiencedStaffRepository.findExperiencedStaffByIdInformationStaff(informationStaff.get().getIdInformationStaff());
+        if(experiencedStaff.isEmpty()) {
+            return Result.badRequestError("The Experienced Staff does NOT exists");
+        }
+        return Result.get(InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaff.get(), experiencedStaff));
+    }
+
+    @Override
     public Result<InformationStaffResponse> activeContractStaff(long id) {
         LOG.info("Active information staff account in service...");
         Optional<InformationStaff> informationStaff = informationStaffRepository.findById(id);

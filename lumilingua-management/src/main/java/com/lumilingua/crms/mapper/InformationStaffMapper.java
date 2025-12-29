@@ -2,10 +2,13 @@ package com.lumilingua.crms.mapper;
 
 import com.lumilingua.crms.dto.requests.InformationStaffRequest;
 import com.lumilingua.crms.dto.responses.InformationStaffResponse;
+import com.lumilingua.crms.entity.ExperiencedStaff;
 import com.lumilingua.crms.entity.InformationStaff;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface InformationStaffMapper {
@@ -22,4 +25,6 @@ public interface InformationStaffMapper {
     InformationStaff toInformationStaff(InformationStaffRequest request, String certificatePath, long idUser);
 
     InformationStaffResponse toInformationStaffResponse(InformationStaffRequest request);
+
+    InformationStaffResponse toInformationStaffResponseMapper(InformationStaff informationStaff, List<ExperiencedStaff> experienced);
 }

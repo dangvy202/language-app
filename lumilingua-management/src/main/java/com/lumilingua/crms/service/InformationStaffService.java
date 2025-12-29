@@ -8,6 +8,7 @@ public interface InformationStaffService {
 //  user
     Result<InformationStaffResponse> createInformationStaff(InformationStaffRequest request);
     Result<InformationStaffResponse> deleteInformationStaff(InformationStaffRequest request);
+    Result<InformationStaffResponse> getInformationStaffByEmail(InformationStaffRequest request);
 //  admin
     Result<InformationStaffResponse> activeContractStaff(long id);
 }
