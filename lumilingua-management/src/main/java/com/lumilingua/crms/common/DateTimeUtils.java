@@ -1,6 +1,7 @@
 package com.lumilingua.crms.common;
 
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -39,5 +40,18 @@ public class DateTimeUtils {
         }
         LocalDateTime future = LocalDateTime.now().plus(amount, unit);
         return Date.from(future.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    public static double calculateYearsExperience(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate == null || toDate == null) {
+            throw new IllegalArgumentException("fromDate / toDate must not be null");
+        }
+
+        if (toDate.isBefore(fromDate)) {
+            throw new IllegalArgumentException("toDate must be after fromDate");
+        }
+
+        long days = ChronoUnit.DAYS.between(fromDate, toDate);
+        return Math.round((days / 365.2425) * 10.0) / 10.0;
     }
 }

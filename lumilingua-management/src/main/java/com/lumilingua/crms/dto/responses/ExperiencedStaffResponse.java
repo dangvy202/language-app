@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -11,7 +12,7 @@ import java.util.Date;
 public class ExperiencedStaffResponse {
     private long idExperienced;
     private String companyName;
-    private Date fromDate;
-    private Date toDate;
+    private LocalDate fromDate;
+    private LocalDate toDate;
     private int yearsOfExperience;
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -24,13 +25,13 @@ public class ExperiencedStaff {
     private String companyName;
 
     @Column(name = "from_date")
-    private Date fromDate;
+    private LocalDate fromDate;
 
     @Column(name = "to_date")
-    private Date toDate;
+    private LocalDate toDate;
 
     @Column(name = "years_of_experience")
-    private int yearsOfExperience;
+    private double yearsOfExperience;
 
     @CreationTimestamp
     private Date createdAt;
