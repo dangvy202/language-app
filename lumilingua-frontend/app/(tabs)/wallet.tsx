@@ -1,252 +1,255 @@
 // App.tsx hoặc HomeScreen.tsx
 
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
-    Image,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const HomeScreen = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+    <View style={styles.container}>
+      {/* Header Gradient */}
+      <LinearGradient
+        colors={['#FFA500', '#FF8C00']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
+        <View style={styles.headerTop}>
+          <TouchableOpacity>
+            <Ionicons name="menu" size={28} color="white" />
+          </TouchableOpacity>
+          <View style={styles.streakContainer}>
+            <Ionicons name="flame" size={24} color="white" />
+            <Text style={styles.streakText}>7 ngày</Text>
+          </View>
+          <TouchableOpacity>
+            <Ionicons name="notifications-outline" size={28} color="white" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="chevron-back" size={28} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="notifications-outline" size={28} color="#000" />
-        </TouchableOpacity>
-      </View>
+        <View style={styles.mascotContainer}>
+          <Image
+            source={require('@/assets/images/accounts/logo.jpg')} // mascot mèo vẫy tay, crop tròn, nền trong suốt nếu có
+            style={styles.mascot}
+          />
+          <Text style={styles.appName}>LumiLingua</Text>
+          <Text style={styles.slogan}>Học ngôn ngữ vui vẻ mỗi ngày!</Text>
+        </View>
+      </LinearGradient>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-        <Text style={styles.searchPlaceholder}>
-          Search for lessons, topics, or teachers
-        </Text>
-      </View>
-
-      {/* Title */}
-      <Text style={styles.title}>LumiLingua</Text>
-
-      {/* Category Tabs */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>
-        <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-          <Ionicons name="book-outline" size={24} color="#FFA500" />
-          <Text style={styles.activeTabText}>Grammar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubble-ellipses-outline" size={24} color="#666" />
-          <Text style={styles.tabText}>Vocabulary</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubbles-outline" size={24} color="#666" />
-          <Text style={styles.tabText}>Phrases</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="mic-outline" size={24} color="#666" />
-          <Text style={styles.tabText}>Pronu...</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Main Cat Card */}
-      <View style={styles.catContainer}>
-        <Image
-          source={{ uri: 'https://via.placeholder.com/300x300/FFD700/FFFFFF?text=🐱' }} // Thay bằng link ảnh mèo cam 2D thật của mày
-          style={styles.catImage}
-          resizeMode="cover"
-        />
-        <View style={styles.catButtons}>
-          <TouchableOpacity style={styles.catButtonLeft}>
-            <Ionicons name="person-outline" size={20} color="#FFF" />
-            <Text style={styles.catButtonText}>Spoken lessons</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.catButtonRight}>
-            <Ionicons name="leaf-outline" size={20} color="#FFF" />
-            <Text style={styles.catButtonText}>Pigeon Vocabulary</Text>
-          </TouchableOpacity>
+        <View style={styles.searchWrapper}>
+          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <TextInput
+            placeholder="Tìm ngôn ngữ hoặc khóa học..."
+            placeholderTextColor="#999"
+            style={styles.searchInput}
+          />
         </View>
       </View>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="book-outline" size={24} color="#999" />
-          <Text style={styles.navText}>Grammar</Text>
+      {/* Categories */}
+      <Text style={styles.sectionTitle}>Danh mục</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
+        {['Grammar', 'Vocabulary', 'Phrases', 'Pronunciation', 'Listening'].map((cat, index) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.categoryTab,
+              index === 0 && styles.activeCategoryTab,
+            ]}
+          >
+            <Ionicons
+              name={
+                cat === 'Grammar'
+                  ? 'book-outline'
+                  : cat === 'Vocabulary'
+                  ? 'chatbubble-ellipses-outline'
+                  : cat === 'Phrases'
+                  ? 'chatbubbles-outline'
+                  : cat === 'Pronunciation'
+                  ? 'mic-outline'
+                  : 'ear-outline'
+              }
+              size={20}
+              color={index === 0 ? '#FFA500' : '#666'}
+            />
+            <Text
+              style={[
+                styles.categoryText,
+                index === 0 && styles.activeCategoryText,
+              ]}
+            >
+              {cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Your Courses */}
+      <Text style={styles.sectionTitle}>Khóa học của bạn</Text>
+      <ScrollView style={styles.coursesScroll}>
+        <TouchableOpacity style={styles.courseCard}>
+          <LinearGradient
+            colors={['#FFF8E1', '#FFE082']}
+            style={styles.cardGradient}
+          >
+            <View style={styles.courseHeader}>
+              <Text style={styles.courseFlag}>🇬🇧</Text>
+              <Text style={styles.courseTitle}>Tiếng Anh Cơ Bản</Text>
+            </View>
+            <Text style={styles.courseProgressText}>Hoàn thành 45%</Text>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: '45%' }]} />
+            </View>
+            <TouchableOpacity style={styles.continueButton}>
+              <Text style={styles.continueText}>Tiếp tục</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="document-text-outline" size={24} color="#999" />
-          <Text style={styles.navText}>Spoken</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.navItem, styles.activeNavItem]}>
-          <View style={styles.activeNavIcon}>
-            <Ionicons name="home" size={28} color="#FFA500" />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="mic-outline" size={24} color="#999" />
-          <Text style={styles.navText}>Pronunciation</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="globe-outline" size={24} color="#999" />
-          <Text style={styles.navText}>Culture</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+
+        {/* Thêm card khác tương tự */}
+      </ScrollView>
+
+      {/* Bottom Nav placeholder - dùng @react-navigation/bottom-tabs thật */}
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
-  header: {
+  container: { flex: 1, backgroundColor: '#fff' },
+  headerGradient: { paddingTop: Platform.OS === 'android' ? 40 : 60 },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 20 : 0,
     paddingBottom: 10,
   },
-  searchContainer: {
+  streakContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    marginHorizontal: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchPlaceholder: {
-    color: '#999',
-    fontSize: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginLeft: 20,
-    marginTop: 20,
-    marginBottom: 15,
-  },
-  tabs: {
-    paddingLeft: 20,
-    marginBottom: 20,
-  },
-  tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 30,
-    marginRight: 12,
-  },
-  activeTab: {
-    backgroundColor: '#FFF8E1',
-    shadowColor: '#FFA500',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  activeTabText: {
-    marginLeft: 8,
-    fontWeight: '600',
-    color: '#FFA500',
-  },
-  tabText: {
-    marginLeft: 8,
-    color: '#666',
-  },
-  catContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  catImage: {
-    width: '100%',
-    height: 350,
-    borderRadius: 30,
-    backgroundColor: '#FFD700',
-  },
-  catButtons: {
-    flexDirection: 'row',
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    justifyContent: 'space-between',
-  },
-  catButtonLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFA500',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 25,
-  },
-  catButtonRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFA500',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 25,
-  },
-  catButtonText: {
-    color: '#FFF',
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#EEE',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  activeNavItem: {
-    marginBottom: 10,
-  },
-  activeNavIcon: {
-    backgroundColor: '#FFF8E1',
-    padding: 12,
-    borderRadius: 30,
-    shadowColor: '#FFA500',
+  streakText: { color: 'white', fontWeight: 'bold', marginLeft: 6 },
+  mascotContainer: { alignItems: 'center', paddingVertical: 20 },
+  mascot: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: 'white',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  navText: {
-    fontSize: 12,
-    color: '#999',
+  appName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 12,
+  },
+  slogan: {
+    fontSize: 16,
+    color: 'white',
+    opacity: 0.95,
     marginTop: 4,
   },
+  searchContainer: { padding: 16, backgroundColor: '#fff' },
+  searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 30,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  searchIcon: { marginRight: 12 },
+  searchInput: { flex: 1, fontSize: 16, paddingVertical: 14 },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#333',
+    marginLeft: 20,
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  categoriesScroll: { paddingLeft: 20 },
+  categoryTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 30,
+    marginRight: 12,
+  },
+  activeCategoryTab: {
+    backgroundColor: '#FFF3E0',
+    shadowColor: '#FFA500',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  categoryText: { marginLeft: 8, fontSize: 15, color: '#666', fontWeight: '600' },
+  activeCategoryText: { color: '#FFA500', fontWeight: 'bold' },
+  coursesScroll: { paddingHorizontal: 16 },
+  courseCard: {
+    marginBottom: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  cardGradient: { padding: 20 },
+  courseHeader: { flexDirection: 'row', alignItems: 'center' },
+  courseFlag: { fontSize: 28, marginRight: 12 },
+  courseTitle: { fontSize: 20, fontWeight: 'bold', color: '#222' },
+  courseProgressText: { color: '#555', marginTop: 8, fontSize: 14 },
+  progressBar: {
+    height: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#FFA500',
+    borderRadius: 5,
+  },
+  continueButton: {
+    backgroundColor: '#FFA500',
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 30,
+    marginTop: 16,
+  },
+  continueText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
 });
 
 export default HomeScreen;

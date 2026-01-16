@@ -18,7 +18,7 @@ const TabIcon = ({ focused, icon, title }: any) => {
               rounded-full overflow-hidden"
           >
             <Ionicons name={icon} size={20} color="#FFA500" />
-            <Text className="ml-2 text-[12px] font-semibold text-[#2E2A47]">
+            <Text className="ml-2 text-[15px] font-semibold text-[#2E2A47]">
               {title}
             </Text>
           </View>
@@ -59,9 +59,8 @@ export default function RootLayout() {
           alignItems: 'center',
         },
         tabBarStyle: {
-          height: 52,
-          marginBottom: 20,
-          backgroundColor: 'white',
+          height: 72,
+          backgroundColor: '#ffffff',
           position: 'absolute',
           overflow: 'hidden'
         }
@@ -128,7 +127,7 @@ export default function RootLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon 
                 focused={focused} 
-                icon="menu"
+                icon="book"
                 title="Saved"
             />
           )
