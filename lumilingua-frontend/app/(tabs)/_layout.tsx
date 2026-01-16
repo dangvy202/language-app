@@ -1,31 +1,133 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from "expo-router";
+import { Text, TouchableOpacity, View } from "react-native";
+
+const TabIcon = ({ focused, icon, title }: any) => {
+  if (focused) {
+    return (
+      <TouchableOpacity>
+        {icon !== 'menu' ? (
+          <View
+            style={{
+              backgroundColor: 'rgb(255, 240, 200)',
+            }}
+            className="
+              flex-row items-center justify-center
+              px-1 py-2
+              min-w-[95px] h-10
+              rounded-full overflow-hidden"
+          >
+            <Ionicons name={icon} size={20} color="#FFA500" />
+            <Text className="ml-2 text-[12px] font-semibold text-[#2E2A47]">
+              {title}
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={{
+              backgroundColor: 'rgb(255, 240, 200)',
+            }}
+            className="
+              flex-row items-center justify-center
+              px-1 py-2
+              min-w-[95px] h-10
+              rounded-full overflow-hidden"
+          >
+            <Ionicons name={icon} size={20} color="#FFA500" />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View className="h-10 w-10 items-center justify-center">
+      <Ionicons name={icon} size={20} color="#FFA500" />
+    </View>
+  );
+};
 
 export default function RootLayout() {  
   return  (
-    <Tabs>
+    <Tabs 
+      screenOptions={{
+        tabBarShowLabel: false,
+        tabBarItemStyle: {
+          width: '100%',
+          height: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        tabBarStyle: {
+          backgroundColor: 'white',
+        }
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="wallet"
         options={{
-          title: 'Home',
-          headerShown: false
-        }}
-      />
-      <Tabs.Screen 
-        name='saved'options={{
-          title: 'Saved',
-          headerShown: false
+          title: 'Wallet',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon 
+                focused={focused} 
+                icon="wallet" 
+                title="Wallet"
+            />
+          )
         }}
       />
       <Tabs.Screen 
         name='profile'options={{
           title: 'Profile',
-          headerShown: false
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon 
+                focused={focused} 
+                icon="person"
+                title="Profile"
+            />
+          )
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon 
+                focused={focused} 
+                icon="home" 
+                title="Home"
+            />
+          )
         }}
       />
       <Tabs.Screen 
         name='search'options={{
           title: 'Search',
-          headerShown: false
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon 
+                focused={focused} 
+                icon="search"
+                title="Search"
+            />
+          )
+        }}
+      />
+      <Tabs.Screen 
+        name='saved'options={{
+          title: 'Saved',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon 
+                focused={focused} 
+                icon="menu"
+                title="Saved"
+            />
+          )
         }}
       />
     </Tabs>
