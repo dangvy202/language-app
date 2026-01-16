@@ -59,7 +59,11 @@ export default function RootLayout() {
           alignItems: 'center',
         },
         tabBarStyle: {
+          height: 52,
+          marginBottom: 20,
           backgroundColor: 'white',
+          position: 'absolute',
+          overflow: 'hidden'
         }
       }}
     >
