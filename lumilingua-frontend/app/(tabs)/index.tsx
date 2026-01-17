@@ -34,8 +34,11 @@ export default function Index() {
                 style={styles.avatar}
               />
             </View>
-            <Text style={styles.username}>Ten Account</Text>
-            <Text style={styles.subtitle}>Học ngôn ngữ vui vẻ mỗi ngày!</Text>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Text style={styles.hi}>Hi, </Text>
+              <Text style={styles.username}>Ten Account</Text>
+            </View>
+            <Text style={styles.subtitle}>”Learn to earn. Enjoy your day with LumiLingua!”</Text>
           </View>
         </LinearGradient>
       </View>
@@ -92,7 +95,10 @@ export default function Index() {
         <View style={styles.coursesContainer}>
           <TouchableOpacity style={styles.course}>
             <LinearGradient colors={['#FFECB3', '#FFE082']} style={{ padding: 20 }}>
-              <Text style={styles.courseTitle}>Tiếng Anh Cơ Bản</Text>
+              <View style={styles.courseHeader}>
+                <Text style={styles.courseFlag}>🇬🇧</Text>
+                <Text style={styles.courseTitle}>Tiếng Anh Cơ Bản</Text>
+              </View>
               <Text style={styles.analysisTitle}>Hoàn thành 45%</Text>
               <View style={styles.learnedAnalysis}>
                 <View
@@ -229,6 +235,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FB8500',
   },
+  hi: {fontSize: 20, color: '#fff', marginTop: 10},
   username: {
     fontSize: 26,
     fontWeight: '800',
@@ -312,6 +319,8 @@ const styles = StyleSheet.create({
     elevation: 4,
     overflow: 'hidden',
   },
+  courseHeader: { flexDirection: 'row', alignItems: 'center' },
+  courseFlag: { fontSize: 28, marginRight: 12 },
   courseTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -345,7 +354,7 @@ const styles = StyleSheet.create({
   teachersScroll: {
     paddingLeft: 20,
     marginBottom: 30,
-    height: 260,
+    height: 265,
   },
   teacherCard: {
     width: 220,
