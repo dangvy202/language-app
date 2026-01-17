@@ -8,8 +8,10 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 const Profile = () => {
+    const router = useRouter();
     return (
         <View style={styles.container}>
             {/* Header Gradient */}
@@ -83,7 +85,7 @@ const Profile = () => {
                 <TouchableOpacity
                     style={styles.becomeTutorButton}
                     activeOpacity={0.8}
-                    onPress={() => navigation.navigate('RegisterTutor')}
+                    onPress={() => router.push('/RegisterTutor')}
                 >
                     <LinearGradient
                         colors={['#FFB703', '#FB8500']}

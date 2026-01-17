@@ -21,6 +21,10 @@ export default function Index() {
             <TouchableOpacity>
               <Ionicons name="menu" size={28} color="#fff" />
             </TouchableOpacity>
+            <View style={styles.streakContainer}>
+              <Ionicons name="flame" size={24} color="white" />
+              <Text style={styles.streakText}>7 ngày</Text>
+            </View>
             <TouchableOpacity>
               <Ionicons name="notifications-outline" size={28} color="#fff" />
             </TouchableOpacity>
@@ -34,7 +38,7 @@ export default function Index() {
                 style={styles.avatar}
               />
             </View>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.hi}>Hi, </Text>
               <Text style={styles.username}>Ten Account</Text>
             </View>
@@ -210,6 +214,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  streakText: { color: 'white', fontWeight: 'bold', marginLeft: 6 },
   avatarWrapper: {
     width: 120,
     height: 120,
@@ -235,7 +248,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FB8500',
   },
-  hi: {fontSize: 20, color: '#fff', marginTop: 10},
+  hi: { fontSize: 20, color: '#fff', marginTop: 10 },
   username: {
     fontSize: 26,
     fontWeight: '800',
@@ -278,7 +291,7 @@ const styles = StyleSheet.create({
   categoriesScroll: {
     paddingLeft: 20,
     marginBottom: 10,
-    height:100
+    height: 100
   },
   categoryText: {
     marginLeft: 8,
