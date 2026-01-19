@@ -3,4 +3,4 @@ from .views import LevelViewSet
 
 levels_router = routers.SimpleRouter()
 
-levels_router.register('level', LevelViewSet)
+levels_router.register('/level', LevelViewSet)

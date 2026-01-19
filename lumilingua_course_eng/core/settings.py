@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'lumilingua_management',
+        'NAME': 'lumilingua_course_eng',
         'USER': 'dangvy202',
         'PASSWORD': 'admin123456',
         'HOST': 'localhost',
