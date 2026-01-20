@@ -38,10 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'modules.course.apps.CourseConfig'
 ]
 
 MIDDLEWARE = [
+'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -49,6 +51,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8081",               # Expo Go dev trên localhost
+    "http://127.0.0.1:8081",
+    "http://localhost:3000",               # Nếu dùng web dev
+    "http://192.168.1.x:8081",             # Thay 192.168.1.x bằng IP máy tính của bạn
+    "exp://192.168.1.x:8081",              # Expo dev trên điện thoại (thay IP thật)
+    "http://localhost:19000",              # Thêm nếu dùng Expo web
+    "http://10.0.2.2:8000",                # Nếu test emulator Android
 ]
 
 ROOT_URLCONF = 'core.urls'

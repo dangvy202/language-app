@@ -121,14 +121,14 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen 
-        name='saved'options={{
-          title: 'Saved',
+        name='learn'options={{
+          title: 'Learn',
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon 
                 focused={focused} 
                 icon="book"
-                title="Saved"
+                title="Learn"
             />
           )
         }}
