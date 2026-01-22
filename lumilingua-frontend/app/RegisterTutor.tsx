@@ -34,7 +34,6 @@ const RegisterTutor = () => {
             'Đăng ký thành công',
             'Cảm ơn bạn! Chúng tôi sẽ liên hệ trong vòng 24-48h để xác nhận.'
         );
-        // Reset form hoặc navigate về Profile
     };
 
     return (

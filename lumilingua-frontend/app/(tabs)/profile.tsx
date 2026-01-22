@@ -23,7 +23,7 @@ const Profile = () => {
             >
                 <TouchableOpacity style={styles.avatarContainer}>
                     <Image
-                        source={require('@/assets/images/accounts/logo.jpg')} // mascot mèo vẫy tay, crop tròn
+                        source={require('@/assets/images/accounts/logo.jpg')}
                         style={styles.avatar}
                     />
                     <View style={styles.editBadge}>
@@ -85,7 +85,7 @@ const Profile = () => {
                 <TouchableOpacity
                     style={styles.becomeTutorButton}
                     activeOpacity={0.8}
-                    onPress={() => router.push('/RegisterTutor')}
+                    onPress={() => router.push('/Login')}
                 >
                     <LinearGradient
                         colors={['#FFB703', '#FB8500']}

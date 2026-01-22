@@ -1,47 +1,39 @@
 // services/useFetch.ts
-import { useEffect, useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 
-const useFetch = <T>(fetchFunction: () => Promise<T>, autoFetch = true) => {
+type FetchFn<T> = () => Promise<T>;
+
+const useFetch = <T>(fetchFn: FetchFn<T>, autoFetch = true) => {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(autoFetch);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      const result = await fetchFunction();
-      console.log("[FETCH] Success:", result); // debug
+    try {
+      const result = await fetchFn();
       setData(result);
-    } catch (err) {
-      console.log("[FETCH] Error:", err);
-      setError(err instanceof Error ? err : new Error("An error occurred"));
+    } catch (err: any) {
+      setError(err instanceof Error ? err : new Error("Có lỗi xảy ra"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchFn]);
 
   useEffect(() => {
     if (autoFetch) {
       fetchData();
     }
-  }, []);
-
-  // Reset function
-  const reset = () => {
-    setData(null);
-    setLoading(false);
-    setError(null);
-  };
+  }, [fetchData, autoFetch]);
 
   return {
     data,
     loading,
     error,
     refetch: fetchData,
-    reset,
   };
 };
 
-export default useFetch
+export default useFetch;

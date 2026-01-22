@@ -8,6 +8,7 @@ export default function RootLayout() {
         name="(tabs)"
         options={{ headerShown: false, title: '' }}
       />
+      <Stack.Screen name="login" />
       <Stack.Screen
         name="course/[id]"
         options={{

@@ -1,9 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 
-type IoniconName = keyof typeof Ionicons.glyphMap;interface Skill {
+type IoniconName = keyof typeof Ionicons.glyphMap; interface Skill {
   key_skill: 'reading' | 'listening' | 'speaking' | 'writing',
   label: string,
   icon: IoniconName
+}
+
+interface Authentication {
+  token: string,
+  expired: string
 }
 
 interface Level {

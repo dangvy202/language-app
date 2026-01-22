@@ -1,9 +1,11 @@
 import { Level, Skill } from '@/interfaces/interfaces';
 import { fetchLevel } from '@/services/api';
-import useFetch from '@/services/useFetch';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import Loading from "@/component/loading";
+import useFetch from '@/services/useFetch';
+
 import {
     ActivityIndicator,
     TouchableOpacity,
@@ -22,7 +24,10 @@ export default function Learn() {
         loading: levelLoading,
         error: levelError,
     } = useFetch(() => fetchLevel({ query: "" }));
-
+    
+    if (levelLoading) {
+        return <Loading />;
+    }
     const levels = rawData ?? [];
 
     const defaultSkills: Skill[] = [
@@ -98,7 +103,7 @@ export default function Learn() {
                                 onPress={() => {
                                     if (isUnlocked) {
                                         console.log(`Bắt đầu/tiếp tục học level ${level.id_level}`);
-                                        // router.push(`/learn/${level.id}`); // ví dụ điều hướng
+                                        // router.push(`/learn/${level.id}`);
                                     } else {
                                         console.log(`Cần mở khóa level ${level.id_level}`);
                                     }
@@ -171,7 +176,7 @@ export default function Learn() {
                                         />
                                         <Text style={styles.startButtonText}>
                                             {isUnlocked
-                                                ? (10 || 0) > 0
+                                                ? (10) > 0
                                                     ? 'Tiếp tục học'
                                                     : 'Bắt đầu ngay'
                                                 : 'Mở khóa level'}
