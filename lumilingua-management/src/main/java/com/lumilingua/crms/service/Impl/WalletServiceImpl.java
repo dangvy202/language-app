@@ -20,6 +20,7 @@ import com.lumilingua.crms.mapper.WalletTransferHistoryMapper;
 import com.lumilingua.crms.repository.*;
 import com.lumilingua.crms.service.VoucherService;
 import com.lumilingua.crms.service.WalletService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,8 @@ public class WalletServiceImpl implements WalletService {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public Result<WalletResponse> fundTransferWallet(TransferRequest request) throws Exception {
         LOG.info("Fund tranfer wallet id '%s' in service...".formatted(request.getReceiveWalletId()));
-        Wallet fundWallet = walletRepository.findWalletByIdAndLockDB(request.getFundWalletId()).orElseThrow(() -> new RuntimeException("Unable to get wallet ID: " + request.getFundWalletId()));
+        Wallet fundWallet = walletRepository.findWalletByIdAndLockDB(request.getFundWalletId())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet ID: " + request.getFundWalletId()));
         Wallet receivedWallet = walletRepository.findWalletByIdAndLockDB(request.getReceiveWalletId()).orElseThrow(() -> new RuntimeException("Unable to get wallet ID: " + request.getReceiveWalletId()));
         if(request.getAmtType() == AmountEnum.AMT_LEARN) {
             if(fundWallet.getAmountLearn().compareTo(request.getAmount()) >= 0) {
@@ -117,7 +119,7 @@ public class WalletServiceImpl implements WalletService {
                     .map(wallet -> {
                         WalletMapper.INSTANT.updateBankInWallet(request, wallet);
                         return walletRepository.save(wallet);
-                    }).orElseThrow(() -> new RuntimeException("Unable to get address wallet '%s'".formatted(walletId)));
+                    }).orElseThrow(() -> new EntityNotFoundException("Unable to get address wallet '%s'".formatted(walletId)));
             LOG.info("Update bank information is SUCCESS: " + walletUpdate);
             return Result.update();
         } catch (Exception e) {
@@ -132,11 +134,11 @@ public class WalletServiceImpl implements WalletService {
     public Result<WalletPurchaseHistoryResponse> purchasePackageCategory(PurchaseRequest request) throws Exception {
         LOG.info("Purchase package id '%s' by wallet id '%s' in service".formatted(request.getPackageCategoryId(), request.getWalletId()));
         Wallet wallet = walletRepository.findById(request.getWalletId())
-                .orElseThrow(() -> new RuntimeException("The wallet id '%s' is incorrect".formatted(request.getWalletId())));
+                .orElseThrow(() -> new EntityNotFoundException("The wallet id '%s' is incorrect".formatted(request.getWalletId())));
         CategoryLevel categoryLevel = categoryLevelRepository.findById(request.getPackageCategoryId())
-                .orElseThrow(() -> new RuntimeException("The package id '%s' is incorrect".formatted(request.getPackageCategoryId())));
+                .orElseThrow(() -> new EntityNotFoundException("The package id '%s' is incorrect".formatted(request.getPackageCategoryId())));
         User user = userRepository.findUserByWalletId(request.getWalletId())
-                .orElseThrow(() -> new RuntimeException("The user is incorrect"));
+                .orElseThrow(() -> new EntityNotFoundException("The user is incorrect"));
         if(request.getAmtType() == AmountEnum.AMT_LEARN) {
             if(wallet.getAmountLearn().compareTo(categoryLevel.getPrice()) > 0) {
                 // set and update wallet
@@ -185,7 +187,7 @@ public class WalletServiceImpl implements WalletService {
                 return Result.badRequestError("The voucher is not exist!");
             }
             Wallet wallet = walletRepository.findById(walletId)
-                    .orElseThrow(() -> new RuntimeException("Unable to get wallet ID: " + walletId));
+                    .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet ID: " + walletId));
             Date expiredVoucherParse = DateTimeUtils.parseAlphabetToDate(voucherResponse.getData().getExpiredVoucher());
             wallet.setIdVoucher(Long.parseLong(String.valueOf(idVoucher)));
             wallet.setExpiredVoucher(expiredVoucherParse);

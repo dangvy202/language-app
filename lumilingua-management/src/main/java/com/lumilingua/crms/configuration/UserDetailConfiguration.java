@@ -2,6 +2,7 @@ package com.lumilingua.crms.configuration;
 
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,10 +26,8 @@ public class UserDetailConfiguration {
         return new UserDetailsService() {
             @Override
             public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-                User user = userRepository.findUserByEmail(email).orElse(null);
-                if(user == null){
-                    throw new UsernameNotFoundException("USER NOT FOUND");
-                }
+                User user = userRepository.findUserByEmail(email)
+                        .orElseThrow(() -> new EntityNotFoundException("The email is NOT exists"));
                 return new UserDetail(user);
             }
         };

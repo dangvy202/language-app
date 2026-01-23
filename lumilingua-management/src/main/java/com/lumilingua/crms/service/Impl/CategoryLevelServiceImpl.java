@@ -8,6 +8,7 @@ import com.lumilingua.crms.entity.CategoryLevel;
 import com.lumilingua.crms.mapper.CategoryLevelMapper;
 import com.lumilingua.crms.repository.CategoryLevelRepository;
 import com.lumilingua.crms.service.CategoryLevelService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
     public Result<CategoryLevelResponse> getCategoryLevelById(long id) {
         LOG.info("Get category level by id in service...");
         CategoryLevel categoryLevel = categoryLevelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Unable to get CategoryLevel ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("CategoryLevel not found with ID: " + id));
         return Result.get(CategoryLevelMapper.INSTANT.toCategoryLevelResponse(categoryLevel));
     }
 
@@ -58,7 +59,7 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
     public Result<CategoryLevelResponse> updateCategoryLevelById(long id, CategoryLevelRequest categoryLevelRequest) {
         LOG.info("Find category level by id in service...");
         CategoryLevel categoryLevel = categoryLevelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Unable to get CategoryLevel ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get CategoryLevel ID: " + id));
         try {
             LOG.info("Update category level by id in service is SUCCESS!");
             categoryLevelRepository.save(CategoryLevelMapper.INSTANT.updateCategoryLevelFromRequest(categoryLevelRequest, categoryLevel));
@@ -73,7 +74,7 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
     public Result<CategoryLevelResponse> deleteCategoryLevelById(long id) {
         LOG.info("Find category level by id in service...");
         CategoryLevel categoryLevel = categoryLevelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Unable to get CategoryLevel ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get CategoryLevel ID: " + id));
         try {
             LOG.info("Delete category level by id in service is SUCCESS!");
             categoryLevelRepository.delete(categoryLevel);
