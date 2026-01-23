@@ -85,7 +85,7 @@ const Profile = () => {
                 <TouchableOpacity
                     style={styles.becomeTutorButton}
                     activeOpacity={0.8}
-                    onPress={() => router.push('/Login')}
+                    onPress={() => router.push('/RegisterAccount')}
                 >
                     <LinearGradient
                         colors={['#FFB703', '#FB8500']}

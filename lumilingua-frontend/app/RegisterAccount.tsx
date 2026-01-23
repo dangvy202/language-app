@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    View, Text, TextInput, TouchableOpacity,
+    View, Text, TextInput, TouchableOpacity, Image, StyleSheet,
     KeyboardAvoidingView, Platform, ScrollView,
     Alert, ActivityIndicator
 } from 'react-native';
@@ -116,9 +116,12 @@ export default function Register() {
                         className="px-6"
                     >
                         {/* Header */}
-                        <View className="items-center mt-16 mb-12">
-                            <View className="w-32 h-32 bg-orange-100 rounded-full items-center justify-center mb-6 shadow-md">
-                                <Ionicons name="school-outline" size={64} color="#FFA500" />
+                        <View className="items-center mt-10 mb-10">
+                            <View className="w-70 h-70 bg-orange-100 rounded-full items-center justify-center mb-6 shadow-md">
+                                <Image
+                                    source={require('@/assets/images/logoRegister.jpg')}
+                                    style={styles.logo}
+                                />
                             </View>
                             <Text className="text-3xl font-bold text-[#2E2A47]">Register Lumilingua</Text>
                             <Text className="text-lg text-gray-500 mt-2">Register an account for learn</Text>
@@ -257,3 +260,13 @@ export default function Register() {
 
     );
 }
+
+const styles = StyleSheet.create({
+    logo: {
+        width: 110,
+        height: 110,
+        borderRadius: 55,
+        borderWidth: 3,
+        borderColor: '#FB8500',
+    }
+})
