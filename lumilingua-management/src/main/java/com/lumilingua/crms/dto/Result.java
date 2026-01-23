@@ -42,7 +42,7 @@ public class Result<T> {
         return new Result<>(ResultApiConstant.StatusCode.OK, ResultApiConstant.MessageCode.SUCCESS, null, data);
     }
 
-    public static <T> Result<T> forbiden(String msg) {
+    public static <T> Result<T> forbidden(String msg) {
         return new Result<>(ResultApiConstant.StatusCode.FORBIDDEN, ResultApiConstant.MessageCode.FORBIDDEN_MESSAGE, msg, null);
     }
 

@@ -7,6 +7,7 @@ import com.lumilingua.crms.entity.Voucher;
 import com.lumilingua.crms.mapper.VoucherMapper;
 import com.lumilingua.crms.repository.VoucherRepository;
 import com.lumilingua.crms.service.VoucherService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,20 +81,16 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public Result<VoucherResponse> deleteVoucherById(int id) {
         LOG.info("Delete voucher by id '%s' in service...".formatted(id));
-        Voucher response = voucherRepository.findById(id).orElse(null);
-        if(response == null) {
-            String msg = "Unable to get voucher by id '%s'".formatted(id);
-            LOG.error(msg);
-            return Result.badRequestError(msg);
-        } else {
-            try {
-                voucherRepository.deleteById(id);
-                LOG.info("Delete voucher is SUCCESS!");
-                return Result.delete();
-            } catch (RuntimeException e) {
-                LOG.error("Delete voucher is FALIED!");
-                throw new RuntimeException(e.getMessage());
-            }
+        Voucher response = voucherRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get voucher by id '%s'".formatted(id)));
+        try {
+            voucherRepository.deleteById(Integer.parseInt(String.valueOf(response.getIdVoucher())));
+            LOG.info("Delete voucher is SUCCESS!");
+            return Result.delete();
+        } catch (RuntimeException e) {
+            LOG.error("Delete voucher is FALIED!");
+            throw new RuntimeException(e.getMessage());
         }
+
     }
 }

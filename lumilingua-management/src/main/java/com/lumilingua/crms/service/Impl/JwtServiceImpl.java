@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,14 @@ import java.util.function.Function;
 @Service
 public class JwtServiceImpl implements JwtService {
 
-    private static final String SECRET_KEY = "43MZw7N4sfnif+anE0Ls/iPiYjtoqqnLo5KFGa21SuExFcCW2t11N4Zj3Jx5isQH7wu+/D/tZlRFcPZqcZAW4lLpv54IykAOazvT/N3q7ZmJqrzOHQ6ICdhBJLXW4vB/a0tjWV2JIE6yNeSFmVKNoDQwa3CbCYxENAVI66FhswpioDnSNn6xdgJ+k4fD/8THJjEeqHd0zdGAazL2h03nOSsY0UbNWQMFiiw9MdkuZW5txP3HbLMbRZLujlBGeH7g5J7Gng78s/XipCbWA3pw6UZTwUIpC2i50ZbmcpZGE4RYmFMbTPhbVuuLteR9jwXP59gKeXpXrV3sIunOuATrSqgeK6Ps1x6gzrCeMT8GH30=";
+    @Value("${jwt.secret}")
+    private String secretKey;
+
+    @Value("${jwt.access-token-expiration}") // 900000 = 15 phút
+    private long accessExpirationMs;
+
+    @Value("${jwt.refresh-token-expiration}") // 604800000 = 7 ngày
+    private long refreshExpirationMs;
 
     @Override
     public String extractUserName(String token) {
@@ -40,17 +48,26 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
-    public String generateToken(UserDetails userDetails) {
-        return this.generateTokenApp(new HashMap<>() , userDetails);
+    public String generateAccessToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "access");
+        return this.generateTokenApp(claims , userDetails, accessExpirationMs);
     }
 
-    private String generateTokenApp(Map<String,Object> extraClaims , UserDetails userDetails){
+    @Override
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type" , "refresh");
+        return this.generateTokenApp(claims , userDetails, refreshExpirationMs);
+    }
+
+    private String generateTokenApp(Map<String,Object> extraClaims , UserDetails userDetails,long expirationMs){
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -60,7 +77,8 @@ public class JwtServiceImpl implements JwtService {
         return claimsResolve.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    @Override
+    public Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -70,7 +88,7 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private Key getSigningKey() {
-        byte[] keyByte = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyByte = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyByte);
     }
 }

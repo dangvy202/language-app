@@ -23,7 +23,7 @@ const loginApi = async (email: string, password: string) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!');
+    throw new Error(errorData.notification);
   }
 
   return await response.json();
@@ -56,10 +56,9 @@ export default function Login() {
       await AsyncStorage.setItem('accessToken', response.accessToken || '');
       await AsyncStorage.setItem('refreshToken', response.refreshToken || '');
 
-      Alert.alert('Thành công', 'Đăng nhập thành công!');
       router.replace('/');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Đăng nhập thất bại. Vui lòng thử lại!');
+      setErrorMsg(err.message);
     } finally {
       setLoading(false);
     }

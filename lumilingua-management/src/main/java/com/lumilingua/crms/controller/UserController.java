@@ -3,6 +3,7 @@ package com.lumilingua.crms.controller;
 import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.AuthenticationRequest;
+import com.lumilingua.crms.dto.requests.RefreshTokenRequest;
 import com.lumilingua.crms.dto.requests.UserRequest;
 import com.lumilingua.crms.dto.responses.AuthenticationResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
-@CrossOrigin(origins = "http://localhost:8081")
 public class UserController {
     private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
 
@@ -56,5 +56,14 @@ public class UserController {
             return new ResponseEntity<>(result, HttpStatus.UNAUTHORIZED);
         }
         return new ResponseEntity<>(result, HttpStatus.ACCEPTED);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Result<AuthenticationResponse>> refresh(@RequestBody RefreshTokenRequest request) {
+        var result = userService.refreshToken(request);
+        if(result.code != ResultApiConstant.StatusCode.OK) {
+            return new ResponseEntity<>(result, HttpStatus.UNAUTHORIZED);
+        }
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
