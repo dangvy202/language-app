@@ -9,6 +9,7 @@ import com.lumilingua.crms.dto.responses.UserResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.enums.StatusEnum;
+import com.lumilingua.crms.mapper.AuthenticationMapper;
 import com.lumilingua.crms.mapper.UserMapper;
 import com.lumilingua.crms.repository.UserRepository;
 import com.lumilingua.crms.security.UserDetail;
@@ -125,10 +126,9 @@ public class UserServiceImpl implements UserService {
 //            String accessKey = "access_token:" + userEntity.getIdUser();
 //            redisTemplate.opsForValue().set(accessKey, accessToken, 15, TimeUnit.MINUTES);
 
-            AuthenticationResponse response = new AuthenticationResponse();
-            response.setToken(accessToken);
-            response.setRefreshToken(refreshToken);
-            response.setExpired(accessExpirationMs);
+            AuthenticationResponse response = AuthenticationMapper.INSTANT.toAuthenticationResponse(accessToken, accessExpirationMs, refreshToken);
+            response.setInformation(AuthenticationMapper.INSTANT.toInformationResponse(userEntity));
+
             return Result.get(response);
         } catch (BadCredentialsException e) {
             return Result.forbidden("Invalid password");

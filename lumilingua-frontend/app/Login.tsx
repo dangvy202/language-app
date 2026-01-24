@@ -62,14 +62,11 @@ export default function Login() {
             const accessToken = await AsyncStorage.getItem('token');
             const refreshToken = await AsyncStorage.getItem('refreshToken');
             const expiredStr = await AsyncStorage.getItem('expired');
-
-            console.log("a= "+ accessToken)
-            console.log("b= "+ refreshToken)
-            console.log("c= "+ expiredStr)
+            const userName = await AsyncStorage.getItem('username');
 
             const expired = expiredStr ? parseInt(expiredStr, 10) : null;
 
-            if (accessToken && expired && Date.now() < expired) {
+            if (accessToken && userName && expired && Date.now() < expired) {
                 router.replace('/');
                 return;
             }
@@ -82,10 +79,10 @@ export default function Login() {
                     await AsyncStorage.setItem('token', response.data.token || '');
                     await AsyncStorage.setItem('expired', response.data.expired || '');
 
-                    router.replace('/');
+                    // router.replace('/');
                 } catch (err: any) {
                     console.log('Refresh token error:', err);
-                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired']);
+                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username']);
                 } finally {
                     setLoading(false);
                 }
@@ -110,6 +107,7 @@ export default function Login() {
             await AsyncStorage.setItem('token', response.data.token || '');
             await AsyncStorage.setItem('refreshToken', response.data.refreshToken || '');
             await AsyncStorage.setItem('expired', response.data.expired || '');
+            await AsyncStorage.setItem('username', response.data.information.username)
 
             router.replace('/');
         } catch (err: any) {

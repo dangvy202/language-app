@@ -18,7 +18,7 @@ const registerApi = async (userData: {
     phone: string;
     gender: string
 }) => {
-    const endpoint = "http://127.0.0.1:8888/api/v1/user/register"; // Thay endpoint thật
+    const endpoint = "http://127.0.0.1:8888/api/v1/user/register";
 
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -31,10 +31,10 @@ const registerApi = async (userData: {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin!');
+        throw new Error(errorData.notification);
     }
 
-    return await response.json(); // Giả sử server trả { accessToken, refreshToken, user }
+    return await response.json();
 };
 
 export default function Register() {
@@ -43,7 +43,7 @@ export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [phone, setPhone] = useState('');
-    const [gender, setGender] = useState('Nam'); // Default Nam
+    const [gender, setGender] = useState('MALE');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -73,15 +73,11 @@ export default function Register() {
             const userData = { username, email, password, phone, gender };
             const response = await registerApi(userData);
 
-            // Lưu token nếu server trả (tùy backend)
-            await AsyncStorage.setItem('accessToken', response.accessToken || '');
-            await AsyncStorage.setItem('refreshToken', response.refreshToken || '');
-
-            Alert.alert('Thành công', 'Đăng ký thành công! Đang chuyển đến trang chủ...');
-            router.replace('/'); // Về Home
+            Alert.alert('Success', 'Register success! Redirect Login...');
+            router.replace('/Login');
         } catch (err: any) {
             console.log("Register error:", err);
-            setErrorMsg(err.message || 'Đăng ký thất bại. Vui lòng thử lại!');
+            setErrorMsg(err.notification || 'Đăng ký thất bại. Vui lòng thử lại!');
         } finally {
             setLoading(false);
         }
@@ -199,7 +195,7 @@ export default function Register() {
                                     <Ionicons name="call-outline" size={24} color="#FFA500" />
                                     <TextInput
                                         className="flex-1 ml-3 text-base text-[#2E2A47]"
-                                        placeholder="Fill phone-number (10 numbers)"
+                                        placeholder="Fill phone-number (10 degits)"
                                         placeholderTextColor="#999"
                                         value={phone}
                                         onChangeText={setPhone}

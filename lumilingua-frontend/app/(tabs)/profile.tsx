@@ -9,9 +9,21 @@ import {
     View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from "react";
 
 const Profile = () => {
     const router = useRouter();
+    const [userName, setUserName] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadUserName = async () => {
+            const name = await AsyncStorage.getItem("username");
+            setUserName(name);
+        };
+
+        loadUserName();
+    }, []);
     return (
         <View style={styles.container}>
             {/* Header Gradient */}
@@ -31,7 +43,7 @@ const Profile = () => {
                     </View>
                 </TouchableOpacity>
 
-                <Text style={styles.userName}>Ten Account</Text>
+                <Text style={styles.userName}>{userName}</Text>
                 <Text style={styles.userLevel}>Level 12 • 4,850 XP</Text>
 
                 <View style={styles.statsRow}>

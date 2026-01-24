@@ -10,8 +10,22 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from "react";
+
 
 export default function Index() {
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUserName = async () => {
+      const name = await AsyncStorage.getItem("username");
+      setUserName(name);
+    };
+
+    loadUserName();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Header với mascot */}
@@ -40,14 +54,14 @@ export default function Index() {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.hi}>Hi, </Text>
-              <Text style={styles.username}>Ten Account</Text>
+              <Text style={styles.username}>{userName}</Text>
             </View>
             <Text style={styles.subtitle}>”Learn to earn. Enjoy your day with LumiLingua!”</Text>
           </View>
         </LinearGradient>
       </View>
 
-      {/* ScrollView chính cho toàn bộ nội dung */}
+      {/* ScrollView */}
       <ScrollView
         style={styles.body}
         showsVerticalScrollIndicator={false}
