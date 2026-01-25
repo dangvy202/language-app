@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, Image, StyleSheet,
     KeyboardAvoidingView, Platform, ScrollView,
@@ -37,6 +37,26 @@ const registerApi = async (userData: {
     return await response.json();
 };
 
+const refreshTokenApi = async (refreshToken: string) => {
+    const endpoint = "http://localhost:8888/api/v1/user/refresh";
+
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.notification);
+    }
+
+    return await response.json();
+};
+
 export default function Register() {
     const router = useRouter();
     const [username, setUsername] = useState('');
@@ -47,6 +67,42 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            const accessToken = await AsyncStorage.getItem('token');
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
+            const expiredStr = await AsyncStorage.getItem('expired');
+            const userName = await AsyncStorage.getItem('username');
+            const email = await AsyncStorage.getItem('email');
+
+            const expired = expiredStr ? parseInt(expiredStr, 10) : null;
+
+            if (email && accessToken && userName && expired && Date.now() < expired) {
+                router.replace('/');
+                return;
+            }
+
+            if (refreshToken) {
+                try {
+                    setLoading(true);
+                    const response = await refreshTokenApi(refreshToken);
+
+                    await AsyncStorage.setItem('token', response.data.token || '');
+                    await AsyncStorage.setItem('expired', response.data.expired || '');
+
+                    router.replace('/');
+                } catch (err: any) {
+                    console.log('Refresh token error:', err);
+                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        checkAuth();
+    }, []);
 
     const validateForm = () => {
         if (!username.trim()) return 'Vui lòng nhập tên đăng nhập!';

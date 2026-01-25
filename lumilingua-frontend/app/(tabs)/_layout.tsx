@@ -172,7 +172,7 @@ export default function RootLayout() {
             onPress={() => {
               closeSheet();
               setTimeout(() => {
-                // router.push('/learn/vocabulary');
+                router.push('/course/vocabulary');
               }, 200);
             }}
           >

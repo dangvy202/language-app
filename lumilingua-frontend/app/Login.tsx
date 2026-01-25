@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    View, Text, TextInput, TouchableOpacity,
+    ActivityIndicator,
     KeyboardAvoidingView, Platform, ScrollView,
-    Alert, ActivityIndicator
+    Text, TextInput, TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const loginApi = async (email: string, password: string) => {
     const endpoint = "http://localhost:8888/api/v1/user/login";
@@ -63,10 +64,11 @@ export default function Login() {
             const refreshToken = await AsyncStorage.getItem('refreshToken');
             const expiredStr = await AsyncStorage.getItem('expired');
             const userName = await AsyncStorage.getItem('username');
+            const email = await AsyncStorage.getItem('email');
 
             const expired = expiredStr ? parseInt(expiredStr, 10) : null;
 
-            if (accessToken && userName && expired && Date.now() < expired) {
+            if (email && accessToken && userName && expired && Date.now() < expired) {
                 router.replace('/');
                 return;
             }
@@ -79,10 +81,10 @@ export default function Login() {
                     await AsyncStorage.setItem('token', response.data.token || '');
                     await AsyncStorage.setItem('expired', response.data.expired || '');
 
-                    // router.replace('/');
+                    router.replace('/');
                 } catch (err: any) {
                     console.log('Refresh token error:', err);
-                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username']);
+                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
                 } finally {
                     setLoading(false);
                 }
@@ -107,7 +109,8 @@ export default function Login() {
             await AsyncStorage.setItem('token', response.data.token || '');
             await AsyncStorage.setItem('refreshToken', response.data.refreshToken || '');
             await AsyncStorage.setItem('expired', response.data.expired || '');
-            await AsyncStorage.setItem('username', response.data.information.username)
+            await AsyncStorage.setItem('username', response.data.information.username);
+            await AsyncStorage.setItem('email', response.data.information.email);
 
             router.replace('/');
         } catch (err: any) {

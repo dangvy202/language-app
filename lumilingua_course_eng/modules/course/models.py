@@ -18,3 +18,22 @@ class Level(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['rank'], name='unique_rank_level_name'),
         ]
+
+class Topic(models.Model):
+    id_topic = models.AutoField(primary_key=True)
+    name_topic = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_topic"
+        manage: True
+        ordering = ['name_topic']
+        indexes = [
+            models.Index(fields=['name_topic'], name='idx_name_topic'),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['name_topic'], name='unique_name_topic')
+        ]
+
+

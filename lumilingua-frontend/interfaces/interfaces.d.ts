@@ -20,3 +20,10 @@ interface Level {
   description: string,
   skills: Skill[]
 }
+
+interface Topic {
+  id_topic: number;
+  name_topic: string;
+  created_at: string,
+  updated_at: string,
+}
