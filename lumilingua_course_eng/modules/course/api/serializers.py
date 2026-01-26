@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from ..models import Level, Topic
+from ..models import Level, Topic, Vocabulary
+
 
 class LevelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,5 +12,11 @@ class LevelSerializer(serializers.ModelSerializer):
 class TopicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Topic
-        fields = ['id_topic', 'name_topic']
+        fields = ['id_topic', 'name_topic', 'icon']
+        read_only_fields = ['created_at', 'updated_at']
+
+class VocabularySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vocabulary
+        fields = ['id_vocabulary', 'name_vocabulary', 'ipa', 'level', 'topic']
         read_only_fields = ['created_at', 'updated_at']

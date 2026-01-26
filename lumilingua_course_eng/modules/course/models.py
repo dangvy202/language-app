@@ -22,12 +22,13 @@ class Level(models.Model):
 class Topic(models.Model):
     id_topic = models.AutoField(primary_key=True)
     name_topic = models.TextField()
+    icon = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "tbl_topic"
-        manage: True
+        manage: False
         ordering = ['name_topic']
         indexes = [
             models.Index(fields=['name_topic'], name='idx_name_topic'),
@@ -36,4 +37,29 @@ class Topic(models.Model):
             models.UniqueConstraint(fields=['name_topic'], name='unique_name_topic')
         ]
 
+class Vocabulary(models.Model):
+    id_vocabulary = models.AutoField(primary_key=True)
+    name_vocabulary = models.CharField(max_length=255)
+    ipa = models.CharField(max_length=255)
+    level = models.ForeignKey(
+        'Level',
+        on_delete=models.CASCADE,
+        db_column='id_level',
+        related_name = 'vocabularies'
+    )
+    topic = models.ForeignKey(
+        'Topic',
+        on_delete=models.CASCADE,
+        db_column='id_topic',
+        related_name='vocabularies'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        db_table = 'tbl_vocabulary'
+        manage: True
+        ordering = ['name_vocabulary']
+        constraints = [
+            models.UniqueConstraint(fields=['name_vocabulary'], name='unique_name_vocabulary')
+        ]
