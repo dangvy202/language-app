@@ -37,11 +37,20 @@ export default function LearnVocabulary() {
         setActiveTab(tab);
     };
 
+    const handleLevelPress = (level: Level) => {
+        router.push(`/course/${level.id_level}`);
+    };
+
     const renderItem = ({ item }: { item: VocabularyItem }) => (
         <TouchableOpacity
             className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-orange-100"
             onPress={() => {
-                // console.log('Clicked:', 'rank' in item ? item.rank : item.name);
+                if ('rank' in item) {
+                    handleLevelPress(item as Level);
+                } else {
+                    // TODO: Navigate đến topic detail nếu cần
+                    //console.log('Topic clicked:', item.name);
+                }
             }}
         >
             <View className="flex-row justify-between items-center mb-3">
@@ -154,7 +163,10 @@ export default function LearnVocabulary() {
                 ) : (
                     <FlatList<VocabularyItem>
                         data={currentData}
-                        //   keyExtractor={(item) => item.id.toString()}
+                        keyExtractor={(item) => {
+                            if ('id_level' in item) return `level-${item.id_level}`;
+                            return `topic-${item.id_topic ?? item.id_topic ?? Math.random()}`; // fallback nếu không có id
+                        }}
                         renderItem={renderItem}
                         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
                         refreshControl={

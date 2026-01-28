@@ -27,7 +27,7 @@ export const fetchLogin = async (email: string, password: string) => {
 };
 
 export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]> => {
-    const endpoint = "http://127.0.0.1:8000/api/level/"
+    const endpoint = "https://faultily-uncanny-cecelia.ngrok-free.dev/api/level/"
 
     const response = await fetch(endpoint, {
         method: 'GET',
@@ -45,7 +45,7 @@ export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]>
 };
 
 export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]> => {
-    const endpoint = "http://127.0.0.1:8000/api/topic/"
+    const endpoint = "https://faultily-uncanny-cecelia.ngrok-free.dev/api/topic/"
 
     const response = await fetch(endpoint, {
         method: 'GET',
@@ -60,4 +60,32 @@ export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]>
     const data = await response.json();
 
     return data;
+};
+
+export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number }): Promise<any[]> => {
+  try {
+    // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
+
+    const endpoint = `https://faultily-uncanny-cecelia.ngrok-free.dev/api/vocabulary/?level=${levelId}`;
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        // ...(token ? { 'Authorization': `Bearer ${token}` } : {}), // Thêm token nếu có
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || errorData.notification || 'Không thể tải từ vựng theo level');
+    }
+
+    const data = await response.json();
+    return data.data || data || [];
+  } catch (error: any) {
+    console.error('Fetch vocabulary by level error:', error);
+    throw error;
+  }
 };
