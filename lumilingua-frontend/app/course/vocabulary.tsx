@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
+    Alert,
     FlatList,
     RefreshControl,
     Text,
@@ -38,20 +39,22 @@ export default function LearnVocabulary() {
     };
 
     const handleLevelPress = (level: Level) => {
-        router.push(`/course/${level.id_level}`);
+        router.push(`/course/level/${level.id_level}`);
     };
 
     const handleTopicPress = (topic: Topic) => {
-        router.push(`/course/${topic.name_topic}`);
+        router.push(`/course/topic/${topic.name_topic}`);
+
+        // Alert.alert("asdasd")
     };
 
     const renderItem = ({ item }: { item: VocabularyItem }) => (
         <TouchableOpacity
             className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-orange-100"
             onPress={() => {
-                if ('rank' in item) {
+                if ('id_level' in item) {
                     handleLevelPress(item as Level);
-                } else {
+                } else if ('id_topic' in item) {
                     handleTopicPress(item as Topic);
                 }
             }}
@@ -167,8 +170,10 @@ export default function LearnVocabulary() {
                     <FlatList<VocabularyItem>
                         data={currentData}
                         keyExtractor={(item) => {
-                            if ('id_level' in item) return `level-${item.id_level}`;
-                            return `topic-${item.id_topic ?? item.id_topic ?? Math.random()}`; // fallback nếu không có id
+                            if ('id_level' in item) {
+                                return `level-${item.id_level}`;
+                            }
+                            return `topic-${item.id_topic}`;
                         }}
                         renderItem={renderItem}
                         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}

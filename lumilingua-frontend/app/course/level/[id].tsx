@@ -1,5 +1,5 @@
 import { View, Text, Dimensions, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -21,6 +21,7 @@ import Notfound from '@/component/404';
 
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
+
 
 export default function VocabularyByLevel() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -149,100 +150,101 @@ export default function VocabularyByLevel() {
     );
 
     return (
-        <View className="flex-1 bg-gray-100">
-            {/* HEADER */}
-            <View className="pt-14 pb-6 px-6 flex-row justify-between items-center">
-                <Text className="text-3xl font-extrabold">
-                    Level {id}
-                </Text>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="bg-black/10 p-2 rounded-full"
-                >
-                    <Ionicons name="close" size={28} />
-                </TouchableOpacity>
-            </View>
+       
+            <View className="flex-1 bg-gray-100">
+                {/* HEADER */}
+                <View className="pt-14 pb-6 px-6 flex-row justify-between items-center">
+                    <Text className="text-3xl font-extrabold">
+                        Level {id}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        className="bg-black/10 p-2 rounded-full"
+                    >
+                        <Ionicons name="close" size={28} />
+                    </TouchableOpacity>
+                </View>
 
-            {/* PROGRESS */}
-            <View className="px-6 mb-4">
-                <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <View
-                        className="h-full bg-orange-400 rounded-full"
-                        style={{ width: `${progress}%` }}
+                {/* PROGRESS */}
+                <View className="px-6 mb-4">
+                    <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <View
+                            className="h-full bg-orange-400 rounded-full"
+                            style={{ width: `${progress}%` }}
+                        />
+                    </View>
+                </View>
+
+                {/* CARD */}
+                <View className="flex-1 items-center justify-center">
+                    <GestureDetector gesture={gesture}>
+                        <Animated.View
+                            style={cardStyle}
+                            className="w-[340px] h-[500px] bg-white rounded-[48px] shadow-2xl px-8 py-10"
+                        >
+                            {/* SPEAK */}
+                            <TouchableOpacity
+                                onPress={() => speak(word.name_vocabulary)}
+                                className="absolute top-6 right-6 bg-orange-100 p-4 rounded-full shadow"
+                            >
+                                <Ionicons
+                                    name="volume-high"
+                                    size={28}
+                                    color="#FFA500"
+                                />
+                            </TouchableOpacity>
+
+                            <View className="items-center mt-12">
+                                <Text className="text-5xl font-extrabold text-center mb-3">
+                                    {word.name_vocabulary}
+                                </Text>
+
+                                <Text className="text-xl text-gray-400 mb-8">
+                                    {word.ipa}
+                                </Text>
+
+
+                                <View className="mb-7">
+                                    <Image
+                                        source={{ uri: word.img_path }}
+                                        style={styles.imgWord}
+                                    />
+                                </View>
+
+                                <View className="bg-orange-50 px-6 py-4 rounded-2xl mb-6">
+                                    <Text className="text-3xl font-bold text-orange-600 text-center">
+                                        {loadingMean ? '...' : meaning ?? 'No meaning'}
+                                    </Text>
+                                </View>
+
+                                <Text className="text-lg text-gray-500 italic text-center leading-7 mb-5">
+                                    “{loadingMean ? '...' : example ?? 'No example'}”
+                                </Text>
+                            </View>
+                        </Animated.View>
+                    </GestureDetector>
+                </View>
+
+                {/* BUTTONS */}
+                <View className="flex-row justify-between px-16 pb-10">
+                    <Ionicons
+                        name="chevron-back-circle"
+                        size={64}
+                        color={index === 0 ? '#ccc' : '#FFA500'}
+                        onPress={prevCard}
+                    />
+                    <Ionicons
+                        name="chevron-forward-circle"
+                        size={64}
+                        color={
+                            index === vocabulary.length - 1
+                                ? '#ccc'
+                                : '#FFA500'
+                        }
+                        onPress={nextCard}
                     />
                 </View>
             </View>
-
-            {/* CARD */}
-            <View className="flex-1 items-center justify-center">
-                <GestureDetector gesture={gesture}>
-                    <Animated.View
-                        style={cardStyle}
-                        className="w-[340px] h-[500px] bg-white rounded-[48px] shadow-2xl px-8 py-10"
-                    >
-                        {/* SPEAK */}
-                        <TouchableOpacity
-                            onPress={() => speak(word.name_vocabulary)}
-                            className="absolute top-6 right-6 bg-orange-100 p-4 rounded-full shadow"
-                        >
-                            <Ionicons
-                                name="volume-high"
-                                size={28}
-                                color="#FFA500"
-                            />
-                        </TouchableOpacity>
-
-                        <View className="items-center mt-12">
-                            <Text className="text-5xl font-extrabold text-center mb-3">
-                                {word.name_vocabulary}
-                            </Text>
-
-                            <Text className="text-xl text-gray-400 mb-8">
-                                {word.ipa}
-                            </Text>
-
-
-                            <View className="mb-7">
-                                <Image
-                                    source={{ uri: word.img_path }}
-                                    style={styles.imgWord}
-                                />
-                            </View>
-
-                            <View className="bg-orange-50 px-6 py-4 rounded-2xl mb-6">
-                                <Text className="text-3xl font-bold text-orange-600 text-center">
-                                    {loadingMean ? '...' : meaning ?? 'No meaning'}
-                                </Text>
-                            </View>
-
-                            <Text className="text-lg text-gray-500 italic text-center leading-7 mb-5">
-                                “{loadingMean ? '...' : example ?? 'No example'}”
-                            </Text>
-                        </View>
-                    </Animated.View>
-                </GestureDetector>
-            </View>
-
-            {/* BUTTONS */}
-            <View className="flex-row justify-between px-16 pb-10">
-                <Ionicons
-                    name="chevron-back-circle"
-                    size={64}
-                    color={index === 0 ? '#ccc' : '#FFA500'}
-                    onPress={prevCard}
-                />
-                <Ionicons
-                    name="chevron-forward-circle"
-                    size={64}
-                    color={
-                        index === vocabulary.length - 1
-                            ? '#ccc'
-                            : '#FFA500'
-                    }
-                    onPress={nextCard}
-                />
-            </View>
-        </View>
     );
 }
 

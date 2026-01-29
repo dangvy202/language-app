@@ -62,6 +62,34 @@ export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]>
     return data;
 };
 
+export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string }): Promise<any[]> => {
+  try {
+    // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
+
+    const endpoint = `https://faultily-uncanny-cecelia.ngrok-free.dev/api/vocabulary/?topic=${nameTopic}`;
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        // ...(token ? { 'Authorization': `Bearer ${token}` } : {}), // Thêm token nếu có
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || errorData.notification || 'Không thể tải từ vựng theo topic');
+    }
+
+    const data = await response.json();
+    return data.data || data || [];
+  } catch (error: any) {
+    console.error('Fetch vocabulary by topic error:', error);
+    throw error;
+  }
+};
+
 export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | string }): Promise<any[]> => {
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth

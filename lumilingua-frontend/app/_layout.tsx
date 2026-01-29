@@ -14,7 +14,13 @@ export default function RootLayout() {
           />
           <Stack.Screen name="login" />
           <Stack.Screen
-            name="course/[id]"
+            name="course/topic/[topic]"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="course/level/[id]"
             options={{
               headerShown: false,
             }}

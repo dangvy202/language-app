@@ -1,4 +1,6 @@
 from rest_framework import viewsets
+
+from .filters import VocabularyFilter
 from .serializers import LevelSerializer, TopicSerializer, VocabularySerializer, LanguageSerializer, MeanSerializer
 from ..models import Level, Topic, Vocabulary, Language, Mean
 from django_filters.rest_framework import DjangoFilterBackend
@@ -16,7 +18,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
     queryset = Vocabulary.objects.all()
 
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['level', 'topic']
+    filterset_class  = VocabularyFilter
 
 class LanguageViewSet(viewsets.ModelViewSet):
     serializer_class = LanguageSerializer
