@@ -41,6 +41,9 @@ export default function VocabularyByTopic() {
     const [example, setExample] = useState<string | null>(null);
     const [loadingMean, setLoadingMean] = useState(false);
 
+    /* ===================== NEW STATES FOR UI (giả lập) ===================== */
+    const [isRecording, setIsRecording] = useState(false); // giả lập đang ghi âm
+    const [isSaved, setIsSaved] = useState(false); // giả lập đã bookmark
 
     useEffect(() => {
         if (!vocabulary[index]) return;
@@ -67,7 +70,7 @@ export default function VocabularyByTopic() {
             })
             .finally(() => {
                 setLoadingMean(false);
-            });;
+            });
     }, [index, vocabulary]);
 
     /* ===================== ANIMATION ===================== */
@@ -100,6 +103,18 @@ export default function VocabularyByTopic() {
         }
         translateX.value = 0;
         rotateZ.value = 0;
+    };
+
+    const toggleRecord = () => {
+        setIsRecording(prev => !prev);
+        vibrate();
+        // Sau này: start/stop recording + gọi API pronunciation scoring
+    };
+
+    const toggleSave = () => {
+        setIsSaved(prev => !prev);
+        vibrate();
+        // Sau này: lưu vào AsyncStorage hoặc gửi API save bookmark
     };
 
     /* ===================== GESTURE (TINDER STYLE) ===================== */
@@ -185,9 +200,20 @@ export default function VocabularyByTopic() {
                     <GestureDetector gesture={gesture}>
                         <Animated.View
                             style={cardStyle}
-                            className="w-[340px] h-[500px] bg-white rounded-[48px] shadow-2xl px-8 py-10"
+                            className="w-[340px] h-[500px] bg-white rounded-[48px] shadow-2xl px-8 py-10 relative"
                         >
-                            {/* SPEAK */}
+                            {/* BOOKMARK */}
+                            <TouchableOpacity
+                                onPress={toggleSave}
+                                className="absolute top-6 left-6 bg-orange-100 p-3 rounded-full shadow z-10"
+                            >
+                                <Ionicons
+                                    name={isSaved ? "bookmark" : "bookmark-outline"}
+                                    size={28}
+                                    color={isSaved ? "#FFA500" : "#666"}
+                                />
+                            </TouchableOpacity>
+
                             <TouchableOpacity
                                 onPress={() => speak(word.name_vocabulary)}
                                 className="absolute top-6 right-6 bg-orange-100 p-4 rounded-full shadow"
@@ -207,7 +233,6 @@ export default function VocabularyByTopic() {
                                 <Text className="text-xl text-gray-400 mb-8">
                                     {word.ipa}
                                 </Text>
-
 
                                 <View className="mb-7">
                                     <Image
@@ -231,13 +256,30 @@ export default function VocabularyByTopic() {
                 </View>
 
                 {/* BUTTONS */}
-                <View className="flex-row justify-between px-16 pb-10">
+                <View className="flex-row items-center justify-between px-10 pb-10">
+                    {/* Prev */}
                     <Ionicons
                         name="chevron-back-circle"
                         size={64}
                         color={index === 0 ? '#ccc' : '#FFA500'}
                         onPress={prevCard}
                     />
+
+                    <View className="flex-1 items-center">
+                        <TouchableOpacity
+                            onPress={toggleRecord}
+                            className={`p-5 rounded-full shadow-lg
+                        ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-orange-100'}`}
+                        >
+                            <Ionicons
+                                name="mic"
+                                size={36}
+                                color={isRecording ? "white" : "#FFA500"}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Next */}
                     <Ionicons
                         name="chevron-forward-circle"
                         size={64}
@@ -251,7 +293,6 @@ export default function VocabularyByTopic() {
                 </View>
             </View>
         </>
-
     );
 }
 
@@ -260,4 +301,4 @@ const styles = StyleSheet.create({
         width: 230,
         height: 110
     }
-})
+});

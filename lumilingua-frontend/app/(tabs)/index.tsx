@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Stack, useRouter } from 'expo-router';
 import {
   Image,
   Platform,
@@ -16,6 +17,8 @@ import { useEffect, useState } from "react";
 
 export default function Index() {
   const [userName, setUserName] = useState<string | null>(null);
+    const router = useRouter();
+
 
   useEffect(() => {
     const loadUserName = async () => {
@@ -89,21 +92,21 @@ export default function Index() {
             <Ionicons name="book-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Grammar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryTab}>
-            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#666" />
-            <Text style={styles.categoryText}>Vocabulary</Text>
+          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]} onPress={() => {router.push('/course/vocabulary');}}>
+            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFA500" />
+            <Text style={styles.activeCategoryText}>Vocabulary</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryTab}>
-            <Ionicons name="chatbubbles-outline" size={24} color="#666" />
-            <Text style={styles.categoryText}>Phrases</Text>
+          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
+            <Ionicons name="chatbubbles-outline" size={24} color="#FFA500" />
+            <Text style={styles.activeCategoryText}>Phrases</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryTab}>
-            <Ionicons name="mic-outline" size={24} color="#666" />
-            <Text style={styles.categoryText}>Pronunciation</Text>
+          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
+            <Ionicons name="mic-outline" size={24} color="#FFA500" />
+            <Text style={styles.activeCategoryText}>Pronunciation</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryTab}>
-            <Ionicons name="ear-outline" size={24} color="#666" />
-            <Text style={styles.categoryText}>Listening</Text>
+          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
+            <Ionicons name="ear-outline" size={24} color="#FFA500" />
+            <Text style={styles.activeCategoryText}>Listening</Text>
           </TouchableOpacity>
         </ScrollView>
 

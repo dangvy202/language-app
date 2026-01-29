@@ -8,7 +8,8 @@ import {
     RefreshControl,
     Text,
     TouchableOpacity,
-    View
+    View,
+    Image
 } from 'react-native';
 
 
@@ -115,12 +116,20 @@ export default function LearnVocabulary() {
             />
             <View className="flex-1 bg-gray-50">
                 {/* Header */}
-                <View className="bg-[#FFA500] pt-12 pb-6 px-6">
-                    <Text className="text-white text-3xl font-bold">Từ vựng</Text>
-                    <Text className="text-white text-base mt-2 opacity-90">
-                        Học và ôn tập từ vựng theo cách của bạn
-                    </Text>
+                <View className="bg-[#FFA500] from-orange-600 to-orange-600 pt-12 pb-8 px-6 shadow-lg rounded-b-3xl">
+                    <View className="flex-row items-center">
+                        <Ionicons name="book-outline" size={44} color="white" className="mr-4" />
+                        <View>
+                            <Text className="text-white text-4xl font-black">Vocabularies</Text>
+                            <Text className="text-orange-100 text-base mt-1 opacity-90">
+                                Học từ vựng theo cách của bạn
+                            </Text>
+                        </View>
+                    </View>
                 </View>
+
+
+
 
                 {/* Tabs */}
                 <View className="flex-row px-6 mt-4 mb-2 bg-white border-b border-gray-200">
@@ -194,7 +203,7 @@ export default function LearnVocabulary() {
                 )}
 
                 {/* Bottom button */}
-                <View className="absolute bottom-6 left-6 right-6">
+                {/* <View className="absolute bottom-6 left-6 right-6">
                     <TouchableOpacity
                         className="bg-[#FFA500] py-5 rounded-2xl items-center shadow-xl"
                         onPress={() => {
@@ -203,7 +212,7 @@ export default function LearnVocabulary() {
                     >
                         <Text className="text-white text-lg font-bold">Ôn tập từ vựng hôm nay</Text>
                     </TouchableOpacity>
-                </View>
+                </View> */}
             </View>
         </>
 
