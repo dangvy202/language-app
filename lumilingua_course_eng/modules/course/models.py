@@ -41,6 +41,10 @@ class Vocabulary(models.Model):
     id_vocabulary = models.AutoField(primary_key=True)
     name_vocabulary = models.CharField(max_length=255)
     ipa = models.CharField(max_length=255)
+    img_path = models.ImageField(
+    upload_to='vocabulary/',
+    null=True,
+    blank=True)
     level = models.ForeignKey(
         'Level',
         on_delete=models.CASCADE,
@@ -58,7 +62,7 @@ class Vocabulary(models.Model):
 
     class Meta:
         db_table = 'tbl_vocabulary'
-        manage: True
+        manage: False
         ordering = ['name_vocabulary']
         constraints = [
             models.UniqueConstraint(fields=['name_vocabulary'], name='unique_name_vocabulary')

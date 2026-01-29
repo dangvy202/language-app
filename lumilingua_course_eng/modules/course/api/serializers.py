@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.files.storage import default_storage
 from rest_framework import serializers
 from ..models import Level, Topic, Vocabulary
 
@@ -18,5 +20,5 @@ class TopicSerializer(serializers.ModelSerializer):
 class VocabularySerializer(serializers.ModelSerializer):
     class Meta:
         model = Vocabulary
-        fields = ['id_vocabulary', 'name_vocabulary', 'ipa', 'level', 'topic']
+        fields = ['id_vocabulary', 'name_vocabulary', 'ipa', 'level', 'topic', 'img_path']
         read_only_fields = ['created_at', 'updated_at']

@@ -62,7 +62,7 @@ export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]>
     return data;
 };
 
-export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number }): Promise<any[]> => {
+export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | string }): Promise<any[]> => {
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 

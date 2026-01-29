@@ -41,6 +41,10 @@ export default function LearnVocabulary() {
         router.push(`/course/${level.id_level}`);
     };
 
+    const handleTopicPress = (topic: Topic) => {
+        router.push(`/course/${topic.name_topic}`);
+    };
+
     const renderItem = ({ item }: { item: VocabularyItem }) => (
         <TouchableOpacity
             className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-orange-100"
@@ -48,8 +52,7 @@ export default function LearnVocabulary() {
                 if ('rank' in item) {
                     handleLevelPress(item as Level);
                 } else {
-                    // TODO: Navigate đến topic detail nếu cần
-                    //console.log('Topic clicked:', item.name);
+                    handleTopicPress(item as Topic);
                 }
             }}
         >
