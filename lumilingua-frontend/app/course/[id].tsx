@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 
 import Loading from '@/component/loading';
 import useFetch from '@/services/useFetch';
-import { fetchVocabularyByLevelId } from '@/services/api';
+import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByLevelId } from '@/services/api';
 import Notfound from '@/component/404';
 
 const { width } = Dimensions.get('window');
@@ -35,6 +35,40 @@ export default function VocabularyByLevel() {
 
     const vocabulary = data ?? [];
     const [index, setIndex] = useState(0);
+
+    /* ===================== MEANING STATE ===================== */
+    const [meaning, setMeaning] = useState<string | null>(null);
+    const [example, setExample] = useState<string | null>(null);
+    const [loadingMean, setLoadingMean] = useState(false);
+
+
+    useEffect(() => {
+        if (!vocabulary[index]) return;
+
+        const vocabId = vocabulary[index].id_vocabulary;
+
+        setLoadingMean(true);
+
+        fetchMeanByVocabularyAndLanguage({
+            vocabulary: vocabId,
+            language: 1,
+        }).then((res) => {
+            if (Array.isArray(res) && res.length > 0) {
+                setMeaning(res[0].mean_vocabulary);
+                setExample(res[0].example_vocabulary);
+            } else {
+                setMeaning(null);
+                setExample(null);
+            }
+        })
+            .catch(() => {
+                setMeaning(null);
+                setExample(null);
+            })
+            .finally(() => {
+                setLoadingMean(false);
+            });;
+    }, [index, vocabulary]);
 
     /* ===================== ANIMATION ===================== */
     const translateX = useSharedValue(0);
@@ -144,7 +178,7 @@ export default function VocabularyByLevel() {
                 <GestureDetector gesture={gesture}>
                     <Animated.View
                         style={cardStyle}
-                        className="w-[340px] h-[460px] bg-white rounded-[48px] shadow-2xl px-8 py-10"
+                        className="w-[340px] h-[500px] bg-white rounded-[48px] shadow-2xl px-8 py-10"
                     >
                         {/* SPEAK */}
                         <TouchableOpacity
@@ -177,15 +211,13 @@ export default function VocabularyByLevel() {
 
                             <View className="bg-orange-50 px-6 py-4 rounded-2xl mb-6">
                                 <Text className="text-3xl font-bold text-orange-600 text-center">
-                                    {word.meaning}
+                                    {loadingMean ? '...' : meaning ?? 'No meaning'}
                                 </Text>
                             </View>
 
-                            {word.example && (
-                                <Text className="text-lg text-gray-500 italic text-center leading-7">
-                                    “{word.example}”
-                                </Text>
-                            )}
+                            <Text className="text-lg text-gray-500 italic text-center leading-7 mb-5">
+                                “{loadingMean ? '...' : example ?? 'No example'}”
+                            </Text>
                         </View>
                     </Animated.View>
                 </GestureDetector>

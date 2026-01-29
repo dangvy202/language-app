@@ -89,3 +89,30 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
     throw error;
   }
 };
+
+export const fetchMeanByVocabularyAndLanguage = async ({ vocabulary, language }: { vocabulary: number, language: number }): Promise<any[]> => {
+  try {
+    // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
+    const endpoint = `https://faultily-uncanny-cecelia.ngrok-free.dev/api/mean/?vocabulary=${vocabulary}&language=${language}`
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        // ...(token ? { 'Authorization': `Bearer ${token}` } : {}), // Thêm token nếu có
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || errorData.notification || 'Không thể tải ý nghĩa theo vocabulary và language');
+    }
+
+    const data = await response.json();
+    return data.data || data || [];
+  } catch (error: any) {
+    console.error('Fetch mean by vocabulary and language error:', error);
+    throw error;
+  }
+};

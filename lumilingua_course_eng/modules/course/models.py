@@ -41,10 +41,7 @@ class Vocabulary(models.Model):
     id_vocabulary = models.AutoField(primary_key=True)
     name_vocabulary = models.CharField(max_length=255)
     ipa = models.CharField(max_length=255)
-    img_path = models.ImageField(
-    upload_to='vocabulary/',
-    null=True,
-    blank=True)
+    img_path = models.ImageField(upload_to='vocabulary/',null=True,blank=True)
     level = models.ForeignKey(
         'Level',
         on_delete=models.CASCADE,
@@ -67,3 +64,42 @@ class Vocabulary(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['name_vocabulary'], name='unique_name_vocabulary')
         ]
+
+class Language(models.Model):
+    id_language = models.AutoField(primary_key=True)
+    language_code = models.CharField(max_length=10)
+    name_language = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tbl_language'
+        manage: False
+        ordering = ['language_code']
+        constraints = [
+            models.UniqueConstraint(fields=['language_code', 'name_language'], name='unique_language_code_name')
+        ]
+
+class Mean(models.Model):
+    id_mean = models.AutoField(primary_key=True)
+    mean_vocabulary = models.CharField(max_length=255)
+    example_vocabulary = models.TextField()
+    vocabulary = models.ForeignKey(
+        'Vocabulary',
+        on_delete=models.CASCADE,
+        db_column='id_vocabulary',
+        related_name='means'
+    )
+    language = models.ForeignKey(
+        'Language',
+        on_delete=models.CASCADE,
+        db_column='id_language',
+        related_name='means'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tbl_mean'
+        manage: False
+        ordering = ['mean_vocabulary']
