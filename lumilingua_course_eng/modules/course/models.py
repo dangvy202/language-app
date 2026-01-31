@@ -28,7 +28,7 @@ class Topic(models.Model):
 
     class Meta:
         db_table = "tbl_topic"
-        manage: False
+        managed = False
         ordering = ['name_topic']
         indexes = [
             models.Index(fields=['name_topic'], name='idx_name_topic'),
@@ -59,7 +59,7 @@ class Vocabulary(models.Model):
 
     class Meta:
         db_table = 'tbl_vocabulary'
-        manage: False
+        managed = False
         ordering = ['name_vocabulary']
         constraints = [
             models.UniqueConstraint(fields=['name_vocabulary'], name='unique_name_vocabulary')
@@ -74,7 +74,7 @@ class Language(models.Model):
 
     class Meta:
         db_table = 'tbl_language'
-        manage: False
+        managed = False
         ordering = ['language_code']
         constraints = [
             models.UniqueConstraint(fields=['language_code', 'name_language'], name='unique_language_code_name')
@@ -101,5 +101,5 @@ class Mean(models.Model):
 
     class Meta:
         db_table = 'tbl_mean'
-        manage: False
+        managed = False
         ordering = ['mean_vocabulary']

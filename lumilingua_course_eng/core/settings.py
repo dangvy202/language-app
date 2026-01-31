@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
-    'modules.course.apps.CourseConfig'
+    'modules.course.apps.CourseConfig',
+    'modules.progress.apps.ProgressConfig'
 ]
 
 MIDDLEWARE = [
