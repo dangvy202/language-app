@@ -1,11 +1,17 @@
 from rest_framework import serializers
-from ..models import UserCache, Certificate, CertificateCache, UserNote
+from ..models import UserCache, Certificate, CertificateCache, UserNote, HistoryProgress
 
 
 class UserCacheSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserCache
         fields = ['id_user_cache', 'streak', 'id_user', 'email', 'phone']
+        read_only_fields = ['created_at', 'updated_at']
+
+class HistoryProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HistoryProgress
+        fields = ['id_history_progress', 'isFinished', 'finished_date', 'duration', 'user_cache', 'topic', 'id_vocabulary_progress']
         read_only_fields = ['created_at', 'updated_at']
 
 class UserNoteSerializer(serializers.ModelSerializer):
