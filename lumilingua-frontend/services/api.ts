@@ -175,6 +175,42 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
   }
 };
 
+export const fetchUserCache = async ({ email }: { email: string }): Promise<any[]> => {
+  try {
+    const endpoint = `http://localhost:8000/api/user_cache/?email=${email}`;
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = {};
+      }
+
+      const errorMessage =
+        errorData.error ||
+        errorData.detail ||
+        errorData.message ||
+        `Error server: ${response.status} ${response.statusText}`;
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    return data.data || data || [];
+  } catch (err: any) {
+    throw new Error(err.message || 'Unable to get UserCache');
+  }
+};
+
 export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0, }: {
   id_user: number;
   email: string;
@@ -220,10 +256,7 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
 
       throw new Error(errorMessage);
     }
-
-    const data = await response.json();
-
-    return data.data || data;
+    return response;
   } catch (err: any) {
     throw new Error(err.message || 'Unable to save UserCache');
   }

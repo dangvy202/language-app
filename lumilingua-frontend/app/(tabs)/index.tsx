@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from "react";
 import {
   Image,
   Platform,
@@ -12,26 +13,60 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from "react";
 
+import Loading from '@/component/loading';
+import { fetchUserCache } from '@/services/api';
+import useFetch from '@/services/useFetch';
 
 export default function Index() {
   const [userName, setUserName] = useState<string | null>(null);
-    const router = useRouter();
-
+  const [streak, setStreak] = useState<number>(0);
+  const [email, setEmail] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const loadUserName = async () => {
+    const loadUser = async () => {
       const name = await AsyncStorage.getItem("username");
-      setUserName(name);
+      setUserName(name || "Guest");
+
+      const storedEmail = await AsyncStorage.getItem("email");
+      if (!storedEmail) {
+        router.replace('/Login');
+        return;
+      }
+
+      setEmail(storedEmail);
     };
 
-    loadUserName();
-  }, []);
+    loadUser();
+  }, [router]);
+
+  const { data, loading: fetchLoading, error } = useFetch(
+    () => fetchUserCache({ email: email! }),
+    !!email
+  );
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const userCache = data[0];
+
+      const fetchedStreak = userCache?.streak ?? 0;
+      setStreak(fetchedStreak);
+      AsyncStorage.setItem('streak', fetchedStreak.toString());
+    }
+
+    if (error) {
+      console.error("Lỗi fetch UserCache:", error);
+    }
+  }, [data, error]);
+
+  if (!email || fetchLoading) {
+    return <Loading />;
+  }
 
   return (
     <View style={styles.container}>
-      {/* Header với mascot */}
+      {/* Header */}
       <View style={{ paddingBottom: 15 }}>
         <LinearGradient colors={['#FFB703', '#FB8500']}>
           <View style={styles.header}>
@@ -40,7 +75,7 @@ export default function Index() {
             </TouchableOpacity>
             <View style={styles.streakContainer}>
               <Ionicons name="flame" size={24} color="white" />
-              <Text style={styles.streakText}>7 ngày</Text>
+              <Text style={styles.streakText}>{streak} ngày</Text>
             </View>
             <TouchableOpacity>
               <Ionicons name="notifications-outline" size={28} color="#fff" />
@@ -57,7 +92,7 @@ export default function Index() {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.hi}>Hi, </Text>
-              <Text style={styles.username}>{userName}</Text>
+              <Text style={styles.username}>{userName || 'User'}</Text>
             </View>
             <Text style={styles.subtitle}>”Learn to earn. Enjoy your day with LumiLingua!”</Text>
           </View>
@@ -92,7 +127,7 @@ export default function Index() {
             <Ionicons name="book-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Grammar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]} onPress={() => {router.push('/course/vocabulary');}}>
+          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]} onPress={() => { router.push('/course/vocabulary'); }}>
             <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Vocabulary</Text>
           </TouchableOpacity>
@@ -391,10 +426,6 @@ const styles = StyleSheet.create({
     marginRight: 16,
     borderRadius: 20,
     overflow: 'hidden',
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 4 },
-    // shadowOpacity: 0.15,
-    // shadowRadius: 10,
     elevation: 6,
   },
   teacherGradient: {

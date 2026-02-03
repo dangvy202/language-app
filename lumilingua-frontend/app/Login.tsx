@@ -107,19 +107,18 @@ export default function Login() {
         try {
             const response = await loginApi(email.trim(), password.trim());
 
+            await saveOrUpdateUserCache({
+                id_user: response.data.information.idUser,
+                email: response.data.information.email,
+                phone: response.data.information.phone,
+            });
+
             await AsyncStorage.setItem('token', response.data.token || '');
             await AsyncStorage.setItem('refreshToken', response.data.refreshToken || '');
             await AsyncStorage.setItem('expired', response.data.expired || '');
             await AsyncStorage.setItem('username', response.data.information.username);
             await AsyncStorage.setItem('email', response.data.information.email);
             await AsyncStorage.setItem('idUser', response.data.information.idUser);
-
-            await saveOrUpdateUserCache({
-                id_user: response.data.information.idUser,
-                email: response.data.information.email,
-                phone: response.data.information.phone,
-                streak: 0,
-            });
             router.replace('/');
         } catch (err: any) {
             setErrorMsg(err.message);
