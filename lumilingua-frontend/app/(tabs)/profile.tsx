@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+    Alert,
     Image,
     ScrollView,
     StyleSheet,
@@ -24,6 +25,35 @@ const Profile = () => {
 
         loadUserName();
     }, []);
+
+    const handleLogout = async () => {
+        try {
+            await AsyncStorage.multiRemove([
+                'token',
+                'refreshToken',
+                'expired',
+                'username',
+                'email',
+            ]);
+            router.replace('/Login');
+        } catch (err) {
+            Alert.alert('Lỗi', 'Đăng xuất thất bại');
+        }
+        // Alert.alert(
+        //     'Đăng xuất',
+        //     'Bạn có chắc muốn đăng xuất?',
+        //     [
+        //         { text: 'Hủy', style: 'cancel' },
+        //         {
+        //             text: 'Đăng xuất',
+        //             style: 'destructive',
+        //             onPress: async () => {
+
+        //             },
+        //         },
+        //     ]
+        // );
+    };
     return (
         <View style={styles.container}>
             {/* Header Gradient */}
@@ -134,7 +164,7 @@ const Profile = () => {
                         <Text style={styles.settingText}>Support & FAQ</Text>
                         <Ionicons name="chevron-forward" size={20} color="#ccc" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.settingItem, { borderBottomWidth: 0 }]}>
+                    <TouchableOpacity onPress={handleLogout} style={[styles.settingItem, { borderBottomWidth: 0 }]}>
                         <Ionicons name="log-out-outline" size={24} color="#FF6347" />
                         <Text style={[styles.settingText, { color: '#FF6347' }]}>Logout</Text>
                     </TouchableOpacity>

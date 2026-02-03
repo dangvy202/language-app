@@ -23,6 +23,7 @@ const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
 
 export default function VocabularyByTopic() {
+
     const { topic } = useLocalSearchParams<{ topic: string }>();
     const router = useRouter();
 
@@ -44,6 +45,8 @@ export default function VocabularyByTopic() {
     /* ===================== NEW STATES FOR UI (giả lập) ===================== */
     const [isRecording, setIsRecording] = useState(false); // giả lập đang ghi âm
     const [isSaved, setIsSaved] = useState(false); // giả lập đã bookmark
+
+    
 
     useEffect(() => {
         if (!vocabulary[index]) return;

@@ -5,6 +5,7 @@ import com.lumilingua.crms.dto.requests.AuthenticationRequest;
 import com.lumilingua.crms.dto.requests.RefreshTokenRequest;
 import com.lumilingua.crms.dto.requests.UserRequest;
 import com.lumilingua.crms.dto.responses.AuthenticationResponse;
+import com.lumilingua.crms.dto.responses.InformationAccountResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
 
 public interface UserService {
@@ -12,4 +13,5 @@ public interface UserService {
     Result<UserResponse> registerAccountByCustomer(UserRequest userRequest);
     Result<AuthenticationResponse> login(AuthenticationRequest request);
     Result<AuthenticationResponse> refreshToken(RefreshTokenRequest request);
+    Result<InformationAccountResponse> getInformationAccountByEmail(String email);
 }

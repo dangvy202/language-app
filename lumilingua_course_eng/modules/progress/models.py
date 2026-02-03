@@ -6,6 +6,7 @@ class UserCache(models.Model):
     id_user = models.IntegerField(null=False,blank=False)
     email = models.CharField(max_length=255,null=False,blank=False)
     phone = models.CharField(max_length=255,null=False,blank=False)
+    last_login = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,7 +1,8 @@
 import Loading from '@/component/loading';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
 import {
     Alert,
     FlatList,
@@ -16,13 +17,77 @@ import {
 
 import Notfound from '@/component/404';
 import { Level, Topic } from '@/interfaces/interfaces';
-import { fetchLevel, fetchTopic } from '@/services/api';
+import { fetchLevel, fetchTopic, saveOrUpdateUserCache } from '@/services/api';
 import useFetch from '@/services/useFetch';
 
 type VocabularyItem = Level | Topic;
 
 export default function LearnVocabulary() {
     const router = useRouter();
+    const [loadingLogin, setLoadingLogin] = useState(false);
+
+    const refreshTokenApi = async (refreshToken: string) => {
+        const endpoint = "http://localhost:8888/api/v1/user/refresh";
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.notification);
+        }
+
+        return await response.json();
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkAuth = async () => {
+            if (!isMounted) return;
+
+            const token = await AsyncStorage.getItem('token');
+            const expiredStr = await AsyncStorage.getItem('expired');
+            const expired = expiredStr ? parseInt(expiredStr, 10) : null;
+
+            if (token && expired && Date.now() < expired) {
+                setLoadingLogin(false);
+                return;
+            }
+
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
+
+            if (refreshToken) {
+                setLoadingLogin(true);
+                try {
+                    const response = await refreshTokenApi(refreshToken);
+                    await AsyncStorage.setItem('token', response.data.token || '');
+                    await AsyncStorage.setItem('expired', response.data.expired || '');
+                } catch (err) {
+                    console.log('Refresh error:', err);
+                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
+                    router.replace('/Login');
+                } finally {
+                    if (isMounted) setLoadingLogin(false);
+                }
+            } else {
+                router.replace('/Login');
+            }
+        };
+
+        checkAuth();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [router]);
+
 
     const [activeTab, setActiveTab] = useState<'level' | 'topic'>('level');
 
@@ -45,8 +110,6 @@ export default function LearnVocabulary() {
 
     const handleTopicPress = (topic: Topic) => {
         router.push(`/course/topic/${topic.name_topic}`);
-
-        // Alert.alert("asdasd")
     };
 
     const renderItem = ({ item }: { item: VocabularyItem }) => (

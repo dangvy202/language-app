@@ -5,11 +5,13 @@ import com.lumilingua.crms.dto.requests.AuthenticationRequest;
 import com.lumilingua.crms.dto.requests.RefreshTokenRequest;
 import com.lumilingua.crms.dto.requests.UserRequest;
 import com.lumilingua.crms.dto.responses.AuthenticationResponse;
+import com.lumilingua.crms.dto.responses.InformationAccountResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.enums.StatusEnum;
 import com.lumilingua.crms.mapper.AuthenticationMapper;
+import com.lumilingua.crms.mapper.InformationAccountMapper;
 import com.lumilingua.crms.mapper.UserMapper;
 import com.lumilingua.crms.repository.UserRepository;
 import com.lumilingua.crms.security.UserDetail;
@@ -55,6 +57,15 @@ public class UserServiceImpl implements UserService {
     // properties
     @Value("${jwt.access-token-expiration}") // 900000 = 15 minute
     private long accessExpirationMs;
+
+    @Override
+    public Result<InformationAccountResponse> getInformationAccountByEmail(String email) {
+        LOG.info("Get information account by email in service...");
+        User userEntity = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Unableo to get information account by email '%s'".formatted(email)));
+        return Result.get(InformationAccountMapper.INSTANT
+                .toInformationAccountResponse(Integer.parseInt(String.valueOf(userEntity.getIdUser())), userEntity.getPhone(), userEntity.getEmail()));
+    }
 
     @Override
     @Transactional

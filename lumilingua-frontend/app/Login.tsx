@@ -1,3 +1,4 @@
+import { saveOrUpdateUserCache } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
@@ -111,7 +112,14 @@ export default function Login() {
             await AsyncStorage.setItem('expired', response.data.expired || '');
             await AsyncStorage.setItem('username', response.data.information.username);
             await AsyncStorage.setItem('email', response.data.information.email);
+            await AsyncStorage.setItem('idUser', response.data.information.idUser);
 
+            await saveOrUpdateUserCache({
+                id_user: response.data.information.idUser,
+                email: response.data.information.email,
+                phone: response.data.information.phone,
+                streak: 0,
+            });
             router.replace('/');
         } catch (err: any) {
             setErrorMsg(err.message);

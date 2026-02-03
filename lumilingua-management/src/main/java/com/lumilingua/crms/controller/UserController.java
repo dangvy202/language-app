@@ -6,10 +6,10 @@ import com.lumilingua.crms.dto.requests.AuthenticationRequest;
 import com.lumilingua.crms.dto.requests.RefreshTokenRequest;
 import com.lumilingua.crms.dto.requests.UserRequest;
 import com.lumilingua.crms.dto.responses.AuthenticationResponse;
+import com.lumilingua.crms.dto.responses.InformationAccountResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
 import com.lumilingua.crms.service.UserService;
-import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
+ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -64,6 +64,13 @@ public class UserController {
         if(result.code != ResultApiConstant.StatusCode.OK) {
             return new ResponseEntity<>(result, HttpStatus.UNAUTHORIZED);
         }
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping("/{email}")
+    public ResponseEntity<Result<InformationAccountResponse>> getInformationAccountByEmail(@PathVariable("email") String email) {
+        LOG.info("Call api get information account by email '%s'".formatted("/api/v1/user/'" + email));
+        var result = userService.getInformationAccountByEmail(email);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

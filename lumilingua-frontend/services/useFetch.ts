@@ -1,4 +1,3 @@
-// services/useFetch.ts
 import { useState, useCallback, useEffect } from "react";
 
 type FetchFn<T> = () => Promise<T>;
@@ -20,7 +19,7 @@ const useFetch = <T>(fetchFn: FetchFn<T>, autoFetch = true) => {
     } finally {
       setLoading(false);
     }
-  }, [fetchFn]);
+  }, []);
 
   useEffect(() => {
     if (autoFetch) {

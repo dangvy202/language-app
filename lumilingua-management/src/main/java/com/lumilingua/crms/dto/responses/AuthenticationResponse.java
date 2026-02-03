@@ -19,6 +19,7 @@ public class AuthenticationResponse {
     @Data
     @FieldDefaults(level = AccessLevel.PRIVATE)
     public static class InformationResponse {
+        private long idUser;
         private String username;
         private String email;
         private StatusEnum status;
