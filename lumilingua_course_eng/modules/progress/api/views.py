@@ -12,6 +12,13 @@ class UserCacheViewSet(viewsets.ModelViewSet):
     queryset = UserCache.objects.all()
     serializer_class = UserCacheSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        email = self.request.query_params.get('email')
+        if email:
+            queryset = queryset.filter(email=email)
+        return queryset
+
     def create(self, request, *args, **kwargs):
         id_user = request.data.get('id_user')
         email = request.data.get('email')
@@ -33,7 +40,7 @@ class UserCacheViewSet(viewsets.ModelViewSet):
         if last_login_date:
             if last_login_date == today:
                 new_streak = user_cache.streak  # lasted_login_streak
-            elif last_login_date == today:
+            elif last_login_date == today - timezone.timedelta(days=1):
                 new_streak = user_cache.streak + 1  # increase_streak
             else:
                 new_streak = 1  #reset_streak

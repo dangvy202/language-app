@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from "react";
@@ -12,28 +13,46 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Loading from '@/component/loading';
-import { fetchUserCache } from '@/services/api';
+import { fetchUserCache, saveOrUpdateUserCache } from '@/services/api';
 import useFetch from '@/services/useFetch';
 
 export default function Index() {
   const [userName, setUserName] = useState<string | null>(null);
   const [streak, setStreak] = useState<number>(0);
   const [email, setEmail] = useState<string | null>(null);
+  const [isStreakLoading, setIsStreakLoading] = useState(true)
   const router = useRouter();
 
   useEffect(() => {
     const loadUser = async () => {
       const name = await AsyncStorage.getItem("username");
-      setUserName(name || "Guest");
+      setUserName(name);
 
       const storedEmail = await AsyncStorage.getItem("email");
+      const storedIdUser = await AsyncStorage.getItem("idUser");
+      const storedPhone = await AsyncStorage.getItem("phone");
+
+      // Nếu đang load hoặc chưa có email → KHÔNG redirect ngay, chờ Login xử lý
       if (!storedEmail) {
+        console.log('No email in storage → chờ Login xử lý');
         router.replace('/Login');
         return;
       }
+
+      const idUserNumber = storedIdUser ? Number(storedIdUser) : null;
+
+      if (idUserNumber === null || Number.isNaN(idUserNumber)) {
+        console.warn("Invalid or missing idUser in storage");
+        return; // Không redirect
+      }
+
+      await saveOrUpdateUserCache({
+        id_user: idUserNumber,
+        email: storedEmail,
+        phone: storedPhone as string,
+      });
 
       setEmail(storedEmail);
     };
@@ -46,21 +65,38 @@ export default function Index() {
     !!email
   );
 
+
   useEffect(() => {
+    console.log('useFetch data:', data);
+    console.log('fetchLoading:', fetchLoading);
+    console.log('email:', email);
+
+    if (fetchLoading) {
+      setIsStreakLoading(true);
+      return;
+    }
+
     if (data && data.length > 0) {
       const userCache = data[0];
+      console.log('userCache object:', userCache);
+      console.log('Call API streak:', userCache?.streak);
 
       const fetchedStreak = userCache?.streak ?? 0;
       setStreak(fetchedStreak);
       AsyncStorage.setItem('streak', fetchedStreak.toString());
+      setIsStreakLoading(false);
+    } else if (data && data.length === 0) {
+      console.log('UserCache null for email:', email);
+      setStreak(0);
+      setIsStreakLoading(false);
+    } else if (error) {
+      console.error("Error fetch UserCache:", error);
+      setStreak(0);
+      setIsStreakLoading(false);
     }
+  }, [data, fetchLoading, error, email]);
 
-    if (error) {
-      console.error("Lỗi fetch UserCache:", error);
-    }
-  }, [data, error]);
-
-  if (!email || fetchLoading) {
+  if (fetchLoading || !email || isStreakLoading) {
     return <Loading />;
   }
 

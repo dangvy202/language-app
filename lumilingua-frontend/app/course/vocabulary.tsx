@@ -1,23 +1,21 @@
 import Loading from '@/component/loading';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useEffect } from 'react';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
-    Alert,
     FlatList,
     RefreshControl,
     Text,
     TouchableOpacity,
-    View,
-    Image
+    View
 } from 'react-native';
 
 
 
 import Notfound from '@/component/404';
 import { Level, Topic } from '@/interfaces/interfaces';
-import { fetchLevel, fetchTopic, saveOrUpdateUserCache } from '@/services/api';
+import { fetchLevel, fetchTopic } from '@/services/api';
 import useFetch from '@/services/useFetch';
 
 type VocabularyItem = Level | Topic;
@@ -27,7 +25,7 @@ export default function LearnVocabulary() {
     const [loadingLogin, setLoadingLogin] = useState(false);
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "http://localhost:8888/api/v1/user/refresh";
+        const endpoint = "https://developer-cgi-purple-varying.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -68,7 +66,7 @@ export default function LearnVocabulary() {
                 try {
                     const response = await refreshTokenApi(refreshToken);
                     await AsyncStorage.setItem('token', response.data.token || '');
-                    await AsyncStorage.setItem('expired', response.data.expired || '');
+                    await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
                 } catch (err) {
                     console.log('Refresh error:', err);
                     await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);

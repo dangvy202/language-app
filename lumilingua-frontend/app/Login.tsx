@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const loginApi = async (email: string, password: string) => {
-    const endpoint = "http://localhost:8888/api/v1/user/login";
+    const endpoint = "https://developer-cgi-purple-varying.trycloudflare.com/api/v1/user/login";
 
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -32,7 +32,7 @@ const loginApi = async (email: string, password: string) => {
 };
 
 const refreshTokenApi = async (refreshToken: string) => {
-    const endpoint = "http://localhost:8888/api/v1/user/refresh";
+    const endpoint = "https://developer-cgi-purple-varying.trycloudflare.com/api/v1/user/refresh";
 
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -61,34 +61,34 @@ export default function Login() {
 
     useEffect(() => {
         const checkAuth = async () => {
-            const accessToken = await AsyncStorage.getItem('token');
-            const refreshToken = await AsyncStorage.getItem('refreshToken');
-            const expiredStr = await AsyncStorage.getItem('expired');
-            const userName = await AsyncStorage.getItem('username');
-            const email = await AsyncStorage.getItem('email');
+            try {
+                const accessToken = await AsyncStorage.getItem('token');
+                const refreshToken = await AsyncStorage.getItem('refreshToken');
+                const expiredStr = await AsyncStorage.getItem('expired');
+                const userName = await AsyncStorage.getItem('username');
+                const email = await AsyncStorage.getItem('email');
 
-            const expired = expiredStr ? parseInt(expiredStr, 10) : null;
+                const expired = expiredStr ? parseInt(expiredStr, 10) : null;
 
-            if (email && accessToken && userName && expired && Date.now() < expired) {
-                router.replace('/');
-                return;
-            }
+                if (email && accessToken && userName && expired && Date.now() < expired) {
+                    router.replace('/');
+                    return;
+                }
 
-            if (refreshToken) {
-                try {
+                if (refreshToken) {
                     setLoading(true);
                     const response = await refreshTokenApi(refreshToken);
 
                     await AsyncStorage.setItem('token', response.data.token || '');
-                    await AsyncStorage.setItem('expired', response.data.expired || '');
+                    await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
 
                     router.replace('/');
-                } catch (err: any) {
-                    console.log('Refresh token error:', err);
-                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
-                } finally {
-                    setLoading(false);
                 }
+            } catch (err: any) {
+                console.error('Auth check error:', err);
+                await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -115,10 +115,13 @@ export default function Login() {
 
             await AsyncStorage.setItem('token', response.data.token || '');
             await AsyncStorage.setItem('refreshToken', response.data.refreshToken || '');
-            await AsyncStorage.setItem('expired', response.data.expired || '');
+            await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
             await AsyncStorage.setItem('username', response.data.information.username);
             await AsyncStorage.setItem('email', response.data.information.email);
-            await AsyncStorage.setItem('idUser', response.data.information.idUser);
+            await AsyncStorage.setItem('idUser', String(response.data.information.idUser || ''));
+            await AsyncStorage.setItem('phone', response.data.information.phone);
+            console.log('id user ' + response.data.information.idUser);
+
             router.replace('/');
         } catch (err: any) {
             setErrorMsg(err.message);

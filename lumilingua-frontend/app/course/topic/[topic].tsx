@@ -1,31 +1,34 @@
-import { View, Text, Dimensions, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
+import * as Haptics from 'expo-haptics';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import * as Speech from 'expo-speech';
+import { useEffect, useState } from 'react';
+import { Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-    withTiming,
     interpolate,
     runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from 'react-native-reanimated';
-import * as Speech from 'expo-speech';
-import * as Haptics from 'expo-haptics';
 
-import Loading from '@/component/loading';
-import useFetch from '@/services/useFetch';
-import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic } from '@/services/api';
 import Notfound from '@/component/404';
+import Loading from '@/component/loading';
+import { useUserCache } from '@/hook/useUserCache';
+import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic, saveHistoryProgress } from '@/services/api';
+import useFetch from '@/services/useFetch';
 
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
 
 export default function VocabularyByTopic() {
+    const router = useRouter();
 
     const { topic } = useLocalSearchParams<{ topic: string }>();
-    const router = useRouter();
+    const [email, setEmail] = useState<string | null>(null);
+    const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const nameTopic = String(topic);
 
@@ -46,7 +49,7 @@ export default function VocabularyByTopic() {
     const [isRecording, setIsRecording] = useState(false); // giả lập đang ghi âm
     const [isSaved, setIsSaved] = useState(false); // giả lập đã bookmark
 
-    
+
 
     useEffect(() => {
         if (!vocabulary[index]) return;
@@ -75,6 +78,11 @@ export default function VocabularyByTopic() {
                 setLoadingMean(false);
             });
     }, [index, vocabulary]);
+
+    // const { dataUserCacge, loading: fetchLoading, error } = useFetch(
+    //     () => fetchUserCache({ email: email! }),
+    //     !!email
+    // );
 
     /* ===================== ANIMATION ===================== */
     const translateX = useSharedValue(0);
@@ -120,7 +128,68 @@ export default function VocabularyByTopic() {
         // Sau này: lưu vào AsyncStorage hoặc gửi API save bookmark
     };
 
-    /* ===================== GESTURE (TINDER STYLE) ===================== */
+    const saveProgress = async () => {
+        if (!userCache || userCache.length === 0) {
+            console.warn("Không có userCache để lưu tiến độ");
+            return;
+        }
+
+        const userCacheId = userCache[0].id_user_cache; // lấy từ cache
+
+        try {
+            // Ví dụ params bạn cần truyền (thay đổi theo API thật của bạn)
+            const result = await saveHistoryProgress({
+                isFinished: false,                  // false vì chưa hoàn thành, chỉ lưu tiến độ giữa chừng
+                finished_date: new Date().toISOString(),
+                duration: "00:12:45",               // bạn cần tính thời gian thực tế (dùng useRef + setInterval)
+                user_cache: userCacheId,
+                topic: Number(topic),               // topic từ params
+                id_vocabulary_progress: word?.id_vocabulary || null, // hoặc array nếu lưu nhiều
+                // thêm field khác nếu cần: learned_words, streak update, v.v.
+            });
+
+            console.log("Lưu tiến độ thành công:", result);
+            // Có thể toast.success("Đã lưu tiến độ!")
+        } catch (err) {
+            console.error("Lỗi khi lưu tiến độ:", err);
+            // toast.error("Không lưu được tiến độ")
+        }
+    };
+
+    const handleConfirmExit = () => {
+        console.log("handleConfirmExit call");
+
+        // Mobile: dùng Alert native
+        Alert.alert(
+            "Exit the topic?",
+            "Do you want to save the progress of learned?",
+            [
+                {
+                    text: "Do not save",
+                    style: "destructive",
+                    onPress: () => {
+                        console.log("Chọn: Done save");
+                        router.back();
+                    },
+                },
+                {
+                    text: "Save and exit",
+                    onPress: async () => {
+                        console.log("Chọn: Save and exit");
+                        await saveProgress();
+                        router.back();
+                    },
+                },
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                    onPress: () => console.log("Chọn: Hủy"),
+                },
+            ],
+            { cancelable: true }
+        );
+    };
+    /* ===================== GESTURE ===================== */
     const gesture = Gesture.Pan()
         .onUpdate(e => {
             translateX.value = e.translationX;
@@ -181,7 +250,11 @@ export default function VocabularyByTopic() {
                         Topic {nameTopic}
                     </Text>
                     <TouchableOpacity
-                        onPress={() => router.back()}
+                        onPress={() => {
+                            console.log("=== NÚT CLOSE ĐÃ ĐƯỢC BẤM ===");
+                            vibrate(); // rung nhẹ để biết có nhận touch không
+                            handleConfirmExit();
+                        }}
                         className="bg-black/10 p-2 rounded-full"
                     >
                         <Ionicons name="close" size={28} />

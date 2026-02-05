@@ -1,14 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
-import {
-    View, Text, TextInput, TouchableOpacity, Image, StyleSheet,
-    KeyboardAvoidingView, Platform, ScrollView,
-    Alert, ActivityIndicator
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    KeyboardAvoidingView, Platform, ScrollView,
+    StyleSheet,
+    Text, TextInput, TouchableOpacity,
+    View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Hàm gọi API register (tùy chỉnh endpoint Java)
 const registerApi = async (userData: {
@@ -89,7 +93,7 @@ export default function Register() {
                     const response = await refreshTokenApi(refreshToken);
 
                     await AsyncStorage.setItem('token', response.data.token || '');
-                    await AsyncStorage.setItem('expired', response.data.expired || '');
+                    await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
 
                     router.replace('/');
                 } catch (err: any) {

@@ -1,8 +1,8 @@
-import { Level } from "@/interfaces/interfaces";
+import { HistoryProgressCreatePayload, Level } from "@/interfaces/interfaces";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const fetchLogin = async (email: string, password: string) => {
-  const endpoint = "http://127.0.0.1:8888/api/v1/user/login"
+  const endpoint = "https://developer-cgi-purple-varying.trycloudflare.com/api/v1/user/login"
 
   try {
     const response = await fetch(endpoint, {
@@ -28,7 +28,7 @@ export const fetchLogin = async (email: string, password: string) => {
 };
 
 export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "http://localhost:8000/api/level/"
+  const endpoint = "https://arrival-citizenship-climate-eagles.trycloudflare.com/api/level/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -46,7 +46,7 @@ export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]>
 };
 
 export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "http://localhost:8000/api/topic/"
+  const endpoint = "https://arrival-citizenship-climate-eagles.trycloudflare.com/api/topic/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -67,7 +67,7 @@ export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `http://localhost:8000/api/vocabulary/?topic=${nameTopic}`;
+    const endpoint = `https://arrival-citizenship-climate-eagles.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -95,7 +95,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `http://localhost:8000/api/vocabulary/?level=${levelId}`;
+    const endpoint = `https://arrival-citizenship-climate-eagles.trycloudflare.com/api/vocabulary/?level=${levelId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -122,7 +122,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
 export const fetchMeanByVocabularyAndLanguage = async ({ vocabulary, language }: { vocabulary: number, language: number }): Promise<any[]> => {
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-    const endpoint = `http://localhost:8000/api/mean/?vocabulary=${vocabulary}&language=${language}`
+    const endpoint = `https://arrival-citizenship-climate-eagles.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -151,7 +151,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
     const token = await AsyncStorage.getItem('token');
     const email = await AsyncStorage.getItem('email');
 
-    const endpoint = `http://localhost:8888/api/v1/user/${email}`;
+    const endpoint = `https://developer-cgi-purple-varying.trycloudflare.com/api/v1/user/${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -177,7 +177,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
 
 export const fetchUserCache = async ({ email }: { email: string }): Promise<any[]> => {
   try {
-    const endpoint = `http://localhost:8000/api/user_cache/?email=${email}`;
+    const endpoint = `https://arrival-citizenship-climate-eagles.trycloudflare.com/api/user_cache/?email=${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -229,7 +229,7 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
       streak,
     };
 
-    const endpoint = `http://localhost:8000/api/user_cache/`;
+    const endpoint = `https://arrival-citizenship-climate-eagles.trycloudflare.com/api/user_cache/`;
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -259,5 +259,66 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
     return response;
   } catch (err: any) {
     throw new Error(err.message || 'Unable to save UserCache');
+  }
+};
+
+export const saveHistoryProgress = async ({
+  isFinished,
+  finished_date,
+  duration,
+  user_cache,
+  topic,
+  id_vocabulary_progress = 0,
+}: HistoryProgressCreatePayload): Promise<any> => {
+  try {
+    const payload: Record<string, any> = {
+      isFinished,
+      user_cache,
+      topic,
+      id_vocabulary_progress,
+    };
+
+    // Chỉ thêm nếu có giá trị (backend thường cho phép null/blank)
+    if (finished_date !== undefined) {
+      payload.finished_date = finished_date; // phải là string ISO 8601
+    }
+    if (duration !== undefined) {
+      payload.duration = duration;           // "HH:MM:SS" hoặc số giây tùy backend
+    }
+
+    const endpoint = "https://arrival-citizenship-climate-eagles.trycloudflare.com/api/history_progress/";
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = {};
+      }
+
+      const errorMessage =
+        errorData.error ||
+        errorData.detail ||
+        errorData.message ||
+        errorData.non_field_errors?.[0] ||
+        `Lỗi server: ${response.status} ${response.statusText}`;
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (err: any) {
+    console.error("Error HistoryProgress:", err);
+    throw new Error(err.message || "Unable to save history progress");
   }
 };
