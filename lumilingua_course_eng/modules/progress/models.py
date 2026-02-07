@@ -36,7 +36,7 @@ class HistoryProgress(models.Model):
         db_column='id_topic',
         related_name='history_topic'
     )
-    id_vocabulary_progress = models.IntegerField(default=0, null=False, blank=True)
+    id_vocabulary_progress = models.IntegerField(default=0, null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

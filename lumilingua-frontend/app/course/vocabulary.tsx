@@ -25,7 +25,7 @@ export default function LearnVocabulary() {
     const [loadingLogin, setLoadingLogin] = useState(false);
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://developer-cgi-purple-varying.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "http://localhost:8888/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',

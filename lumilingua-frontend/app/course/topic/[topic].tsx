@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
-import { Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     interpolate,
@@ -137,15 +137,13 @@ export default function VocabularyByTopic() {
         const userCacheId = userCache[0].id_user_cache; // lấy từ cache
 
         try {
-            // Ví dụ params bạn cần truyền (thay đổi theo API thật của bạn)
             const result = await saveHistoryProgress({
                 isFinished: false,                  // false vì chưa hoàn thành, chỉ lưu tiến độ giữa chừng
                 finished_date: new Date().toISOString(),
                 duration: "00:12:45",               // bạn cần tính thời gian thực tế (dùng useRef + setInterval)
                 user_cache: userCacheId,
-                topic: Number(topic),               // topic từ params
-                id_vocabulary_progress: word?.id_vocabulary || null, // hoặc array nếu lưu nhiều
-                // thêm field khác nếu cần: learned_words, streak update, v.v.
+                topic: Number(vocabulary[index].topic),               // topic từ params
+                id_vocabulary_progress: word?.id_vocabulary || null,
             });
 
             console.log("Lưu tiến độ thành công:", result);
@@ -158,7 +156,21 @@ export default function VocabularyByTopic() {
 
     const handleConfirmExit = () => {
         console.log("handleConfirmExit call");
+        if (Platform.OS === 'web') {
+            // Fallback cho web (browser)
+            const wantSave = window.confirm(
+                "Bạn có muốn lưu tiến độ trước khi thoát không?"
+            );
 
+            if (wantSave) {
+                saveProgress().then(() => {
+                    router.back();
+                });
+            } else {
+                router.back();
+            }
+            return;
+        }
         // Mobile: dùng Alert native
         Alert.alert(
             "Exit the topic?",
