@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Alert, Dimensions, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -13,7 +13,6 @@ import Animated, {
     withSpring,
     withTiming,
 } from 'react-native-reanimated';
-
 import Notfound from '@/component/404';
 import Loading from '@/component/loading';
 import { useUserCache } from '@/hook/useUserCache';
@@ -23,12 +22,29 @@ import useFetch from '@/services/useFetch';
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
 
+const msToHHMMSS = (ms:any) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return [
+        hours.toString().padStart(2, '0'),
+        minutes.toString().padStart(2, '0'),
+        seconds.toString().padStart(2, '0'),
+    ].join(':');
+};
+
 export default function VocabularyByTopic() {
     const router = useRouter();
 
     const { topic } = useLocalSearchParams<{ topic: string }>();
-    const [email, setEmail] = useState<string | null>(null);
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
+    const startTimeRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        startTimeRef.current = Date.now();
+    }, []);
 
     const nameTopic = String(topic);
 
@@ -78,11 +94,6 @@ export default function VocabularyByTopic() {
                 setLoadingMean(false);
             });
     }, [index, vocabulary]);
-
-    // const { dataUserCacge, loading: fetchLoading, error } = useFetch(
-    //     () => fetchUserCache({ email: email! }),
-    //     !!email
-    // );
 
     /* ===================== ANIMATION ===================== */
     const translateX = useSharedValue(0);
@@ -134,20 +145,29 @@ export default function VocabularyByTopic() {
             return;
         }
 
-        const userCacheId = userCache[0].id_user_cache; // lấy từ cache
+        const vocabularyLastedOfTopic = vocabulary[vocabulary.length -1]
+        const userCacheId = userCache[0].id_user_cache;
+        const isFinished = vocabularyLastedOfTopic?.id_vocabulary === word?.id_vocabulary ? true : false
+        let duration = null;
+
+        if (isFinished && startTimeRef.current) {
+            const endTime = Date.now();
+            const diffMs = endTime - startTimeRef.current;
+
+            duration = msToHHMMSS(diffMs);
+        }
 
         try {
             const result = await saveHistoryProgress({
-                isFinished: false,                  // false vì chưa hoàn thành, chỉ lưu tiến độ giữa chừng
-                finished_date: new Date().toISOString(),
-                duration: "00:12:45",               // bạn cần tính thời gian thực tế (dùng useRef + setInterval)
+                isFinished: isFinished,
+                finished_date: isFinished ? new Date().toISOString() : null,
+                duration: isFinished ? duration : null,
                 user_cache: userCacheId,
-                topic: Number(vocabulary[index].topic),               // topic từ params
-                id_vocabulary_progress: word?.id_vocabulary || null,
+                topic: Number(vocabulary[index].topic),
+                id_vocabulary_progress: word?.id_vocabulary || null
             });
 
-            console.log("Lưu tiến độ thành công:", result);
-            // Có thể toast.success("Đã lưu tiến độ!")
+            console.log("Save successful:", result);
         } catch (err) {
             console.error("Lỗi khi lưu tiến độ:", err);
             // toast.error("Không lưu được tiến độ")

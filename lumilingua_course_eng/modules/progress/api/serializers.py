@@ -9,6 +9,7 @@ class UserCacheSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 class HistoryProgressSerializer(serializers.ModelSerializer):
+    finished_date = serializers.DateTimeField(allow_null=True, required=False)
     class Meta:
         model = HistoryProgress
         fields = ['id_history_progress', 'isFinished', 'finished_date', 'duration', 'user_cache', 'topic', 'id_vocabulary_progress']

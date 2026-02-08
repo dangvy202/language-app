@@ -79,43 +79,38 @@ class HistoryProgressViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        duration = None
+        duration_str = request.data.get('duration')
 
-        duration_str = request.data.get('duration')  # "00:12:45"
-
-        if not duration_str or duration_str:
+        if duration_str:
             h, m, s = map(int, duration_str.split(':'))
             duration = timedelta(hours=h, minutes=m, seconds=s)
 
-            try:
-                history_progress = HistoryProgress.objects.get(user_cache_id=user_cache,topic=topic)
-                created = False
-            except HistoryProgress.DoesNotExist:
-                history_progress = None
-                created = True
+        try:
+            history_progress = HistoryProgress.objects.get(user_cache_id=user_cache, topic=topic)
+            created = False
+        except HistoryProgress.DoesNotExist:
+            history_progress = None
+            created = True
 
-            if created:
-                history_progress = HistoryProgress.objects.create(
-                    user_cache_id=user_cache,
-                    isFinished=request.data.get('isFinished'),
-                    finished_date=request.data.get('finished_date'),
-                    duration=duration,
-                    id_vocabulary_progress=id_vocabulary_progress,
-                    topic_id=topic
-                )
-            else:
-                history_progress.isFinished = request.data.get('isFinished')
-                history_progress.finished_date = request.data.get('finished_date')
-                history_progress.duration = duration
-                history_progress.id_vocabulary_progress = id_vocabulary_progress
-                history_progress.save(update_fields=['isFinished', 'finished_date', 'duration', 'id_vocabulary_progress'])
-
-            serializer = self.get_serializer(history_progress)
-            return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
-        else:
-            return Response(
-                {"error": "Missing input field!"},
-                status=status.HTTP_400_BAD_REQUEST
+        if created:
+            history_progress = HistoryProgress.objects.create(
+                user_cache_id=user_cache,
+                isFinished=request.data.get('isFinished'),
+                finished_date=request.data.get('finished_date'),
+                duration=duration,
+                id_vocabulary_progress=id_vocabulary_progress,
+                topic_id=topic
             )
+        else:
+            history_progress.isFinished = request.data.get('isFinished')
+            history_progress.finished_date = request.data.get('finished_date')
+            history_progress.duration = duration
+            history_progress.id_vocabulary_progress = id_vocabulary_progress
+            history_progress.save(update_fields=['isFinished', 'finished_date', 'duration', 'id_vocabulary_progress'])
+
+        serializer = self.get_serializer(history_progress)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 class UserNoteViewSet(viewsets.ModelViewSet):
     queryset = UserNote.objects.all()
