@@ -11,18 +11,21 @@ import {
     View
 } from 'react-native';
 
-
-
 import Notfound from '@/component/404';
+import { useUserCache } from '@/hook/useUserCache';
 import { Level, Topic } from '@/interfaces/interfaces';
-import { fetchLevel, fetchTopic } from '@/services/api';
+import { fetchLevel, fetchTopic, getHistoryProgress } from '@/services/api';
 import useFetch from '@/services/useFetch';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 type VocabularyItem = Level | Topic;
 
 export default function LearnVocabulary() {
     const router = useRouter();
     const [loadingLogin, setLoadingLogin] = useState(false);
+    const [progressMap, setProgressMap] = useState<Record<number, number>>({});
+    const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
         const endpoint = "http://localhost:8888/api/v1/user/refresh";
@@ -85,6 +88,35 @@ export default function LearnVocabulary() {
             isMounted = false;
         };
     }, [router]);
+    useFocusEffect(
+        useCallback(() => {
+            if (!userCache || userCache.length === 0) return;
+
+            const fetchProgress = async () => {
+                try {
+                    const userCacheId = Number(userCache[0]?.id_user_cache);
+                    if (!userCacheId) return;
+
+                    const progressList = await getHistoryProgress(userCacheId);
+
+                    const map: Record<number, number> = {};
+
+                    progressList.forEach((item: any) => {
+                        map[item.topic] = item.progress_percent ?? 0;
+                    });
+
+                    setProgressMap(map);
+                } catch (err) {
+                    console.log("Fetch progress error:", err);
+                }
+            };
+
+            fetchProgress();
+
+        }, [userCache])
+    );
+
+
 
 
     const [activeTab, setActiveTab] = useState<'level' | 'topic'>('level');
@@ -110,56 +142,90 @@ export default function LearnVocabulary() {
         router.push(`/course/topic/${topic.name_topic}`);
     };
 
-    const renderItem = ({ item }: { item: VocabularyItem }) => (
-        <TouchableOpacity
-            className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-orange-100"
-            onPress={() => {
-                if ('id_level' in item) {
-                    handleLevelPress(item as Level);
-                } else if ('id_topic' in item) {
-                    handleTopicPress(item as Topic);
-                }
-            }}
-        >
-            <View className="flex-row justify-between items-center mb-3">
-                {'rank' in item ? (
-                    // Level item
-                    <>
-                        <Text className="text-2xl font-bold text-[#2E2A47]">{item.rank}</Text>
-                        <View className="bg-orange-100 px-4 py-2 rounded-full">
-                            <Text className="text-orange-600 font-medium">{item.level_name}</Text>
-                        </View>
-                    </>
-                ) : (
-                    // Topic item
-                    <>
-                        <View className="flex-row items-center">
-                            <Ionicons name={item.icon as any} size={28} color="#FFA500" />
-                            <Text className="ml-3 text-xl font-bold text-[#2E2A47]">{item.name_topic}</Text>
-                        </View>
-                        <View className="bg-orange-100 px-3 py-1 rounded-full">
-                            {/* <Text className="text-orange-600 font-medium">{item.count || 'N/A'} từ</Text> */}
-                        </View>
-                    </>
-                )}
-            </View>
+    const getProgressColor = (progress: number) => {
+        if (progress === 100) return "#22C55E";
+        if (progress >= 50) return "#ff9100";
+        if (progress >= 30) return "#ddce00";
+        return "#EF4444";
+    };
 
-            {/* Progress bar */}
-            <View className="mb-4">
-                <Text className="text-gray-600 mb-2">Progress: {10}%</Text>
-                <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <View
-                        className="h-full bg-[#FFA500]"
-                        style={{ width: `${10}%` }}
-                    />
+    const renderItem = ({ item }: { item: VocabularyItem }) => {
+        const progress =
+            'id_topic' in item
+                ? progressMap[item.id_topic] || 0
+                : 0;
+        const progressColor = getProgressColor(progress);
+        return (
+            <TouchableOpacity
+                className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-orange-100"
+                onPress={() => {
+                    if ('id_level' in item) {
+                        handleLevelPress(item as Level);
+                    } else if ('id_topic' in item) {
+                        handleTopicPress(item as Topic);
+                    }
+                }}
+            >
+                <View className="flex-row justify-between items-center mb-3">
+                    {'rank' in item ? (
+                        // Level item
+                        <>
+                            <Text className="text-2xl font-bold text-[#2E2A47]">
+                                {item.rank}
+                            </Text>
+                            <View className="bg-orange-100 px-4 py-2 rounded-full">
+                                <Text className="text-orange-600 font-medium">
+                                    {item.level_name}
+                                </Text>
+                            </View>
+                        </>
+                    ) : (
+                        // Topic item
+                        <>
+                            <View className="flex-row items-center">
+                                <Ionicons
+                                    name={item.icon as any}
+                                    size={28}
+                                    color="#FFA500"
+                                />
+                                <Text className="ml-3 text-xl font-bold text-[#2E2A47]">
+                                    {item.name_topic}
+                                </Text>
+                            </View>
+                            <View className="bg-orange-100 px-3 py-1 rounded-full" />
+                        </>
+                    )}
                 </View>
-            </View>
 
-            <View className="flex-row justify-end">
-                <Text className="text-[#FFA500] font-medium">Continuous →</Text>
-            </View>
-        </TouchableOpacity>
-    );
+                {/* Progress bar */}
+                {'id_topic' in item && (
+                    <View className="mb-4">
+                        <Text className="text-gray-600 mb-2">
+                            Progress: {progress}%
+                        </Text>
+
+                        <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <View
+                                className="h-full rounded-full"
+                                style={{
+                                    width: `${progress}%`,
+                                    backgroundColor: progressColor
+                                }}
+                            />
+                        </View>
+                    </View>
+                )}
+
+                <View className="flex-row justify-end">
+                    <Text className="text-[#FFA500] font-medium">
+                        Continuous →
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+
 
     return (
         <>

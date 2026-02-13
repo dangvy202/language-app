@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, useRouter } from "expo-router";
-import { Text, TouchableOpacity, View, Modal } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { useState, useRef } from "react";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';

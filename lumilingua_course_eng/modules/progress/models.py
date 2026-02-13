@@ -24,6 +24,7 @@ class HistoryProgress(models.Model):
     isFinished = models.BooleanField(default=False)
     finished_date = models.DateTimeField(null=True, blank=True)
     duration = models.DurationField(null=True, blank=True)
+    progress_percent = models.IntegerField(default=0)
     user_cache = models.ForeignKey(
         'UserCache',
         on_delete=models.CASCADE,

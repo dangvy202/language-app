@@ -18,6 +18,8 @@ import Loading from '@/component/loading';
 import { useUserCache } from '@/hook/useUserCache';
 import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic, saveHistoryProgress } from '@/services/api';
 import useFetch from '@/services/useFetch';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
@@ -153,8 +155,14 @@ export default function VocabularyByTopic() {
         if (isFinished && startTimeRef.current) {
             const endTime = Date.now();
             const diffMs = endTime - startTimeRef.current;
-
             duration = msToHHMMSS(diffMs);
+        }
+
+        const onePercentWord = 100 / vocabulary.length
+        let progressPercent = 0
+
+        for(let i = 0 ; i <= index; i++) {
+            progressPercent += onePercentWord
         }
 
         try {
@@ -163,14 +171,14 @@ export default function VocabularyByTopic() {
                 finished_date: isFinished ? new Date().toISOString() : null,
                 duration: isFinished ? duration : null,
                 user_cache: userCacheId,
+                progress_percent: progressPercent,
                 topic: Number(vocabulary[index].topic),
                 id_vocabulary_progress: word?.id_vocabulary || null
             });
 
             console.log("Save successful:", result);
         } catch (err) {
-            console.error("Lỗi khi lưu tiến độ:", err);
-            // toast.error("Không lưu được tiến độ")
+            console.error("Failures save progress:", err);
         }
     };
 

@@ -35,5 +35,6 @@ export interface HistoryProgressCreatePayload {
   duration?: string | null;
   user_cache: number;
   topic: number;
+  progress_percent: number,
   id_vocabulary_progress: number;
 }

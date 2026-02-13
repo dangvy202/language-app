@@ -268,6 +268,7 @@ export const saveHistoryProgress = async ({
   duration,
   user_cache,
   topic,
+  progress_percent,
   id_vocabulary_progress = 0,
 }: HistoryProgressCreatePayload): Promise<any> => {
   try {
@@ -275,15 +276,15 @@ export const saveHistoryProgress = async ({
       isFinished,
       user_cache,
       topic,
+      progress_percent,
       id_vocabulary_progress,
     };
 
-    // Chỉ thêm nếu có giá trị (backend thường cho phép null/blank)
     if (finished_date !== undefined) {
-      payload.finished_date = finished_date; // phải là string ISO 8601
+      payload.finished_date = finished_date;
     }
     if (duration !== undefined) {
-      payload.duration = duration;           // "HH:MM:SS" hoặc số giây tùy backend
+      payload.duration = duration;
     }
 
     const endpoint = "http://localhost:8000/api/history_progress/";
@@ -310,7 +311,7 @@ export const saveHistoryProgress = async ({
         errorData.detail ||
         errorData.message ||
         errorData.non_field_errors?.[0] ||
-        `Lỗi server: ${response.status} ${response.statusText}`;
+        `Server error: ${response.status} ${response.statusText}`;
 
       throw new Error(errorMessage);
     }
@@ -321,4 +322,25 @@ export const saveHistoryProgress = async ({
     console.error("Error HistoryProgress:", err);
     throw new Error(err.message || "Unable to save history progress");
   }
+};
+
+export const getHistoryProgress = async (userCacheId: number) => {
+  let endpoint = `http://localhost:8000/api/history_progress/?user_cache=${userCacheId}`;
+
+  // if (topic) {
+  //   endpoint += `&topic=${topic}`;
+  // }
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch history progress");
+  }
+
+  return response.json();
 };

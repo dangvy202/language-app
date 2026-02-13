@@ -68,6 +68,14 @@ class UserCacheViewSet(viewsets.ModelViewSet):
 class HistoryProgressViewSet(viewsets.ModelViewSet):
     queryset = HistoryProgress.objects.all()
     serializer_class = HistoryProgressSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_cache = self.request.query_params.get('user_cache')
+        if user_cache:
+            queryset = queryset.filter(user_cache=user_cache)
+        return queryset
+
     def create(self, request, *args, **kwargs):
         user_cache = request.data.get('user_cache')
         topic = request.data.get('topic')
@@ -99,6 +107,7 @@ class HistoryProgressViewSet(viewsets.ModelViewSet):
                 isFinished=request.data.get('isFinished'),
                 finished_date=request.data.get('finished_date'),
                 duration=duration,
+                progress_percent=request.data.get('progress_percent'),
                 id_vocabulary_progress=id_vocabulary_progress,
                 topic_id=topic
             )
@@ -106,8 +115,9 @@ class HistoryProgressViewSet(viewsets.ModelViewSet):
             history_progress.isFinished = request.data.get('isFinished')
             history_progress.finished_date = request.data.get('finished_date')
             history_progress.duration = duration
+            history_progress.progress_percent= history_progress.progress_percent if history_progress.progress_percent == 100 else request.data.get('progress_percent')
             history_progress.id_vocabulary_progress = id_vocabulary_progress
-            history_progress.save(update_fields=['isFinished', 'finished_date', 'duration', 'id_vocabulary_progress'])
+            history_progress.save(update_fields=['isFinished', 'finished_date', 'duration', 'progress_percent', 'id_vocabulary_progress'])
 
         serializer = self.get_serializer(history_progress)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
