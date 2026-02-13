@@ -18,8 +18,6 @@ import Loading from '@/component/loading';
 import { useUserCache } from '@/hook/useUserCache';
 import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic, saveHistoryProgress } from '@/services/api';
 import useFetch from '@/services/useFetch';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;

@@ -116,9 +116,6 @@ export default function LearnVocabulary() {
         }, [userCache])
     );
 
-
-
-
     const [activeTab, setActiveTab] = useState<'level' | 'topic'>('level');
 
     const levelFetch = useFetch(() => fetchLevel({ query: "" }), true);
@@ -149,16 +146,38 @@ export default function LearnVocabulary() {
         return "#EF4444";
     };
 
-    const renderItem = ({ item }: { item: VocabularyItem }) => {
+    const renderItem = ({ item, index }: { item: VocabularyItem; index: number }) => {
+        const isTopic = 'id_topic' in item;
+
         const progress =
             'id_topic' in item
                 ? progressMap[item.id_topic] || 0
                 : 0;
         const progressColor = getProgressColor(progress);
+
+        let isLocked = false;
+
+        if (isTopic && activeTab === 'topic') {
+            if (index === 0) {
+                isLocked = false;
+            } else {
+                const prevItem = currentData[index - 1] as Topic;
+                const prevProgress = progressMap[prevItem.id_topic] || 0;
+
+                if (prevProgress < 100) {
+                    isLocked = true;
+                }
+            }
+        }
+
         return (
             <TouchableOpacity
-                className="bg-white rounded-2xl p-5 mb-4 shadow-md border border-orange-100"
+                disabled={isLocked}
+                className={`bg-white rounded-2xl p-5 mb-4 shadow-md border 
+                    ${isLocked ? 'opacity-50 border-gray-200' : 'border-orange-100'}`}
                 onPress={() => {
+                    if (isLocked) return;
+
                     if ('id_level' in item) {
                         handleLevelPress(item as Level);
                     } else if ('id_topic' in item) {
@@ -216,17 +235,18 @@ export default function LearnVocabulary() {
                     </View>
                 )}
 
-                <View className="flex-row justify-end">
-                    <Text className="text-[#FFA500] font-medium">
-                        Continuous →
-                    </Text>
+                <View className="flex-row justify-end items-center">
+                    {isLocked ? (
+                        <Ionicons name="lock-closed" size={20} color="#9CA3AF" />
+                    ) : (
+                        <Text className="text-[#FFA500] font-medium">
+                            Continuous →
+                        </Text>
+                    )}
                 </View>
             </TouchableOpacity>
         );
     };
-
-
-
     return (
         <>
             <Stack.Screen
