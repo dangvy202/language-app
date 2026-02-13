@@ -25,6 +25,7 @@ interface Topic {
   id_topic: number;
   name_topic: string;
   icon: string,
+  vocabulary_count: number,
   created_at: string,
   updated_at: string,
 }

@@ -28,7 +28,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "http://localhost:8888/api/v1/user/refresh";
+        const endpoint = "https://securities-charleston-intersection-utilize.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -189,13 +189,25 @@ export default function LearnVocabulary() {
                     {'rank' in item ? (
                         // Level item
                         <>
-                            <Text className="text-2xl font-bold text-[#2E2A47]">
-                                {item.rank}
-                            </Text>
-                            <View className="bg-orange-100 px-4 py-2 rounded-full">
-                                <Text className="text-orange-600 font-medium">
-                                    {item.level_name}
-                                </Text>
+                            <View className="flex-row items-center">
+                                <View className="w-12 h-12 bg-orange-100 rounded-xl items-center justify-center mr-3">
+                                    <Text className="text-lg font-bold text-[#FFA500]">
+                                        {item.rank}
+                                    </Text>
+                                </View>
+                                <View className="flex-1 mr-3">
+                                    <Text className="text-xl font-bold text-[#2E2A47]">
+                                        {item.level_name}
+                                    </Text>
+
+                                    <Text
+                                        className="text-sm text-gray-500 mt-1"
+                                        numberOfLines={2}
+                                        ellipsizeMode="tail"
+                                    >
+                                        {item.description}
+                                    </Text>
+                                </View>
                             </View>
                         </>
                     ) : (
@@ -211,24 +223,37 @@ export default function LearnVocabulary() {
                                     {item.name_topic}
                                 </Text>
                             </View>
-                            <View className="bg-orange-100 px-3 py-1 rounded-full" />
+                            <View className="bg-orange-100 px-3 py-1 rounded-full">
+                                <Text>{item.vocabulary_count} words</Text>
+                            </View>
                         </>
                     )}
                 </View>
 
                 {/* Progress bar */}
                 {'id_topic' in item && (
-                    <View className="mb-4">
-                        <Text className="text-gray-600 mb-2">
-                            Progress: {progress}%
-                        </Text>
+                    <View className="mb-5">
+                        {/* Top row: description + percent */}
+                        <View className="flex-row justify-between items-center mb-2">
+                            <Text className="text-sm text-gray-500">
+                                Learning progress
+                            </Text>
 
-                        <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <Text
+                                className="text-sm font-semibold"
+                                style={{ color: progressColor }}
+                            >
+                                {progress}%
+                            </Text>
+                        </View>
+
+                        {/* Progress bar */}
+                        <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
                             <View
                                 className="h-full rounded-full"
                                 style={{
                                     width: `${progress}%`,
-                                    backgroundColor: progressColor
+                                    backgroundColor: progressColor,
                                 }}
                             />
                         </View>
@@ -274,9 +299,6 @@ export default function LearnVocabulary() {
                         </View>
                     </View>
                 </View>
-
-
-
 
                 {/* Tabs */}
                 <View className="flex-row px-6 mt-4 mb-2 bg-white border-b border-gray-200">

@@ -9,9 +9,10 @@ class LevelSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 class TopicSerializer(serializers.ModelSerializer):
+    vocabulary_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Topic
-        fields = ['id_topic', 'name_topic', 'icon']
+        fields = ['id_topic', 'name_topic', 'icon', 'vocabulary_count']
         read_only_fields = ['created_at', 'updated_at']
 
 class VocabularySerializer(serializers.ModelSerializer):

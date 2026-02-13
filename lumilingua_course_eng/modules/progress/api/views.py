@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
 
-from .serializers import UserCacheSerializer, CertificateSerializer, CertificateCacheSerializer, UserNoteSerializer, \
+from .serializers import CertificateSerializer, CertificateCacheSerializer, UserNoteSerializer, \
     HistoryProgressSerializer
 from ..models import UserCache, Certificate, CertificateCache, UserNote, HistoryProgress
 from .serializers import UserCacheSerializer
