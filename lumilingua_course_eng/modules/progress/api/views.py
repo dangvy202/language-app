@@ -126,6 +126,61 @@ class UserNoteViewSet(viewsets.ModelViewSet):
     queryset = UserNote.objects.all()
     serializer_class = UserNoteSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        user_cache = self.request.query_params.get('id_user_cache')
+        vocabulary = self.request.query_params.get('id_vocabulary')
+
+        if user_cache:
+            queryset = queryset.filter(user_cache_id=user_cache)
+
+        if vocabulary:
+            queryset = queryset.filter(vocabulary_id=vocabulary)
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        vocabulary = request.data.get('id_vocabulary')
+        user_cache = request.data.get('id_user_cache')
+        content_note = request.data.get('content_note')
+        description_note = request.data.get('description_note')
+
+        if not user_cache or not vocabulary:
+            return Response(
+                {"error": "Missing input field!"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            user_note = UserNote.objects.get(vocabulary_id=vocabulary, user_cache_id=user_cache)
+            if content_note or description_note:
+                user_note.content_note = content_note
+                user_note.description_note = description_note
+                user_note.save(update_fields=['content_note', 'description_note'])
+
+                return Response(
+                    {"code": 204, "message": "Updated successfully"},
+                    status=status.HTTP_200_OK
+                )
+
+            else:
+                user_note.delete()
+                return Response(
+                    {"code":200, "message": "Deleted successfully"},
+                    status=status.HTTP_200_OK
+                )
+        except UserNote.DoesNotExist:
+            user_note = UserNote.objects.create(
+                content_note=request.data.get('content_note'),
+                description_note=request.data.get('description_note'),
+                user_cache_id=user_cache,
+                vocabulary_id=vocabulary
+            )
+            serializer = self.get_serializer(user_note)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer

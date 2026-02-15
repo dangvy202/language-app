@@ -58,12 +58,21 @@ class UserNote(models.Model):
         db_column='id_user_cache',
         related_name='user_notes'
     )
+    vocabulary = models.ForeignKey(
+        'course.Vocabulary',
+        on_delete=models.CASCADE,
+        db_column='id_vocabulary',
+        related_name='fk_user_vocabulary'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "tbl_user_note"
         managed = False
+        constraints = [
+            models.UniqueConstraint(fields=['user_cache', 'vocabulary'], name='unique_usercache_vocabulary')
+        ]
 
 class Certificate(models.Model):
     id_certificate = models.AutoField(primary_key=True)

@@ -18,7 +18,7 @@ class HistoryProgressSerializer(serializers.ModelSerializer):
 class UserNoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserNote
-        fields = ['id_note', 'content_note', 'description_note', 'user_cache']
+        fields = ['id_note', 'content_note', 'description_note', 'user_cache', 'vocabulary']
         read_only_fields = ['created_at', 'updated_at']
 
 class CertificateSerializer(serializers.ModelSerializer):

@@ -39,3 +39,10 @@ export interface HistoryProgressCreatePayload {
   progress_percent: number,
   id_vocabulary_progress: number;
 }
+
+export interface UserNoteCreatePayLoad {
+  content_note: string | null;
+  description_note: string | null;
+  id_vocabulary: string;
+  id_user_cache: number;
+}

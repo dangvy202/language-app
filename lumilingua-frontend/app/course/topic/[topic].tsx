@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useEffect, useState, useRef } from 'react';
-import { Alert, Dimensions, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     interpolate,
@@ -16,13 +16,14 @@ import Animated, {
 import Notfound from '@/component/404';
 import Loading from '@/component/loading';
 import { useUserCache } from '@/hook/useUserCache';
-import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic, saveHistoryProgress } from '@/services/api';
+import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic, saveHistoryProgress, saveNoteVocabulary } from '@/services/api';
 import useFetch from '@/services/useFetch';
+import { useSavedVocabulary } from '@/hook/useUserNote';
 
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
 
-const msToHHMMSS = (ms:any) => {
+const msToHHMMSS = (ms: any) => {
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -41,6 +42,8 @@ export default function VocabularyByTopic() {
     const { topic } = useLocalSearchParams<{ topic: string }>();
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
     const startTimeRef = useRef<number | null>(null);
+    const { isSavedVocabulary, reload  } = useSavedVocabulary(userCache?.[0]?.id_user_cache);
+
 
     useEffect(() => {
         startTimeRef.current = Date.now();
@@ -61,9 +64,15 @@ export default function VocabularyByTopic() {
     const [example, setExample] = useState<string | null>(null);
     const [loadingMean, setLoadingMean] = useState(false);
 
+    /* ===================== USER NOTE ===================== */
+    const [isSaved, setIsSaved] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [contentNote, setContentNote] = useState('');
+    const [descriptionNote, setDescriptionNote] = useState('');
+
     /* ===================== NEW STATES FOR UI (giả lập) ===================== */
     const [isRecording, setIsRecording] = useState(false); // giả lập đang ghi âm
-    const [isSaved, setIsSaved] = useState(false); // giả lập đã bookmark
+    const [isSavedRecording, setIsSavedRecording] = useState(false); // giả lập đã bookmark
 
 
 
@@ -134,10 +143,46 @@ export default function VocabularyByTopic() {
     };
 
     const toggleSave = () => {
-        setIsSaved(prev => !prev);
         vibrate();
-        // Sau này: lưu vào AsyncStorage hoặc gửi API save bookmark
+
+        if (isSaved) {
+            setIsSaved(false);
+        } else {
+            setShowModal(true);
+        }
     };
+
+    const handleSaveNote = async () => {
+        try {
+            if (!userCache || userCache.length === 0) {
+                Alert.alert("User not found");
+                return;
+            }
+
+            const vocabId = word.id_vocabulary;
+            const userCacheId = userCache[0].id_user_cache;
+
+            const payload = {
+                id_user_cache: userCacheId,
+                id_vocabulary: vocabId,
+                content_note: contentNote,
+                description_note: descriptionNote,
+            };
+
+            await saveNoteVocabulary(payload);
+
+            await reload();
+
+            setShowModal(false);
+            setContentNote("");
+            setDescriptionNote("");
+            vibrate();
+
+        } catch (err) {
+            Alert.alert("Error saving note");
+        }
+    };
+
 
     const saveProgress = async () => {
         if (!userCache || userCache.length === 0) {
@@ -145,7 +190,7 @@ export default function VocabularyByTopic() {
             return;
         }
 
-        const vocabularyLastedOfTopic = vocabulary[vocabulary.length -1]
+        const vocabularyLastedOfTopic = vocabulary[vocabulary.length - 1]
         const userCacheId = userCache[0].id_user_cache;
         const isFinished = vocabularyLastedOfTopic?.id_vocabulary === word?.id_vocabulary ? true : false
         let duration = null;
@@ -159,7 +204,7 @@ export default function VocabularyByTopic() {
         const onePercentWord = 100 / vocabulary.length
         let progressPercent = 0
 
-        for(let i = 0 ; i <= index; i++) {
+        for (let i = 0; i <= index; i++) {
             progressPercent += onePercentWord
         }
 
@@ -281,6 +326,62 @@ export default function VocabularyByTopic() {
                 }}
             />
 
+            <Modal
+                visible={showModal}
+                transparent
+                animationType="fade"
+            >
+                <View className="flex-1 justify-center items-center bg-black/40">
+                    <View className="w-[90%] bg-white rounded-2xl p-5">
+
+                        <Text className="text-lg font-bold mb-4 text-[#2E2A47]">
+                            Add Vocabulary Note
+                        </Text>
+
+                        <TextInput
+                            placeholder="Content note..."
+                            placeholderTextColor="#9CA3AF"
+                            value={contentNote}
+                            onChangeText={setContentNote}
+                            className="border border-gray-300 rounded-lg p-3 mb-3"
+                        />
+
+                        <TextInput
+                            placeholder="Description note..."
+                            placeholderTextColor="#9CA3AF"
+                            value={descriptionNote}
+                            onChangeText={setDescriptionNote}
+                            multiline
+                            numberOfLines={3}
+                            className="border border-gray-300 rounded-lg p-3 mb-4"
+                        />
+
+                        <View className="flex-row justify-between mt-2">
+
+                            <TouchableOpacity
+                                onPress={() => setShowModal(false)}
+                                className="flex-1 mr-2 bg-[#EF4444] border border-gray-300 py-3 rounded-xl items-center"
+                            >
+                                <Text className="text-white font-semibold">
+                                    Cancel
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                onPress={handleSaveNote}
+                                className="flex-1 ml-2 bg-[#22C55E] py-3 rounded-xl items-center"
+                            >
+                                <Text className="text-white font-semibold">
+                                    Save
+                                </Text>
+                            </TouchableOpacity>
+
+                        </View>
+
+                    </View>
+                </View>
+            </Modal>
+
             <View className="flex-1 bg-gray-100">
                 {/* HEADER */}
                 <View className="pt-14 pb-6 px-6 flex-row justify-between items-center">
@@ -289,8 +390,7 @@ export default function VocabularyByTopic() {
                     </Text>
                     <TouchableOpacity
                         onPress={() => {
-                            console.log("=== NÚT CLOSE ĐÃ ĐƯỢC BẤM ===");
-                            vibrate(); // rung nhẹ để biết có nhận touch không
+                            vibrate();
                             handleConfirmExit();
                         }}
                         className="bg-black/10 p-2 rounded-full"
@@ -322,9 +422,9 @@ export default function VocabularyByTopic() {
                                 className="absolute top-6 left-6 bg-orange-100 p-3 rounded-full shadow z-10"
                             >
                                 <Ionicons
-                                    name={isSaved ? "bookmark" : "bookmark-outline"}
+                                    name={isSavedVocabulary(word.id_vocabulary) ? "bookmark" : "bookmark-outline"}
                                     size={28}
-                                    color={isSaved ? "#FFA500" : "#666"}
+                                    color={isSavedVocabulary(word.id_vocabulary) ? "#FFA500" : "#666"}
                                 />
                             </TouchableOpacity>
 
