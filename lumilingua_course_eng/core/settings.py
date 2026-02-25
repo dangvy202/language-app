@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'modules.course.apps.CourseConfig',
-    'modules.progress.apps.ProgressConfig'
+    'modules.progress.apps.ProgressConfig',
+    'modules.exercise.apps.ExerciseConfig'
 ]
 
 MIDDLEWARE = [

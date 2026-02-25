@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useEffect, useState, useRef } from 'react';
-import { Alert, Dimensions, Image, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, Linking, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
     interpolate,
@@ -19,6 +19,7 @@ import { useUserCache } from '@/hook/useUserCache';
 import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic, saveHistoryProgress, saveNoteVocabulary } from '@/services/api';
 import useFetch from '@/services/useFetch';
 import { useSavedVocabulary } from '@/hook/useUserNote';
+import { Audio } from 'expo-av';
 
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
@@ -42,7 +43,8 @@ export default function VocabularyByTopic() {
     const { topic } = useLocalSearchParams<{ topic: string }>();
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
     const startTimeRef = useRef<number | null>(null);
-    const { isSavedVocabulary, reload  } = useSavedVocabulary(userCache?.[0]?.id_user_cache);
+    const { isSavedVocabulary, reload } = useSavedVocabulary(userCache?.[0]?.id_user_cache);
+    const recordingRef = useRef<Audio.Recording | null>(null);
 
 
     useEffect(() => {
@@ -72,7 +74,7 @@ export default function VocabularyByTopic() {
 
     /* ===================== NEW STATES FOR UI (giả lập) ===================== */
     const [isRecording, setIsRecording] = useState(false); // giả lập đang ghi âm
-    const [isSavedRecording, setIsSavedRecording] = useState(false); // giả lập đã bookmark
+    const [recording, setRecording] = useState<Audio.Recording | null>(null);
 
 
 
@@ -103,6 +105,7 @@ export default function VocabularyByTopic() {
                 setLoadingMean(false);
             });
     }, [index, vocabulary]);
+
 
     /* ===================== ANIMATION ===================== */
     const translateX = useSharedValue(0);
@@ -136,12 +139,55 @@ export default function VocabularyByTopic() {
         rotateZ.value = 0;
     };
 
-    const toggleRecord = () => {
-        setIsRecording(prev => !prev);
-        vibrate();
-        // Sau này: start/stop recording + gọi API pronunciation scoring
-    };
+    const toggleRecord = async () => {
+        try {
+            if (!isRecording) {
+            // Bật chế độ ghi âm trên iOS (bắt buộc)
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: true,
+                interruptionModeIOS: 1, // 1 = DoNotMix (không mix với app khác)
+                playsInSilentModeIOS: true,
+                staysActiveInBackground: false,
+                interruptionModeAndroid: 1, // 1 = DoNotMix cho Android
+                shouldDuckAndroid: true,
+                playThroughEarpieceAndroid: false,
+            });
 
+            // Yêu cầu quyền micro
+            const { status } = await Audio.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                'Quyền micro cần thiết',
+                'Vui lòng cho phép ứng dụng truy cập micro trong cài đặt để luyện phát âm.',
+                [
+                    { text: 'Đóng', style: 'cancel' },
+                    { text: 'Mở cài đặt', onPress: () => Linking.openSettings() }
+                ]
+                );
+                return;
+            }
+
+                setIsRecording(true);
+                const { recording } = await Audio.Recording.createAsync(
+                    Audio.RecordingOptionsPresets.HIGH_QUALITY
+                );
+                setRecording(recording);
+                await recording.startAsync();
+                console.log('Bắt đầu ghi âm...');
+            } else {
+                await recording?.stopAndUnloadAsync();
+                setIsRecording(false);
+                const uri = recording?.getURI();
+                console.log('Ghi âm xong, file:', uri);
+                // TODO: gửi uri lên server nếu cần
+                setRecording(null); // clear ref
+            }
+        } catch (err) {
+            console.error('Ghi âm lỗi:', err);
+            setIsRecording(false);
+        }
+    };
+    
     const toggleSave = () => {
         vibrate();
 
@@ -483,7 +529,7 @@ export default function VocabularyByTopic() {
                         <TouchableOpacity
                             onPress={toggleRecord}
                             className={`p-5 rounded-full shadow-lg
-                        ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-orange-100'}`}
+                                ${isRecording ? 'bg-red-500' : 'bg-orange-100'}`}
                         >
                             <Ionicons
                                 name="mic"

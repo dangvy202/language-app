@@ -39,6 +39,13 @@
           }
         }
       ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Cho phép ứng dụng ghi âm để luyện phát âm",
+          "cameraPermission": "Cho phép ứng dụng sử dụng camera nếu cần"
+        }
+      ],
       "expo-secure-store"
     ],
     "experiments": {

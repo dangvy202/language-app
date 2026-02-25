@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+    Alert,
     FlatList,
     RefreshControl,
     Text,
@@ -28,7 +29,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://cup-phrase-avenue-void.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "https://western-enhancement-buffalo-institutional.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -370,18 +371,26 @@ export default function LearnVocabulary() {
                         }
                     />
                 )}
+                
 
-                {/* Bottom button */}
-                {/* <View className="absolute bottom-6 left-6 right-6">
+                <View className="absolute bottom-6 left-6 right-6">
                     <TouchableOpacity
                         className="bg-[#FFA500] py-5 rounded-2xl items-center shadow-xl"
                         onPress={() => {
-                            // Alert.alert('Ôn tập', 'Chức năng đang phát triển!');
+                            if (activeTab === 'level') {
+                                Alert.alert('Ôn tập', 'Chức năng ôn từ đã note đang phát triển!');
+                            } else {
+                                Alert.alert('Làm bài tập', 'Chức năng kiểm tra topic đang phát triển!');
+                            }
                         }}
                     >
-                        <Text className="text-white text-lg font-bold">Ôn tập từ vựng hôm nay</Text>
+                        <Text className="text-white text-lg font-bold">
+                            {activeTab === 'level' ? 'Ôn tập các từ đã note' : 'Làm bài tập kiểm tra'}
+                        </Text>
                     </TouchableOpacity>
-                </View> */}
+                </View>
+
+                
             </View>
         </>
 

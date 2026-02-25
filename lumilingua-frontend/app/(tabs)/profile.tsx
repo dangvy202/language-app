@@ -27,32 +27,31 @@ const Profile = () => {
     }, []);
 
     const handleLogout = async () => {
-        try {
-            await AsyncStorage.multiRemove([
-                'token',
-                'refreshToken',
-                'expired',
-                'username',
-                'email',
-            ]);
-            router.replace('/Login');
-        } catch (err) {
-            Alert.alert('Lỗi', 'Đăng xuất thất bại');
-        }
-        // Alert.alert(
-        //     'Đăng xuất',
-        //     'Bạn có chắc muốn đăng xuất?',
-        //     [
-        //         { text: 'Hủy', style: 'cancel' },
-        //         {
-        //             text: 'Đăng xuất',
-        //             style: 'destructive',
-        //             onPress: async () => {
-
-        //             },
-        //         },
-        //     ]
-        // );
+        Alert.alert(
+            'Đăng xuất',
+            'Bạn có chắc muốn đăng xuất?',
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Đăng xuất',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await AsyncStorage.multiRemove([
+                                'token',
+                                'refreshToken',
+                                'expired',
+                                'username',
+                                'email',
+                            ]);
+                            router.replace('/Login');
+                        } catch (err) {
+                            Alert.alert('Lỗi', 'Đăng xuất thất bại');
+                        }
+                    },
+                },
+            ]
+        );
     };
     return (
         <View style={styles.container}>
