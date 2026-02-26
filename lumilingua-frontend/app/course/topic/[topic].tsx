@@ -19,7 +19,7 @@ import { useUserCache } from '@/hook/useUserCache';
 import { fetchMeanByVocabularyAndLanguage, fetchVocabularyByTopic, saveHistoryProgress, saveNoteVocabulary } from '@/services/api';
 import useFetch from '@/services/useFetch';
 import { useSavedVocabulary } from '@/hook/useUserNote';
-import { Audio } from 'expo-av';
+// import { Audio } from 'expo-av';
 
 const { width } = Dimensions.get('window');
 const SWIPE_LIMIT = width * 0.25;
@@ -44,7 +44,7 @@ export default function VocabularyByTopic() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
     const startTimeRef = useRef<number | null>(null);
     const { isSavedVocabulary, reload } = useSavedVocabulary(userCache?.[0]?.id_user_cache);
-    const recordingRef = useRef<Audio.Recording | null>(null);
+    // const recordingRef = useRef<Audio.Recording | null>(null);
 
 
     useEffect(() => {
@@ -74,7 +74,7 @@ export default function VocabularyByTopic() {
 
     /* ===================== NEW STATES FOR UI (giả lập) ===================== */
     const [isRecording, setIsRecording] = useState(false); // giả lập đang ghi âm
-    const [recording, setRecording] = useState<Audio.Recording | null>(null);
+    // const [recording, setRecording] = useState<Audio.Recording | null>(null);
 
 
 
@@ -140,52 +140,52 @@ export default function VocabularyByTopic() {
     };
 
     const toggleRecord = async () => {
-        try {
-            if (!isRecording) {
-            // Bật chế độ ghi âm trên iOS (bắt buộc)
-            await Audio.setAudioModeAsync({
-                allowsRecordingIOS: true,
-                interruptionModeIOS: 1, // 1 = DoNotMix (không mix với app khác)
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: false,
-                interruptionModeAndroid: 1, // 1 = DoNotMix cho Android
-                shouldDuckAndroid: true,
-                playThroughEarpieceAndroid: false,
-            });
+        // try {
+        //     if (!isRecording) {
+        //     // Bật chế độ ghi âm trên iOS (bắt buộc)
+        //     await Audio.setAudioModeAsync({
+        //         allowsRecordingIOS: true,
+        //         interruptionModeIOS: 1, // 1 = DoNotMix (không mix với app khác)
+        //         playsInSilentModeIOS: true,
+        //         staysActiveInBackground: false,
+        //         interruptionModeAndroid: 1, // 1 = DoNotMix cho Android
+        //         shouldDuckAndroid: true,
+        //         playThroughEarpieceAndroid: false,
+        //     });
 
-            // Yêu cầu quyền micro
-            const { status } = await Audio.requestPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert(
-                'Quyền micro cần thiết',
-                'Vui lòng cho phép ứng dụng truy cập micro trong cài đặt để luyện phát âm.',
-                [
-                    { text: 'Đóng', style: 'cancel' },
-                    { text: 'Mở cài đặt', onPress: () => Linking.openSettings() }
-                ]
-                );
-                return;
-            }
+        //     // Yêu cầu quyền micro
+        //     const { status } = await Audio.requestPermissionsAsync();
+        //     if (status !== 'granted') {
+        //         Alert.alert(
+        //         'Quyền micro cần thiết',
+        //         'Vui lòng cho phép ứng dụng truy cập micro trong cài đặt để luyện phát âm.',
+        //         [
+        //             { text: 'Đóng', style: 'cancel' },
+        //             { text: 'Mở cài đặt', onPress: () => Linking.openSettings() }
+        //         ]
+        //         );
+        //         return;
+        //     }
 
-                setIsRecording(true);
-                const { recording } = await Audio.Recording.createAsync(
-                    Audio.RecordingOptionsPresets.HIGH_QUALITY
-                );
-                setRecording(recording);
-                await recording.startAsync();
-                console.log('Bắt đầu ghi âm...');
-            } else {
-                await recording?.stopAndUnloadAsync();
-                setIsRecording(false);
-                const uri = recording?.getURI();
-                console.log('Ghi âm xong, file:', uri);
-                // TODO: gửi uri lên server nếu cần
-                setRecording(null); // clear ref
-            }
-        } catch (err) {
-            console.error('Ghi âm lỗi:', err);
-            setIsRecording(false);
-        }
+        //         setIsRecording(true);
+        //         const { recording } = await Audio.Recording.createAsync(
+        //             Audio.RecordingOptionsPresets.HIGH_QUALITY
+        //         );
+        //         setRecording(recording);
+        //         await recording.startAsync();
+        //         console.log('Bắt đầu ghi âm...');
+        //     } else {
+        //         await recording?.stopAndUnloadAsync();
+        //         setIsRecording(false);
+        //         const uri = recording?.getURI();
+        //         console.log('Ghi âm xong, file:', uri);
+        //         // TODO: gửi uri lên server nếu cần
+        //         setRecording(null); // clear ref
+        //     }
+        // } catch (err) {
+        //     console.error('Ghi âm lỗi:', err);
+        //     setIsRecording(false);
+        // }
     };
     
     const toggleSave = () => {

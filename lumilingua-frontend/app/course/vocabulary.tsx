@@ -14,13 +14,13 @@ import {
 
 import Notfound from '@/component/404';
 import { useUserCache } from '@/hook/useUserCache';
-import { Level, Topic } from '@/interfaces/interfaces';
-import { fetchLevel, fetchTopic, getHistoryProgress } from '@/services/api';
+import { Exercise, Level, Topic } from '@/interfaces/interfaces';
+import { fetchExercise, fetchLevel, fetchTopic, getHistoryProgress } from '@/services/api';
 import useFetch from '@/services/useFetch';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
-type VocabularyItem = Level | Topic;
+type VocabularyItem = Level | Topic | Exercise;
 
 export default function LearnVocabulary() {
     const router = useRouter();
@@ -29,7 +29,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://western-enhancement-buffalo-institutional.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "https://invitation-regions-plate-fact.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -117,18 +117,28 @@ export default function LearnVocabulary() {
         }, [userCache])
     );
 
-    const [activeTab, setActiveTab] = useState<'level' | 'topic'>('level');
+    const [activeTab, setActiveTab] = useState<'level' | 'topic' | 'exercise'>('level');
 
     const levelFetch = useFetch(() => fetchLevel({ query: "" }), true);
     const topicFetch = useFetch(() => fetchTopic({ query: "" }), true);
+    const exerciseFetch = useFetch(() => fetchExercise({ query: "" }), true);
 
-    const currentFetch = activeTab === 'level' ? levelFetch : topicFetch;
+    let currentFetch;
+
+    if (activeTab === 'level') {
+        currentFetch = levelFetch
+    } else if (activeTab === 'topic') {
+        currentFetch = topicFetch
+    } else {
+        currentFetch = exerciseFetch
+    }
+
     const currentData: VocabularyItem[] = currentFetch.data ?? [];
 
     const isLoading = currentFetch.loading;
     const error = currentFetch.error;
 
-    const handleTabChange = (tab: 'level' | 'topic') => {
+    const handleTabChange = (tab: 'level' | 'topic' | 'exercise') => {
         setActiveTab(tab);
     };
 
@@ -146,6 +156,13 @@ export default function LearnVocabulary() {
         if (progress >= 30) return "#ddce00";
         return "#EF4444";
     };
+
+    const rs = {
+        score: 85,
+        attempts: 3,
+        isCompleted: true,
+        completedAt: "2026-02-25T10:20:00"
+    }
 
     const renderItem = ({ item, index }: { item: VocabularyItem; index: number }) => {
         const isTopic = 'id_topic' in item;
@@ -211,7 +228,7 @@ export default function LearnVocabulary() {
                                 </View>
                             </View>
                         </>
-                    ) : (
+                    ) : isTopic ? (
                         // Topic item
                         <>
                             <View className="flex-row items-center">
@@ -226,6 +243,155 @@ export default function LearnVocabulary() {
                             </View>
                             <View className="bg-orange-100 px-3 py-1 rounded-full">
                                 <Text>{item.vocabulary_count} words</Text>
+                            </View>
+                        </>
+                    ) : (
+                        // Exercise item
+                        <>
+                            <View className="bg-white rounded-2xl p-4 mb-4 relative">
+
+                                {/* DONE Badge */}
+                                {rs?.isCompleted && (
+                                    <View className="absolute top-3 right-3 bg-green-500 px-2 py-1 rounded-full">
+                                        <Text className="text-white text-xs font-bold">DONE</Text>
+                                    </View>
+                                )}
+
+                                {/* Top section */}
+                                <View className="flex-row items-start">
+                                    <View className="w-12 h-12 bg-orange-100 rounded-xl items-center justify-center">
+                                        <Ionicons
+                                            name={(item.icon as any) || 'fitness-outline'}
+                                            size={26}
+                                            color="#FFA500"
+                                        />
+                                    </View>
+
+                                    <View className="ml-4 flex-1">
+                                        <Text className="text-lg font-bold text-[#2E2A47]">
+                                            {item.name}
+                                        </Text>
+
+                                        <Text
+                                            className="text-sm text-gray-500 mt-1"
+                                            numberOfLines={2}
+                                        >
+                                            {item.description || 'Bài tập kiểm tra kỹ năng'}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                {/* Divider */}
+                                <View className="h-px bg-gray-100 my-4" />
+
+                                {/* Bottom info row (Exam Info) */}
+                                <View className="flex-row flex-wrap gap-2">
+
+                                    {/* Difficulty */}
+                                    <View
+                                        className={`px-3 py-1 rounded-full
+                                            ${item.difficulty === 'easy'
+                                                ? 'bg-green-100'
+                                                : item.difficulty === 'medium'
+                                                    ? 'bg-yellow-100'
+                                                    : 'bg-red-100'
+                                            }`}
+                                    >
+                                        <Text
+                                            className={`text-xs font-semibold
+                                                ${item.difficulty === 'easy'
+                                                    ? 'text-green-600'
+                                                    : item.difficulty === 'medium'
+                                                        ? 'text-yellow-600'
+                                                        : 'text-red-600'
+                                                }`}
+                                        >
+                                            {item.difficulty?.toUpperCase() || 'MEDIUM'}
+                                        </Text>
+                                    </View>
+
+                                    {/* Questions */}
+                                    <View className="bg-blue-100 px-3 py-1 rounded-full">
+                                        <Text className="text-xs font-medium text-blue-600">
+                                            {item.question_count || 0} câu hỏi
+                                        </Text>
+                                    </View>
+
+                                    {/* Time */}
+                                    <View className="bg-purple-100 px-3 py-1 rounded-full">
+                                        <Text className="text-xs font-medium text-purple-600">
+                                            {item.time_limit} phút
+                                        </Text>
+                                    </View>
+
+                                    {/* Points */}
+                                    <View className="bg-orange-100 px-3 py-1 rounded-full">
+                                        <Text className="text-xs font-medium text-orange-600">
+                                            {item.points || 0} điểm
+                                        </Text>
+                                    </View>
+
+                                    {/* Type */}
+                                    <View className="bg-gray-100 px-3 py-1 rounded-full">
+                                        <Text className="text-xs font-medium text-gray-600">
+                                            {item.type}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                {/* USER RESULT SECTION */}
+                                {rs && (
+                                    <>
+                                        <View className="h-px bg-gray-100 my-4" />
+
+                                        <View className="flex-row flex-wrap gap-2">
+
+                                            {/* Score */}
+                                            <View className="bg-indigo-100 px-3 py-1 rounded-full">
+                                                <Text className="text-xs font-medium text-indigo-600">
+                                                    Score: {rs.score || 0}
+                                                </Text>
+                                            </View>
+
+                                            {/* Attempts */}
+                                            <View className="bg-teal-100 px-3 py-1 rounded-full">
+                                                <Text className="text-xs font-medium text-teal-600">
+                                                    Attempts: {rs.attempts || 0}
+                                                </Text>
+                                            </View>
+
+                                            {/* Completed Status */}
+                                            <View
+                                                className={`px-3 py-1 rounded-full
+                                                    ${rs.isCompleted
+                                                        ? 'bg-green-100'
+                                                        : 'bg-gray-200'
+                                                    }`}
+                                            >
+                                                <Text
+                                                    className={`text-xs font-medium
+                                                        ${rs.isCompleted
+                                                            ? 'text-green-600'
+                                                            : 'text-gray-600'
+                                                        }`}
+                                                >
+                                                    {rs.isCompleted ? 'Completed' : 'Not Completed'}
+                                                </Text>
+                                            </View>
+
+                                            {/* Completed Date */}
+                                            {rs.completedAt && (
+                                                <View className="bg-pink-100 px-3 py-1 rounded-full">
+                                                    <Text className="text-xs font-medium text-pink-600">
+                                                        {new Date(rs.completedAt).toLocaleDateString()}
+                                                    </Text>
+                                                </View>
+                                            )}
+
+                                        </View>
+                                    </>
+                                )}
+
                             </View>
                         </>
                     )}
@@ -324,6 +490,17 @@ export default function LearnVocabulary() {
                             Topic
                         </Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        className={`flex-1 py-4 items-center border-b-4 ${activeTab === 'exercise' ? 'border-[#FFA500]' : 'border-transparent'}`}
+                        onPress={() => handleTabChange('exercise')}
+                    >
+                        <Text
+                            className={`text-lg font-medium ${activeTab === 'exercise' ? 'text-[#FFA500]' : 'text-gray-600'}`}
+                        >
+                            Exercises
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Content */}
@@ -351,8 +528,10 @@ export default function LearnVocabulary() {
                         keyExtractor={(item) => {
                             if ('id_level' in item) {
                                 return `level-${item.id_level}`;
+                            } else if ('id_topic' in item) {
+                                return `topic-${item.id_topic}`;
                             }
-                            return `topic-${item.id_topic}`;
+                            return `exercise-${item.id_exercise}`;
                         }}
                         renderItem={renderItem}
                         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
@@ -371,7 +550,7 @@ export default function LearnVocabulary() {
                         }
                     />
                 )}
-                
+
 
                 <View className="absolute bottom-6 left-6 right-6">
                     <TouchableOpacity
@@ -390,7 +569,7 @@ export default function LearnVocabulary() {
                     </TouchableOpacity>
                 </View>
 
-                
+
             </View>
         </>
 

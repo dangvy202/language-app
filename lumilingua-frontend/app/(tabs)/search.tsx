@@ -1,417 +1,239 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import {
-  Image,
-  Platform,
+  Alert,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const Search = () => {
+// Mock data giống ảnh bạn gửi
+const mockQuestion = {
+  question: '"Arrival" có nghĩa là...',
+  example: 'I bought tickets for a flight that lands at 10 a.m. because I prefer an early arrival.',
+  highlightWord: 'arrival',
+  options: [
+    'leaving a place',
+    'staying at a place',
+    'getting to a place',
+  ],
+  correctAnswer: 'getting to a place',
+  hearts: 25,
+};
+
+export default function ExerciseScreen() {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  const handleSelect = (option: string) => {
+    setSelectedOption(option);
+    setShowFeedback(true);
+
+    const isCorrect = option === mockQuestion.correctAnswer;
+    setTimeout(() => {
+      Alert.alert(
+        isCorrect ? 'Tuyệt vời!' : 'Sai rồi!',
+        isCorrect ? 'Bạn đúng rồi!' : `Đáp án đúng là "${mockQuestion.correctAnswer}"`,
+        [{ text: 'Tiếp theo', onPress: () => setShowFeedback(false) }]
+      );
+    }, 800);
+  };
+
   return (
-    <View style={styles.container}>
-      {/* ===== HEADER ===== */}
-      <LinearGradient
-        colors={['#FFB703', '#FB8500']}
-        style={styles.headerGradient}
-      >
-        {/* Top icons */}
+    <LinearGradient colors={['#1E1E2F', '#0F0F1A']} style={styles.gradient}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity>
-            <Ionicons name="menu" size={26} color="#000" />
+          <TouchableOpacity style={styles.closeButton}>
+            <Ionicons name="close" size={32} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="notifications-outline" size={26} color="#000" />
-          </TouchableOpacity>
-        </View>
 
-        {/* Avatar + Title */}
-        <View style={styles.headerContent}>
-          <View style={styles.avatarWrapper}>
-            <Image
-              source={require('@/assets/images/accounts/logo.jpg')}
-              style={styles.avatar}
-            />
+          <View style={styles.progressBarContainer}>
+            <View style={styles.progressBg}>
+              <View style={[styles.progressFill, { width: '76%' }]} /> {/* 76% giống ảnh */}
+            </View>
           </View>
 
-          <Text style={styles.username}>Ten Account</Text>
-          <Text style={styles.subtitle}>Học ngôn ngữ vui vẻ mỗi ngày!</Text>
+          <View style={styles.heartsContainer}>
+            <Ionicons name="heart" size={24} color="#FF5252" />
+            <Text style={styles.heartsText}>{mockQuestion.hearts}</Text>
+          </View>
         </View>
-      </LinearGradient>
 
-      {/* ===== SEARCH ===== */}
-      <View style={styles.searchWrapper}>
-        <Ionicons name="search-outline" size={20} color="#999" />
-        <TextInput
-          placeholder="Tìm ngôn ngữ hoặc khóa học..."
-          placeholderTextColor="#999"
-          style={styles.searchInput}
-        />
-      </View>
+        {/* Câu hỏi chính */}
+        <ScrollView contentContainerStyle={styles.content}>
+          <Text style={styles.questionTitle}>"Arrival" có nghĩa là...</Text>
 
-      {/* ===== CATEGORIES ===== */}
-      <Text style={styles.sectionTitle}>Categories</Text>
+          <View style={styles.exampleContainer}>
+            {/* <View style={styles.speakerButton}>
+              <Ionicons name="volume-high" size={28} color="#2196F3" />
+            </View> */}
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-      >
-        {/* Active */}
-        <TouchableOpacity>
-          <LinearGradient
-            colors={['#FFB703', '#FB8500']}
-            style={styles.activeTab}
-          >
-            <Ionicons name="book-outline" size={20} color="#fff" />
-            <Text style={styles.activeTabText}>Grammar</Text>
-          </LinearGradient>
+            <Text style={styles.exampleText}>
+              I bought tickets for a flight that lands at 10 a.m. because I prefer an early{' '}
+              <Text style={styles.highlightWord}>{mockQuestion.highlightWord}</Text>.
+            </Text>
+          </View>
+
+          {/* Các lựa chọn */}
+          <View style={styles.optionsContainer}>
+            {mockQuestion.options.map((option, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.optionButton,
+                  selectedOption === option && styles.optionSelected,
+                  showFeedback && option === mockQuestion.correctAnswer && styles.optionCorrect,
+                  showFeedback && selectedOption === option && option !== mockQuestion.correctAnswer && styles.optionWrong,
+                ]}
+                onPress={() => handleSelect(option)}
+                disabled={showFeedback}
+              >
+                <Text style={styles.optionText}>{option}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+
+        {/* Nút KIỂM TRA (Submit) */}
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            !selectedOption && styles.submitDisabled,
+          ]}
+          disabled={!selectedOption || showFeedback}
+          onPress={() => {
+            // Mock submit
+            setShowFeedback(true);
+            const isCorrect = selectedOption === mockQuestion.correctAnswer;
+            Alert.alert(
+              isCorrect ? 'Đúng rồi!' : 'Sai rồi!',
+              isCorrect ? 'Bạn đã chọn đúng!' : `Đáp án đúng là "${mockQuestion.correctAnswer}"`,
+              [{ text: 'Tiếp theo', onPress: () => setShowFeedback(false) }]
+            );
+          }}
+        >
+          <Text style={styles.submitText}>KIỂM TRA</Text>
         </TouchableOpacity>
-
-        {/* Inactive */}
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Vocabulary</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubbles-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Phrases</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="mic-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Pronunciation</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* ===== COURSE ===== */}
-      <Text style={styles.sectionTitle}>Your course</Text>
-
-      <ScrollView contentContainerStyle={styles.courseList}>
-        <TouchableOpacity>
-          <LinearGradient
-            colors={['#FFF3B0', '#FFD166']}
-            style={styles.courseCard}
-          >
-            <View style={styles.courseHeader}>
-              <Ionicons name="school-outline" size={26} color="#FB8500" />
-              <Text style={styles.courseTitle}>Tiếng Anh Cơ Bản</Text>
-            </View>
-
-            <Text style={styles.courseSub}>Hoàn thành 45%</Text>
-
-            <View style={styles.progressBg}>
-              <View style={styles.progressFill} />
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      </ScrollView>
-      {/* ===== CATEGORIES ===== */}
-      <Text style={styles.sectionTitle}>Categories</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-      >
-        {/* Active */}
-        <TouchableOpacity>
-          <LinearGradient
-            colors={['#FFB703', '#FB8500']}
-            style={styles.activeTab}
-          >
-            <Ionicons name="book-outline" size={20} color="#fff" />
-            <Text style={styles.activeTabText}>Grammar</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Inactive */}
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Vocabulary</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubbles-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Phrases</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="mic-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Pronunciation</Text>
-        </TouchableOpacity>
-      </ScrollView>
-      {/* ===== CATEGORIES ===== */}
-      <Text style={styles.sectionTitle}>Categories</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-      >
-        {/* Active */}
-        <TouchableOpacity>
-          <LinearGradient
-            colors={['#FFB703', '#FB8500']}
-            style={styles.activeTab}
-          >
-            <Ionicons name="book-outline" size={20} color="#fff" />
-            <Text style={styles.activeTabText}>Grammar</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Inactive */}
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Vocabulary</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubbles-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Phrases</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="mic-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Pronunciation</Text>
-        </TouchableOpacity>
-      </ScrollView>
-      {/* ===== CATEGORIES ===== */}
-      <Text style={styles.sectionTitle}>Categories</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-      >
-        {/* Active */}
-        <TouchableOpacity>
-          <LinearGradient
-            colors={['#FFB703', '#FB8500']}
-            style={styles.activeTab}
-          >
-            <Ionicons name="book-outline" size={20} color="#fff" />
-            <Text style={styles.activeTabText}>Grammar</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Inactive */}
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Vocabulary</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubbles-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Phrases</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="mic-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Pronunciation</Text>
-        </TouchableOpacity>
-      </ScrollView>
-      {/* ===== CATEGORIES ===== */}
-      <Text style={styles.sectionTitle}>Categories</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-      >
-        {/* Active */}
-        <TouchableOpacity>
-          <LinearGradient
-            colors={['#FFB703', '#FB8500']}
-            style={styles.activeTab}
-          >
-            <Ionicons name="book-outline" size={20} color="#fff" />
-            <Text style={styles.activeTabText}>Grammar</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Inactive */}
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Vocabulary</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="chatbubbles-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Phrases</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tab}>
-          <Ionicons name="mic-outline" size={20} color="#666" />
-          <Text style={styles.tabText}>Pronunciation</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
-/* ================= STYLES ================= */
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-
-  /* Header */
-  headerGradient: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    paddingBottom: 30,
-  },
+  gradient: { flex: 1 },
+  safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 24 : 50,
-  },
-  headerContent: {
     alignItems: 'center',
-    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 8,
   },
-  avatarWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  avatar: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 3,
-    borderColor: '#FB8500',
-  },
-  username: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#fff',
-    marginTop: 10,
-  },
-  subtitle: {
-    color: '#fff',
-    opacity: 0.9,
-  },
-
-  /* Search */
-  searchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F1F1',
-    marginHorizontal: 20,
-    marginTop: -20,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    elevation: 3,
-  },
-  searchInput: {
-    marginLeft: 10,
-    fontSize: 16,
-    flex: 1,
-  },
-
-  /* Section */
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    marginHorizontal: 20,
-    marginTop: 24,
-    marginBottom: 12,
-  },
-
-  /* Tabs */
-  tabs: {
-    paddingLeft: 20,
-    paddingBottom: 10,
-  },
-  activeTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 30,
-    marginRight: 12,
-    shadowColor: '#FB8500',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  activeTabText: {
-    marginLeft: 8,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 30,
-    marginRight: 12,
-  },
-  tabText: {
-    marginLeft: 8,
-    color: '#666',
-  },
-
-  /* Course */
-  courseList: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  courseCard: {
-    padding: 22,
-    borderRadius: 22,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  courseHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  courseTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginLeft: 10,
-    color: '#333',
-  },
-  courseSub: {
-    marginTop: 8,
-    color: '#555',
-  },
+  closeButton: { padding: 8 },
+  progressBarContainer: { flex: 1, marginHorizontal: 16 },
   progressBg: {
-    height: 10,
-    backgroundColor: '#eee',
+    height: 12,
+    backgroundColor: '#333',
     borderRadius: 6,
-    marginTop: 12,
+    overflow: 'hidden',
   },
   progressFill: {
-    width: '45%',
     height: '100%',
-    backgroundColor: '#FB8500',
-    borderRadius: 6,
+    backgroundColor: '#58CC02', // xanh lá Duolingo
+  },
+  heartsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heartsText: {
+    color: '#FF5252',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  content: { padding: 24, paddingBottom: 120 },
+  questionTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  exampleContainer: {
+    backgroundColor: '#2A2A3F',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
+  },
+  speakerButton: {
+    backgroundColor: '#2196F3',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  exampleText: {
+    fontSize: 18,
+    color: '#E0E0E0',
+    lineHeight: 28,
+    textAlign: 'center',
+  },
+  highlightWord: {
+    color: '#BB86FC',
+    fontWeight: 'bold',
+  },
+  optionsContainer: {
+    marginTop: 16,
+  },
+  optionButton: {
+    backgroundColor: '#2A2A3F',
+    paddingVertical: 20,
+    borderRadius: 16,
+    marginVertical: 8,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#444',
+  },
+  optionSelected: {
+    borderColor: '#BB86FC',
+  },
+  optionCorrect: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#388E3C',
+  },
+  optionWrong: {
+    backgroundColor: '#F44336',
+    borderColor: '#D32F2F',
+  },
+  optionText: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: '600',
+  },
+  submitButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 24,
+    right: 24,
+    backgroundColor: '#58CC02',
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: 'center',
+    elevation: 6,
+  },
+  submitDisabled: {
+    backgroundColor: '#666',
+  },
+  submitText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
-
-export default Search

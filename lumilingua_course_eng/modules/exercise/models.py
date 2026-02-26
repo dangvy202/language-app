@@ -2,6 +2,11 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 def validate_exercise_type(value):
+    valid_types = ['multiple_choice', 'sentence_order', 'matching', 'fill_blank', 'all']
+    if value not in valid_types:
+        raise ValidationError(f'Type must be one of: {", ".join(valid_types)}')
+
+def validate_question_type(value):
     valid_types = ['multiple_choice', 'sentence_order', 'matching', 'fill_blank']
     if value not in valid_types:
         raise ValidationError(f'Type must be one of: {", ".join(valid_types)}')
@@ -15,10 +20,11 @@ class Exercise(models.Model):
     id_exercise = models.AutoField(primary_key=True)
     name = models.TextField()
     description = models.TextField()
+    icon = models.TextField()
     type = models.CharField(
         max_length=50,
         validators=[validate_exercise_type],
-        help_text="Type exercise: multiple_choice, sentence_order, matching, fill_blank",
+        help_text="Type exercise: multiple_choice, sentence_order, matching, fill_blank, all",
         null=False,
         blank=False
     )
@@ -81,7 +87,7 @@ class Question(models.Model):
     content = models.TextField(null=False, blank=False)
     type = models.CharField(
         max_length=50,
-        validators=[validate_exercise_type],
+        validators=[validate_question_type],
         help_text="Type exercise: multiple_choice, sentence_order, matching, fill_blank",
         null=False,
         blank=False

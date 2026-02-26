@@ -6,7 +6,7 @@ from modules.exercise.models import Exercise, ExerciseProgress, Question, Questi
 class ExerciseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exercise
-        fields = ['id_exercise', 'name', 'description', 'type', 'difficulty', 'topic', 'time_limit', 'points', 'question_count']
+        fields = ['id_exercise', 'icon', 'name', 'description', 'type', 'difficulty', 'topic', 'time_limit', 'points', 'question_count']
         read_only_fields = ['created_at', 'updated_at']
 
 class ExerciseProgressSerializer(serializers.ModelSerializer):

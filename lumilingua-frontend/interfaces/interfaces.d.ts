@@ -30,6 +30,19 @@ interface Topic {
   updated_at: string,
 }
 
+interface Exercise {
+  id_exercise: number,
+  icon: string,
+  name: string,
+  description: string,
+  type: string,
+  difficulty: string,
+  topic: number,
+  time_limit: number,
+  points: number,
+  question_count: number,
+}
+
 export interface HistoryProgressCreatePayload {
   isFinished: boolean;
   finished_date?: string | null;
