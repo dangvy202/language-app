@@ -288,7 +288,6 @@ export default function VocabularyByTopic() {
             }
             return;
         }
-        // Mobile: dùng Alert native
         Alert.alert(
             "Exit the topic?",
             "Do you want to save the progress of learned?",

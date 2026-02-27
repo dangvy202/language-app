@@ -30,7 +30,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "http://localhost:8888/api/v1/user/refresh";
+        const endpoint = "https://hand-told-owns-assists.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -197,7 +197,6 @@ export default function LearnVocabulary() {
         const exerciseProgress = 'id_exercise' in item ? exerciseProgressMap[item.id_exercise] : null;
 
         let isLocked = false;
-        console.log("check it = " , exerciseProgress)
         if (isTopic && activeTab === 'topic') {
             if (index === 0) {
                 isLocked = false;
@@ -345,7 +344,7 @@ export default function LearnVocabulary() {
                                     {/* Time */}
                                     <View className="bg-purple-100 px-3 py-1 rounded-full">
                                         <Text className="text-xs font-medium text-purple-600">
-                                            {item.time_limit} phút
+                                            {item.time_limit / 60} phút
                                         </Text>
                                     </View>
 

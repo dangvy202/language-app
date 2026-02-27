@@ -16,10 +16,18 @@ class ExerciseProgressSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
 class QuestionSerializer(serializers.ModelSerializer):
+    options = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Question
-        fields = ['id_question', 'exercise', 'content', 'type', 'correct_answer', 'points', 'image_url']
+        fields = ['id_question','exercise','content','type','correct_answer','points','image_url','options']
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_options(self, obj):
+        if obj.type in ['multiple_choice', 'fill_blank']:
+            options = QuestionOptions.objects.filter(question=obj)
+            return QuestionOptionsSerializer(options, many=True).data
+        return []
 
 class QuestionOptionsSerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
 
 from modules.exercise.api.serializers import ExerciseSerializer, ExerciseProgressSerializer, QuestionSerializer, \
     QuestionOptionsSerializer
@@ -23,6 +24,14 @@ class ExerciseProgressViewSet(viewsets.ModelViewSet):
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        exercise_id = self.request.query_params.get('exercise')
+        if exercise_id:
+            queryset = queryset.filter(exercise_id=exercise_id)
+        return queryset
+
 
 class QuestionOptionsViewSet(viewsets.ModelViewSet):
     queryset = QuestionOptions.objects.all()

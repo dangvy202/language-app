@@ -1,5 +1,5 @@
 import { View, Text, Dimensions, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';

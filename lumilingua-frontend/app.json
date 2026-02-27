@@ -1,5 +1,9 @@
 {
   "expo": {
+    "assets": [
+      "./assets/sound/*.wav",
+      "./assets/sound/*.mp3"
+    ],
     "name": "LumiLingua",
     "slug": "lumilingua-frontend",
     "version": "1.0.0",
