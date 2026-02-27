@@ -10,6 +10,7 @@ import {
     View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 // Mock data giống ảnh bạn gửi
 const mockQuestion = {
@@ -26,6 +27,9 @@ const mockQuestion = {
 };
 
 export default function ExerciseScreen() {
+    const { exercise } = useLocalSearchParams<{ exercise: string }>();
+    const router = useRouter();
+    
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [showFeedback, setShowFeedback] = useState(false);
 

@@ -14,8 +14,8 @@ import {
 
 import Notfound from '@/component/404';
 import { useUserCache } from '@/hook/useUserCache';
-import { Exercise, Level, Topic } from '@/interfaces/interfaces';
-import { fetchExercise, fetchLevel, fetchTopic, getHistoryProgress } from '@/services/api';
+import { Exercise, ExerciseProgress, Level, Topic } from '@/interfaces/interfaces';
+import { fetchExercise, fetchLevel, fetchTopic, getExerciseProgress, getHistoryProgress } from '@/services/api';
 import useFetch from '@/services/useFetch';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -26,10 +26,11 @@ export default function LearnVocabulary() {
     const router = useRouter();
     const [loadingLogin, setLoadingLogin] = useState(false);
     const [progressMap, setProgressMap] = useState<Record<number, number>>({});
+    const [exerciseProgressMap, setExerciseProgressMap] = useState<Record<number, ExerciseProgress>>([]);
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://invitation-regions-plate-fact.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "http://localhost:8888/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -93,27 +94,39 @@ export default function LearnVocabulary() {
         useCallback(() => {
             if (!userCache || userCache.length === 0) return;
 
-            const fetchProgress = async () => {
-                try {
-                    const userCacheId = Number(userCache[0]?.id_user_cache);
-                    if (!userCacheId) return;
+            const userCacheId = Number(userCache[0]?.id_user_cache);
+            if (!userCacheId) return;
 
-                    const progressList = await getHistoryProgress(userCacheId);
+            const fetchAllProgress = async () => {
+            try {
+                // Fetch topic progress (giữ nguyên)
+                const progressList = await getHistoryProgress(userCacheId);
+                const progressMap: Record<number, number> = {};
+                progressList.forEach((item: any) => {
+                progressMap[item.topic] = item.progress_percent ?? 0;
+                });
+                setProgressMap(progressMap);
 
-                    const map: Record<number, number> = {};
-
-                    progressList.forEach((item: any) => {
-                        map[item.topic] = item.progress_percent ?? 0;
-                    });
-
-                    setProgressMap(map);
-                } catch (err) {
-                    console.log("Fetch progress error:", err);
-                }
+                // Fetch exercise progress (object map theo id_exercise)
+                const exerciseProgressList = await getExerciseProgress(userCacheId);
+                const exerciseMap: Record<number, ExerciseProgress> = {};
+                exerciseProgressList.forEach((item: any) => {
+                    exerciseMap[item.exercises] = {
+                        attempts: item.attempts ?? 0,
+                        completed_at: item.completed_at ?? "",
+                        exercises: item.exercises,
+                        id_exercise_progress: item.id_exercise_progress ?? 0,
+                        is_completed: item.is_completed ?? false,
+                        score: item.score ?? 0,
+                    };
+                });
+                setExerciseProgressMap(exerciseMap);
+            } catch (err) {
+                console.log("Fetch progress error:", err);
+            } 
             };
 
-            fetchProgress();
-
+            fetchAllProgress();
         }, [userCache])
     );
 
@@ -150,6 +163,13 @@ export default function LearnVocabulary() {
         router.push(`/course/topic/${topic.name_topic}`);
     };
 
+    const handleExercisePress = (exercise: Exercise) => {
+        router.push({
+            pathname: '/course/exercise/[exercise]',
+            params: { exercise: exercise.id_exercise },
+        })
+    };
+
     const getProgressColor = (progress: number) => {
         if (progress === 100) return "#22C55E";
         if (progress >= 50) return "#ff9100";
@@ -166,6 +186,7 @@ export default function LearnVocabulary() {
 
     const renderItem = ({ item, index }: { item: VocabularyItem; index: number }) => {
         const isTopic = 'id_topic' in item;
+        const isExercise = 'id_exercise' in item;
 
         const progress =
             'id_topic' in item
@@ -173,8 +194,10 @@ export default function LearnVocabulary() {
                 : 0;
         const progressColor = getProgressColor(progress);
 
-        let isLocked = false;
+        const exerciseProgress = 'id_exercise' in item ? exerciseProgressMap[item.id_exercise] : null;
 
+        let isLocked = false;
+        console.log("check it = " , exerciseProgress)
         if (isTopic && activeTab === 'topic') {
             if (index === 0) {
                 isLocked = false;
@@ -200,6 +223,8 @@ export default function LearnVocabulary() {
                         handleLevelPress(item as Level);
                     } else if ('id_topic' in item) {
                         handleTopicPress(item as Topic);
+                    } else if ('id_exercise' in item) {
+                        handleExercisePress(item as Exercise);
                     }
                 }}
             >
@@ -251,7 +276,7 @@ export default function LearnVocabulary() {
                             <View className="bg-white rounded-2xl p-4 mb-4 relative">
 
                                 {/* DONE Badge */}
-                                {rs?.isCompleted && (
+                                {exerciseProgress?.is_completed && (
                                     <View className="absolute top-3 right-3 bg-green-500 px-2 py-1 rounded-full">
                                         <Text className="text-white text-xs font-bold">DONE</Text>
                                     </View>
@@ -338,9 +363,8 @@ export default function LearnVocabulary() {
                                         </Text>
                                     </View>
                                 </View>
-
                                 {/* USER RESULT SECTION */}
-                                {rs && (
+                                {exerciseProgress?.is_completed && (
                                     <>
                                         <View className="h-px bg-gray-100 my-4" />
 
@@ -349,41 +373,41 @@ export default function LearnVocabulary() {
                                             {/* Score */}
                                             <View className="bg-indigo-100 px-3 py-1 rounded-full">
                                                 <Text className="text-xs font-medium text-indigo-600">
-                                                    Score: {rs.score || 0}
+                                                    Score: {exerciseProgress?.score || 0}
                                                 </Text>
                                             </View>
 
                                             {/* Attempts */}
                                             <View className="bg-teal-100 px-3 py-1 rounded-full">
                                                 <Text className="text-xs font-medium text-teal-600">
-                                                    Attempts: {rs.attempts || 0}
+                                                    Attempts: {exerciseProgress?.attempts || 0}
                                                 </Text>
                                             </View>
 
                                             {/* Completed Status */}
                                             <View
                                                 className={`px-3 py-1 rounded-full
-                                                    ${rs.isCompleted
+                                                    ${exerciseProgress?.is_completed
                                                         ? 'bg-green-100'
                                                         : 'bg-gray-200'
                                                     }`}
                                             >
                                                 <Text
                                                     className={`text-xs font-medium
-                                                        ${rs.isCompleted
+                                                        ${exerciseProgress?.is_completed
                                                             ? 'text-green-600'
                                                             : 'text-gray-600'
                                                         }`}
                                                 >
-                                                    {rs.isCompleted ? 'Completed' : 'Not Completed'}
+                                                    {exerciseProgress?.is_completed ? 'Completed' : 'Not Completed'}
                                                 </Text>
                                             </View>
 
                                             {/* Completed Date */}
-                                            {rs.completedAt && (
+                                            {exerciseProgress?.completed_at && (
                                                 <View className="bg-pink-100 px-3 py-1 rounded-full">
                                                     <Text className="text-xs font-medium text-pink-600">
-                                                        {new Date(rs.completedAt).toLocaleDateString()}
+                                                        {new Date(exerciseProgress?.completed_at).toLocaleDateString()}
                                                     </Text>
                                                 </View>
                                             )}

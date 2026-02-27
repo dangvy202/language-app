@@ -2,7 +2,7 @@ import { Exercise, HistoryProgressCreatePayload, Level, UserNoteCreatePayLoad } 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const fetchLogin = async (email: string, password: string) => {
-  const endpoint = "https://invitation-regions-plate-fact.trycloudflare.com/api/v1/user/login"
+  const endpoint = "http://localhost:8888/api/v1/user/login"
 
   try {
     const response = await fetch(endpoint, {
@@ -28,7 +28,7 @@ export const fetchLogin = async (email: string, password: string) => {
 };
 
 export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://kijiji-marketplace-angle-painted.trycloudflare.com/api/level/"
+  const endpoint = "http://localhost:8000/api/level/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -46,7 +46,7 @@ export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]>
 };
 
 export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://kijiji-marketplace-angle-painted.trycloudflare.com/api/topic/"
+  const endpoint = "http://localhost:8000/api/topic/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -67,7 +67,7 @@ export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://kijiji-marketplace-angle-painted.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
+    const endpoint = `http://localhost:8000/api/vocabulary/?topic=${nameTopic}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -95,7 +95,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://kijiji-marketplace-angle-painted.trycloudflare.com/api/vocabulary/?level=${levelId}`;
+    const endpoint = `http://localhost:8000/api/vocabulary/?level=${levelId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -122,7 +122,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
 export const fetchMeanByVocabularyAndLanguage = async ({ vocabulary, language }: { vocabulary: number, language: number }): Promise<any[]> => {
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-    const endpoint = `https://kijiji-marketplace-angle-painted.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
+    const endpoint = `http://localhost:8000/api/mean/?vocabulary=${vocabulary}&language=${language}`
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -151,7 +151,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
     const token = await AsyncStorage.getItem('token');
     const email = await AsyncStorage.getItem('email');
 
-    const endpoint = `https://invitation-regions-plate-fact.trycloudflare.com/api/v1/user/${email}`;
+    const endpoint = `http://localhost:8888/api/v1/user/${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -177,7 +177,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
 
 export const fetchUserCache = async ({ email }: { email: string }): Promise<any[]> => {
   try {
-    const endpoint = `https://kijiji-marketplace-angle-painted.trycloudflare.com/api/user_cache/?email=${email}`;
+    const endpoint = `http://localhost:8000/api/user_cache/?email=${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -229,7 +229,7 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
       streak,
     };
 
-    const endpoint = `https://kijiji-marketplace-angle-painted.trycloudflare.com/api/user_cache/`;
+    const endpoint = `http://localhost:8000/api/user_cache/`;
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -287,7 +287,7 @@ export const saveHistoryProgress = async ({
       payload.duration = duration;
     }
 
-    const endpoint = "https://kijiji-marketplace-angle-painted.trycloudflare.com/api/history_progress/";
+    const endpoint = "http://localhost:8000/api/history_progress/";
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -325,11 +325,24 @@ export const saveHistoryProgress = async ({
 };
 
 export const getHistoryProgress = async (userCacheId: number) => {
-  let endpoint = `https://kijiji-marketplace-angle-painted.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
+  let endpoint = `http://localhost:8000/api/history_progress/?user_cache=${userCacheId}`;
 
-  // if (topic) {
-  //   endpoint += `&topic=${topic}`;
-  // }
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch history progress");
+  }
+
+  return response.json();
+};
+
+export const getExerciseProgress = async (userCacheId: number) => {
+  let endpoint = `http://localhost:8000/api/exercise_progress/?user_cache=${userCacheId}`;
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -360,7 +373,7 @@ export const saveNoteVocabulary = async ({
   };
 
   const response = await fetch(
-    "https://kijiji-marketplace-angle-painted.trycloudflare.com/api/user_note/",
+    "http://localhost:8000/api/user_note/",
     {
       method: "POST",
       headers: {
@@ -379,7 +392,7 @@ export const saveNoteVocabulary = async ({
 
 export const fetchUserNotes = async (userCacheId: number) => {
   const response = await fetch(
-    `https://kijiji-marketplace-angle-painted.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
+    `http://localhost:8000/api/user_note/?id_user_cache=${userCacheId}`
   );
 
   if (!response.ok) {
@@ -390,7 +403,7 @@ export const fetchUserNotes = async (userCacheId: number) => {
 };
 
 export const fetchExercise = async ({ query }: { query: string }): Promise<Exercise[]> => {
-  const endpoint = "https://kijiji-marketplace-angle-painted.trycloudflare.com/api/exercise/"
+  const endpoint = "http://localhost:8000/api/exercise/"
 
   const response = await fetch(endpoint, {
     method: 'GET',

@@ -13,6 +13,13 @@ class ExerciseProgressViewSet(viewsets.ModelViewSet):
     queryset = ExerciseProgress.objects.all()
     serializer_class = ExerciseProgressSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_cache = self.request.query_params.get('user_cache')
+        if user_cache:
+            queryset = queryset.filter(user_cache=user_cache)
+        return queryset
+
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer

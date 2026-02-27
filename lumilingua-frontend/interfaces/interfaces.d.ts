@@ -43,6 +43,15 @@ interface Exercise {
   question_count: number,
 }
 
+interface ExerciseProgress {
+  attempts: number,
+  completed_at: string,
+  exercises: number,
+  id_exercise_progress: number,
+  is_completed: boolean,
+  score: number,
+}
+
 export interface HistoryProgressCreatePayload {
   isFinished: boolean;
   finished_date?: string | null;
