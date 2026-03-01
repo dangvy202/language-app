@@ -30,7 +30,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://hand-told-owns-assists.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "https://sensor-adjacent-bride-stock.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -99,7 +99,6 @@ export default function LearnVocabulary() {
 
             const fetchAllProgress = async () => {
             try {
-                // Fetch topic progress (giữ nguyên)
                 const progressList = await getHistoryProgress(userCacheId);
                 const progressMap: Record<number, number> = {};
                 progressList.forEach((item: any) => {
@@ -165,8 +164,8 @@ export default function LearnVocabulary() {
 
     const handleExercisePress = (exercise: Exercise) => {
         router.push({
-            pathname: '/course/exercise/[exercise]',
-            params: { exercise: exercise.id_exercise },
+            pathname: '/course/exercise/[id]',
+            params: { id: exercise.id_exercise },
         })
     };
 
@@ -581,13 +580,11 @@ export default function LearnVocabulary() {
                         onPress={() => {
                             if (activeTab === 'level') {
                                 Alert.alert('Ôn tập', 'Chức năng ôn từ đã note đang phát triển!');
-                            } else {
-                                Alert.alert('Làm bài tập', 'Chức năng kiểm tra topic đang phát triển!');
                             }
                         }}
                     >
                         <Text className="text-white text-lg font-bold">
-                            {activeTab === 'level' ? 'Ôn tập các từ đã note' : 'Làm bài tập kiểm tra'}
+                            Ôn tập các từ đã note
                         </Text>
                     </TouchableOpacity>
                 </View>

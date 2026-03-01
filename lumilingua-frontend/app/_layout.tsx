@@ -28,7 +28,7 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
-            name="course/exercise/[exercise]"
+            name="course/exercise/[id]"
             options={{
               headerShown: false,
             }}

@@ -42,7 +42,7 @@ const registerApi = async (userData: {
 };
 
 const refreshTokenApi = async (refreshToken: string) => {
-    const endpoint = "https://hand-told-owns-assists.trycloudflare.com/api/v1/user/refresh";
+    const endpoint = "https://sensor-adjacent-bride-stock.trycloudflare.com/api/v1/user/refresh";
 
     const response = await fetch(endpoint, {
         method: 'POST',
