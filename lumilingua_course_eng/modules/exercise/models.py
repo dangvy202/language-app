@@ -92,6 +92,12 @@ class Question(models.Model):
         null=False,
         blank=False
     )
+    words = models.JSONField(
+        null=True,
+        blank=True,
+        default=list,
+        help_text="User sort order: (example['element 1', 'element 2',...])"
+    )
     correct_answer = models.TextField(null=False, blank=False)
     points = models.IntegerField(default=0)
     image_url = models.TextField(null=True, blank=True)

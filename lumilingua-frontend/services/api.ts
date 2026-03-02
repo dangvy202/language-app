@@ -2,7 +2,7 @@ import { Exercise, HistoryProgressCreatePayload, Level, UserNoteCreatePayLoad } 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const fetchLogin = async (email: string, password: string) => {
-  const endpoint = "https://sensor-adjacent-bride-stock.trycloudflare.com/api/v1/user/login"
+  const endpoint = "https://knowing-recovery-ferrari-xhtml.trycloudflare.com/api/v1/user/login"
 
   try {
     const response = await fetch(endpoint, {
@@ -28,7 +28,7 @@ export const fetchLogin = async (email: string, password: string) => {
 };
 
 export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://came-relevant-anything-instrumentation.trycloudflare.com/api/level/"
+  const endpoint = "https://continuously-mumbai-highland-southampton.trycloudflare.com/api/level/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -46,7 +46,7 @@ export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]>
 };
 
 export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://came-relevant-anything-instrumentation.trycloudflare.com/api/topic/"
+  const endpoint = "https://continuously-mumbai-highland-southampton.trycloudflare.com/api/topic/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -67,7 +67,7 @@ export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
+    const endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -95,7 +95,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/vocabulary/?level=${levelId}`;
+    const endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/vocabulary/?level=${levelId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -122,7 +122,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
 export const fetchMeanByVocabularyAndLanguage = async ({ vocabulary, language }: { vocabulary: number, language: number }): Promise<any[]> => {
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-    const endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
+    const endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -151,7 +151,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
     const token = await AsyncStorage.getItem('token');
     const email = await AsyncStorage.getItem('email');
 
-    const endpoint = `https://sensor-adjacent-bride-stock.trycloudflare.com/api/v1/user/${email}`;
+    const endpoint = `https://knowing-recovery-ferrari-xhtml.trycloudflare.com/api/v1/user/${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -177,7 +177,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
 
 export const fetchUserCache = async ({ email }: { email: string }): Promise<any[]> => {
   try {
-    const endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/user_cache/?email=${email}`;
+    const endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/user_cache/?email=${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -229,7 +229,7 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
       streak,
     };
 
-    const endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/user_cache/`;
+    const endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/user_cache/`;
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -287,7 +287,7 @@ export const saveHistoryProgress = async ({
       payload.duration = duration;
     }
 
-    const endpoint = "https://came-relevant-anything-instrumentation.trycloudflare.com/api/history_progress/";
+    const endpoint = "https://continuously-mumbai-highland-southampton.trycloudflare.com/api/history_progress/";
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -325,7 +325,7 @@ export const saveHistoryProgress = async ({
 };
 
 export const getHistoryProgress = async (userCacheId: number) => {
-  let endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
+  let endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -342,7 +342,7 @@ export const getHistoryProgress = async (userCacheId: number) => {
 };
 
 export const getExerciseProgress = async (userCacheId: number) => {
-  let endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/exercise_progress/?user_cache=${userCacheId}`;
+  let endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/exercise_progress/?user_cache=${userCacheId}`;
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -373,7 +373,7 @@ export const saveNoteVocabulary = async ({
   };
 
   const response = await fetch(
-    "https://came-relevant-anything-instrumentation.trycloudflare.com/api/user_note/",
+    "https://continuously-mumbai-highland-southampton.trycloudflare.com/api/user_note/",
     {
       method: "POST",
       headers: {
@@ -392,7 +392,7 @@ export const saveNoteVocabulary = async ({
 
 export const fetchUserNotes = async (userCacheId: number) => {
   const response = await fetch(
-    `https://came-relevant-anything-instrumentation.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
+    `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
   );
 
   if (!response.ok) {
@@ -403,7 +403,7 @@ export const fetchUserNotes = async (userCacheId: number) => {
 };
 
 export const fetchExercise = async ({ query }: { query: string }): Promise<Exercise[]> => {
-  const endpoint = "https://came-relevant-anything-instrumentation.trycloudflare.com/api/exercise/"
+  const endpoint = "https://continuously-mumbai-highland-southampton.trycloudflare.com/api/exercise/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -422,7 +422,7 @@ export const fetchExercise = async ({ query }: { query: string }): Promise<Exerc
 
 export const fetchExerciseQuestions = async (exerciseId: number) => {
   try {
-    const endpoint = `https://came-relevant-anything-instrumentation.trycloudflare.com/api/question/?exercise=${exerciseId}`;
+    const endpoint = `https://continuously-mumbai-highland-southampton.trycloudflare.com/api/question/?exercise=${exerciseId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',

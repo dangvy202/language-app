@@ -25,7 +25,7 @@ export default function ExerciseScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [userSentence, setUserSentence] = useState<string[]>([]);
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'complete'| null>(null);
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'complete' | null>(null);
   const [correctAnswerDisplay, setCorrectAnswerDisplay] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +101,7 @@ export default function ExerciseScreen() {
 
   const checkSentenceOrder = () => {
     const userAnswer = userSentence.join(' ').trim().toLowerCase();
-    const correctAnswer = currentQuestion.correct_sentence?.trim().toLowerCase() || '';
+    const correctAnswer = currentQuestion.correct_answer?.trim().toLowerCase() || '';
     return userAnswer === correctAnswer;
   };
 
@@ -123,14 +123,13 @@ export default function ExerciseScreen() {
       isCorrect = selected.is_correct;
 
       const correctOption = currentQuestion.options?.find((o: any) => o.is_correct === true);
-      correctText = correctOption 
-        ? (correctOption.content || correctOption.option_text || correctOption.text || 'Đáp án đúng') 
+      correctText = correctOption
+        ? (correctOption.content || correctOption.option_text || correctOption.text || 'Đáp án đúng')
         : '(Không có đáp án đúng - kiểm tra backend)';
     }
 
     setCorrectAnswerDisplay(correctText);
 
-    // Rung + âm thanh
     if (isCorrect) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await correctSound?.replayAsync();
@@ -219,21 +218,39 @@ export default function ExerciseScreen() {
           {currentQuestion.type === 'sentence_order' ? (
             <>
               <View style={styles.sentenceOrderContainer}>
-                {currentQuestion.words?.map((word: string, idx: number) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={[
-                      styles.wordChip,
-                      userSentence.includes(word) && styles.wordUsed
-                    ]}
-                    onPress={() => handleWordClick(word)}
-                    disabled={!!feedback}
-                  >
-                    <Text style={styles.wordText}>{word}</Text>
-                  </TouchableOpacity>
-                ))}
+                {(() => {
+                  let wordsArray = currentQuestion.words;
+                  if (typeof wordsArray === 'string') {
+                    try {
+                      wordsArray = JSON.parse(wordsArray);
+                    } catch (e) {
+                      console.error('Lỗi parse words:', e);
+                      wordsArray = [];
+                    }
+                  }
+                  return Array.isArray(wordsArray) ? (
+                    wordsArray.map((word: string, idx: number) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={[
+                          styles.wordChip,
+                          userSentence.includes(word) && styles.wordUsed
+                        ]}
+                        onPress={() => handleWordClick(word)}
+                        disabled={!!feedback}
+                      >
+                        <Text style={styles.wordText}>{word}</Text>
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <Text style={{ color: 'red', textAlign: 'center' }}>
+                      Lỗi: Dữ liệu words không hợp lệ (backend trả string JSON)
+                    </Text>
+                  );
+                })()}
               </View>
 
+              {/* Câu user đang xây */}
               <View style={styles.userSentenceBox}>
                 {userSentence.length === 0 ? (
                   <Text style={styles.placeholderText}>Click các từ để xây câu</Text>
@@ -324,7 +341,7 @@ export default function ExerciseScreen() {
             style={[
               styles.submitButton,
               ((!selectedOption && currentQuestion.type !== 'sentence_order') ||
-               (currentQuestion.type === 'sentence_order' && userSentence.length === 0)) && styles.submitDisabled,
+                (currentQuestion.type === 'sentence_order' && userSentence.length === 0)) && styles.submitDisabled,
             ]}
             disabled={
               (currentQuestion.type !== 'sentence_order' && !selectedOption) ||

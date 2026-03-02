@@ -20,7 +20,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id_question','exercise','content','type','correct_answer','points','image_url','options']
+        fields = ['id_question','exercise','content','type','correct_answer','points','image_url','options','words']
         read_only_fields = ['created_at', 'updated_at']
 
     def get_options(self, obj):
