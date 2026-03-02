@@ -25,10 +25,13 @@ export default function ExerciseScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [userSentence, setUserSentence] = useState<string[]>([]);
+  const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
+  const [matchedPairs, setMatchedPairs] = useState<{ leftId: number; rightId: number }[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'complete' | null>(null);
   const [correctAnswerDisplay, setCorrectAnswerDisplay] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
 
   const [correctSound, setCorrectSound] = useState<Audio.Sound | null>(null);
   const [wrongSound, setWrongSound] = useState<Audio.Sound | null>(null);
@@ -87,6 +90,15 @@ export default function ExerciseScreen() {
 
   const currentQuestion = questions[currentIndex];
 
+  useEffect(() => {
+    setSelectedOption(null);
+    setUserSentence([]);
+    setSelectedLeft(null);
+    setMatchedPairs([]);
+    setFeedback(null);
+    setCorrectAnswerDisplay('');
+  }, [currentIndex]);
+
   const handleSelect = (optionId: number) => {
     setSelectedOption(optionId);
   };
@@ -105,13 +117,67 @@ export default function ExerciseScreen() {
     return userAnswer === correctAnswer;
   };
 
+  const handleSelectLeft = (leftId: number) => {
+    if (selectedLeft === leftId) {
+      setSelectedLeft(null); // bỏ chọn
+    } else {
+      setSelectedLeft(leftId);
+    }
+  };
+
+  const handleSelectRight = (rightId: number) => {
+    if (!selectedLeft) return;
+
+    const alreadyMatched = matchedPairs.some(p => p.leftId === selectedLeft && p.rightId === rightId);
+    if (alreadyMatched) {
+      setMatchedPairs(prev => prev.filter(p => !(p.leftId === selectedLeft && p.rightId === rightId)));
+    } else {
+      setMatchedPairs(prev => [...prev, { leftId: selectedLeft, rightId }]);
+    }
+
+    setSelectedLeft(null);
+  };
+
+  const checkMatching = () => {
+    if (!currentQuestion.left || !currentQuestion.right) return false;
+
+    if (matchedPairs.length !== currentQuestion.left.length) return false;
+
+    for (const pair of matchedPairs) {
+      if (pair.leftId !== pair.rightId) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async () => {
     let isCorrect = false;
     let correctText = '';
 
     if (currentQuestion.type === 'sentence_order') {
       isCorrect = checkSentenceOrder();
-      correctText = currentQuestion.correct_sentence || '(Không có đáp án đúng)';
+      correctText = currentQuestion.correct_answer || '(Không có đáp án đúng)';
+    } else if (currentQuestion.type === 'matching') {
+      isCorrect = checkMatching();
+
+  if (isCorrect) {
+    correctText = 'Đã nối đúng tất cả cặp từ!';
+  } else {
+    const correctPairsText = currentQuestion.left
+      ?.map((leftItem: any) => {
+        const rightItem = currentQuestion.right?.find(
+          (r: any) => r.id === leftItem.id
+        );
+        return rightItem
+          ? `${leftItem.text} → ${rightItem.text}`
+          : '';
+      })
+      .join('\n');
+
+    correctText = correctPairsText || 'Kiểm tra lại backend';
+  }
     } else {
       if (!selectedOption) return;
 
@@ -131,6 +197,7 @@ export default function ExerciseScreen() {
     setCorrectAnswerDisplay(correctText);
 
     if (isCorrect) {
+      setScore(prev => prev + (currentQuestion.points || 10));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await correctSound?.replayAsync();
     } else {
@@ -145,6 +212,8 @@ export default function ExerciseScreen() {
     setFeedback(null);
     setSelectedOption(null);
     setUserSentence([]);
+    setSelectedLeft(null);
+    setMatchedPairs([]);
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -176,7 +245,7 @@ export default function ExerciseScreen() {
   return (
     <LinearGradient colors={['#1E1E2F', '#0F0F1A']} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
+        {/* Header với điểm số */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <Ionicons name="close" size={32} color="white" />
@@ -193,15 +262,15 @@ export default function ExerciseScreen() {
             </View>
           </View>
 
-          <View style={styles.heartsContainer}>
-            <Ionicons name="flash" size={28} color="#FFD700" />
-            <Text style={styles.heartsText}>25</Text>
+          <View style={styles.scoreContainer}>
+            <Ionicons name="trophy" size={28} color="#FFD700" />
+            <Text style={styles.scoreText}>{score}</Text>
           </View>
         </View>
 
         {/* Nội dung câu hỏi */}
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.questionTitle}>{currentQuestion.content || currentQuestion.question_text || 'Câu hỏi'}</Text>
+          <Text style={styles.questionTitle}>{currentQuestion.content || 'Câu hỏi'}</Text>
 
           {currentQuestion.example && (
             <View style={styles.exampleContainer}>
@@ -234,7 +303,7 @@ export default function ExerciseScreen() {
                         key={idx}
                         style={[
                           styles.wordChip,
-                          userSentence.includes(word) && styles.wordUsed
+                          userSentence.includes(word) && styles.wordUsed,
                         ]}
                         onPress={() => handleWordClick(word)}
                         disabled={!!feedback}
@@ -244,13 +313,12 @@ export default function ExerciseScreen() {
                     ))
                   ) : (
                     <Text style={{ color: 'red', textAlign: 'center' }}>
-                      Lỗi: Dữ liệu words không hợp lệ (backend trả string JSON)
+                      Lỗi: Dữ liệu words không hợp lệ
                     </Text>
                   );
                 })()}
               </View>
 
-              {/* Câu user đang xây */}
               <View style={styles.userSentenceBox}>
                 {userSentence.length === 0 ? (
                   <Text style={styles.placeholderText}>Click các từ để xây câu</Text>
@@ -268,12 +336,58 @@ export default function ExerciseScreen() {
                 )}
               </View>
             </>
+          ) : currentQuestion.type === 'matching' ? (
+            <View style={styles.matchingContainer}>
+              <View style={styles.matchingColumn}>
+                <Text style={styles.matchingTitle}>Từ tiếng Anh</Text>
+                {currentQuestion.left?.map((item: any) => {
+                  const isSelected = selectedLeft === item.id;
+                  const isMatched = matchedPairs.some(p => p.leftId === item.id);
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[
+                        styles.matchingItem,
+                        isSelected && styles.matchingSelected,
+                        isMatched && styles.matchingMatched,
+                      ]}
+                      onPress={() => handleSelectLeft(item.id)}
+                      disabled={!!feedback || isMatched}
+                    >
+                      <Text style={styles.matchingText}>{item.text}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View style={styles.matchingColumn}>
+                <Text style={styles.matchingTitle}>Nghĩa tiếng Việt</Text>
+                {currentQuestion.right?.map((item: any) => {
+                  const isMatched = matchedPairs.some(p => p.rightId === item.id);
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[
+                        styles.matchingItem,
+                        isMatched && styles.matchingMatched,
+                      ]}
+                      onPress={() => handleSelectRight(item.id)}
+                      disabled={!!feedback || isMatched || !selectedLeft}
+                    >
+                      <Text style={styles.matchingText}>{item.text}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
           ) : (
             <View style={styles.optionsContainer}>
               {currentQuestion.options?.map((option: any) => {
                 const optionId = option.id_option || option.id_question_option;
                 const isSelected = selectedOption === optionId;
-                const isCorrectOption = option.is_correct === true || option.correct === true || option.isCorrect === true;
+                const isCorrectOption = option.is_correct === true;
 
                 const optionStyle = [
                   styles.optionButton,
@@ -325,7 +439,9 @@ export default function ExerciseScreen() {
           {feedback === 'complete' && (
             <View style={styles.completeBox}>
               <Text style={styles.completeText}>Hoàn thành bài tập!</Text>
-              <Text style={styles.completeSubText}>Bạn đã làm xong tất cả câu hỏi. Chúc mừng bạn!</Text>
+              <Text style={styles.completeSubText}>
+                Bạn đạt {score} điểm. Chúc mừng bạn!
+              </Text>
               <TouchableOpacity
                 style={styles.continueButton}
                 onPress={() => router.back()}
@@ -336,16 +452,19 @@ export default function ExerciseScreen() {
           )}
         </ScrollView>
 
+        {/* Nút KIỂM TRA / TIẾP TỤC */}
         {!feedback ? (
           <TouchableOpacity
             style={[
               styles.submitButton,
-              ((!selectedOption && currentQuestion.type !== 'sentence_order') ||
-                (currentQuestion.type === 'sentence_order' && userSentence.length === 0)) && styles.submitDisabled,
+              ((!selectedOption && currentQuestion.type !== 'sentence_order' && currentQuestion.type !== 'matching') ||
+                (currentQuestion.type === 'sentence_order' && userSentence.length === 0) ||
+                (currentQuestion.type === 'matching' && matchedPairs.length === 0)) && styles.submitDisabled,
             ]}
             disabled={
-              (currentQuestion.type !== 'sentence_order' && !selectedOption) ||
-              (currentQuestion.type === 'sentence_order' && userSentence.length === 0)
+              (currentQuestion.type !== 'sentence_order' && currentQuestion.type !== 'matching' && !selectedOption) ||
+              (currentQuestion.type === 'sentence_order' && userSentence.length === 0) ||
+              (currentQuestion.type === 'matching' && matchedPairs.length !== currentQuestion.left?.length)
             }
             onPress={handleSubmit}
           >
@@ -508,6 +627,48 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     alignSelf: 'center',
   },
+
+  matchingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 24,
+  },
+  matchingColumn: {
+    flex: 1,
+    marginHorizontal: 8,
+  },
+  matchingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  matchingItem: {
+    backgroundColor: '#2A2A3F',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginVertical: 8,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#444',
+  },
+  matchingSelected: {
+    borderColor: '#BB86FC',
+    backgroundColor: '#3A3A5F',
+  },
+  matchingMatched: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#388E3C',
+    opacity: 0.8,
+  },
+  matchingText: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: '600',
+  },
+
   feedbackBox: {
     marginTop: 24,
     paddingVertical: 16,
@@ -556,7 +717,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
-
   nextButtonCorrect: {
     position: 'absolute',
     bottom: 20,
@@ -600,10 +760,6 @@ const styles = StyleSheet.create({
     borderColor: '#4CAF50',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
   },
   completeText: {
     fontSize: 32,
@@ -624,14 +780,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 60,
     borderRadius: 30,
     elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
   },
   continueText: {
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  scoreText: {
+    color: '#FFD700',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 6,
   },
 });

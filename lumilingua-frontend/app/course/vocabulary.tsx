@@ -30,7 +30,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://knowing-recovery-ferrari-xhtml.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "http://localhost:8888/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',

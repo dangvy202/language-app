@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+import random
 from modules.exercise.models import Exercise, ExerciseProgress, Question, QuestionOptions
 
 
@@ -20,7 +20,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id_question','exercise','content','type','correct_answer','points','image_url','options','words']
+        fields = "__all__"
         read_only_fields = ['created_at', 'updated_at']
 
     def get_options(self, obj):
@@ -28,6 +28,23 @@ class QuestionSerializer(serializers.ModelSerializer):
             options = QuestionOptions.objects.filter(question=obj)
             return QuestionOptionsSerializer(options, many=True).data
         return []
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.type == "matching" and instance.metadata:
+            pairs = instance.metadata.get("pairs", [])
+
+            left = [{"id": p["id"], "text": p["left"]} for p in pairs]
+            right = [{"id": p["id"], "text": p["right"]} for p in pairs]
+
+            random.shuffle(right)
+
+            data["left"] = left
+            data["right"] = right
+
+            # Not response meta data raw
+            data.pop("metadata", None)
+        return data
 
 class QuestionOptionsSerializer(serializers.ModelSerializer):
     class Meta:

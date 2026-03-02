@@ -98,7 +98,13 @@ class Question(models.Model):
         default=list,
         help_text="User sort order: (example['element 1', 'element 2',...])"
     )
-    correct_answer = models.TextField(null=False, blank=False)
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        default=list,
+        help_text='{"pairs":[{ "id": 1, "left": "Dog", "right": "Chó" },{ "id": 2, "left": "Cat", "right": "Mèo" },{ "id": 3, "left": "Bird", "right": "Chim" }]}'
+    )
+    correct_answer = models.TextField(null=True, blank=False)
     points = models.IntegerField(default=0)
     image_url = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
