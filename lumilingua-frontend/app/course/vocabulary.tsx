@@ -30,7 +30,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "http://localhost:8888/api/v1/user/refresh";
+        const endpoint = "https://closure-observation-galaxy-drug.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -106,7 +106,6 @@ export default function LearnVocabulary() {
                 });
                 setProgressMap(progressMap);
 
-                // Fetch exercise progress (object map theo id_exercise)
                 const exerciseProgressList = await getExerciseProgress(userCacheId);
                 const exerciseMap: Record<number, ExerciseProgress> = {};
                 exerciseProgressList.forEach((item: any) => {
@@ -165,7 +164,10 @@ export default function LearnVocabulary() {
     const handleExercisePress = (exercise: Exercise) => {
         router.push({
             pathname: '/course/exercise/[id]',
-            params: { id: exercise.id_exercise },
+            params: { 
+                id: exercise.id_exercise,
+                time_limit: exercise.time_limit
+            },
         })
     };
 
@@ -588,8 +590,6 @@ export default function LearnVocabulary() {
                         </Text>
                     </TouchableOpacity>
                 </View>
-
-
             </View>
         </>
 

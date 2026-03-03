@@ -1,10 +1,10 @@
 import Loading from '@/component/loading';
-import { fetchExerciseQuestions } from '@/services/api';
+import { fetchExerciseQuestions, submitExerciseProgress } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -14,13 +14,20 @@ import {
   View,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Animated, Easing } from 'react-native';
+import { useUserCache } from '@/hook/useUserCache';
 
 export default function ExerciseScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, time_limit } = useLocalSearchParams();
   const router = useRouter();
 
   const exerciseId = Number(id);
+  const totalTime = Number(time_limit);
 
+  const { cache: userCache, loadingCache, cacheError } = useUserCache();
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(0.8));
+  const [progressAnim] = useState(new Animated.Value(1))
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -32,9 +39,101 @@ export default function ExerciseScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(totalTime);
+  const [expireAt, setExpireAt] = useState<number>(0);
+  const urgentAnim = useRef(new Animated.Value(1)).current;
 
   const [correctSound, setCorrectSound] = useState<Audio.Sound | null>(null);
   const [wrongSound, setWrongSound] = useState<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    if (!totalTime) return;
+
+    const expire = Date.now() + totalTime * 1000;
+    setExpireAt(expire);
+  }, [totalTime]);
+
+  useEffect(() => {
+    if (feedback === 'complete') {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [feedback]);
+
+  useEffect(() => {
+    if (timeLeft <= 10 && timeLeft > 0) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(urgentAnim, { toValue: 0.4, duration: 600, useNativeDriver: true }),
+          Animated.timing(urgentAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      urgentAnim.setValue(1);
+    }
+  }, [timeLeft]);
+
+  useEffect(() => {
+    if (!totalTime || totalTime <= 0) return;
+
+    const expire = Date.now() + totalTime * 1000;
+    setExpireAt(expire);
+
+    // Animation progress từ 1 → 0
+    Animated.timing(progressAnim, {
+      toValue: 0,
+      duration: totalTime * 1000,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    }).start();
+
+    const interval = setInterval(() => {
+      const remain = Math.max(0, Math.floor((expire - Date.now()) / 1000));
+      setTimeLeft(remain);
+
+      if (remain <= 0) {
+        clearInterval(interval);
+        handleTimeUp();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [totalTime]);
+
+  const handleTimeUp = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setFeedback('complete');
+  };
+
+  const handleSubmitProgress = async () => {
+    try {
+      if (!userCache || userCache.length === 0) {
+          router.push('/Login');
+          return;
+      }
+      await submitExerciseProgress({
+        id_user: userCache[0].id_user_cache,
+        id_exercise: exerciseId,
+        score: score,
+        completed_at: new Date().toISOString(),
+      });
+
+      console.log('Submit progress success');
+    } catch (err) {
+      console.log('Submit progress error:', err);
+    }
+  };
 
   useEffect(() => {
     const loadSounds = async () => {
@@ -119,7 +218,7 @@ export default function ExerciseScreen() {
 
   const handleSelectLeft = (leftId: number) => {
     if (selectedLeft === leftId) {
-      setSelectedLeft(null); // bỏ chọn
+      setSelectedLeft(null);
     } else {
       setSelectedLeft(leftId);
     }
@@ -162,22 +261,22 @@ export default function ExerciseScreen() {
     } else if (currentQuestion.type === 'matching') {
       isCorrect = checkMatching();
 
-  if (isCorrect) {
-    correctText = 'Đã nối đúng tất cả cặp từ!';
-  } else {
-    const correctPairsText = currentQuestion.left
-      ?.map((leftItem: any) => {
-        const rightItem = currentQuestion.right?.find(
-          (r: any) => r.id === leftItem.id
-        );
-        return rightItem
-          ? `${leftItem.text} → ${rightItem.text}`
-          : '';
-      })
-      .join('\n');
+      if (isCorrect) {
+        correctText = 'Đã nối đúng tất cả cặp từ!';
+      } else {
+        const correctPairsText = currentQuestion.left
+          ?.map((leftItem: any) => {
+            const rightItem = currentQuestion.right?.find(
+              (r: any) => r.id === leftItem.id
+            );
+            return rightItem
+              ? `${leftItem.text} → ${rightItem.text}`
+              : '';
+          })
+          .join('\n');
 
-    correctText = correctPairsText || 'Kiểm tra lại backend';
-  }
+        correctText = correctPairsText || 'Kiểm tra lại backend';
+      }
     } else {
       if (!selectedOption) return;
 
@@ -241,11 +340,72 @@ export default function ExerciseScreen() {
       </View>
     );
   }
+  if (feedback === 'complete') {
+    return (
+      <LinearGradient colors={['#1E1E2F', '#0F0F1A']} style={styles.gradient}>
+        <SafeAreaView style={{ flex: 1, justifyContent: 'center' }}>
+          <Animated.View
+            style={[
+              styles.completeContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
+            <Ionicons
+              name="trophy"
+              size={120}
+              color="#FFD700"
+              style={styles.completeTrophy}
+            />
 
+            <Text style={styles.completeTitle}>Hoàn thành xuất sắc!</Text>
+
+            <View style={styles.completeScoreBox}>
+              <Text style={styles.completeScore}>{score}</Text>
+              <Text style={styles.completeScoreLabel}>ĐIỂM</Text>
+            </View>
+
+            <Text style={styles.completeMessage}>
+              Bạn đã hoàn thành bài tập với {score} điểm. {'\n'}
+              Tiếp tục cố lên nhé!
+            </Text>
+
+            <TouchableOpacity
+              style={styles.completeButtonPrimary}
+              onPress={async () => {
+                await handleSubmitProgress();
+                router.back();
+              }}
+            >
+              <Text style={styles.completeButtonText}>LƯU & QUAY LẠI</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.completeButtonSecondary}
+              onPress={() => {
+                setCurrentIndex(0);
+                setScore(0);
+                setFeedback(null);
+                setSelectedOption(null);
+                setUserSentence([]);
+                setSelectedLeft(null);
+                setMatchedPairs([]);
+              }}
+            >
+              <Text style={styles.completeButtonTextSecondary}>
+                LÀM LẠI
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
   return (
     <LinearGradient colors={['#1E1E2F', '#0F0F1A']} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header với điểm số */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <Ionicons name="close" size={32} color="white" />
@@ -262,13 +422,54 @@ export default function ExerciseScreen() {
             </View>
           </View>
 
-          <View style={styles.scoreContainer}>
-            <Ionicons name="trophy" size={28} color="#FFD700" />
-            <Text style={styles.scoreText}>{score}</Text>
+          {/* Timeline countdown */}
+          <View style={styles.countdownContainer}>
+            <View style={styles.countdownCircle}>
+              {/* Ring gradient xoay */}
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    borderRadius: 50,
+                    borderWidth: 5,
+                    borderColor: 'transparent',
+                    borderTopColor: timeLeft <= 10 ? '#F44336' : timeLeft <= 30 ? '#FF9800' : '#4CAF50',
+                    transform: [
+                      {
+                        rotate: progressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['-90deg', '270deg'],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+
+              {/* Inner circle + icon + time */}
+              <Animated.View style={[
+                styles.countdownInner,
+                { opacity: timeLeft <= 10 ? urgentAnim : 1 },
+              ]}>
+                <Ionicons name="hourglass" size={22} color="#FFFFFF" style={{ marginBottom: 4 }} />
+                <Text style={[
+                  styles.countdownText,
+                  timeLeft <= 10 && { color: '#F44336', fontSize: 9 },
+                ]}>
+                  {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:
+                  {(timeLeft % 60).toString().padStart(2, '0')}
+                </Text>
+              </Animated.View>
+            </View>
+
+            {/* Score */}
+            <View style={styles.scoreContainer}>
+              <Ionicons name="trophy" size={28} color="#FFD700" />
+              <Text style={styles.scoreText}>{score}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Nội dung câu hỏi */}
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.questionTitle}>{currentQuestion.content || 'Câu hỏi'}</Text>
 
@@ -283,7 +484,6 @@ export default function ExerciseScreen() {
             </View>
           )}
 
-          {/* Xử lý theo type */}
           {currentQuestion.type === 'sentence_order' ? (
             <>
               <View style={styles.sentenceOrderContainer}>
@@ -419,7 +619,7 @@ export default function ExerciseScreen() {
           )}
 
           {/* Feedback box */}
-          {feedback && feedback !== 'complete' && (
+          {feedback &&  (
             <View style={[
               styles.feedbackBox,
               feedback === 'correct' ? styles.feedbackCorrect : styles.feedbackWrong
@@ -432,22 +632,6 @@ export default function ExerciseScreen() {
                   Đáp án đúng: {correctAnswerDisplay}
                 </Text>
               )}
-            </View>
-          )}
-
-          {/* Hoàn thành bài tập */}
-          {feedback === 'complete' && (
-            <View style={styles.completeBox}>
-              <Text style={styles.completeText}>Hoàn thành bài tập!</Text>
-              <Text style={styles.completeSubText}>
-                Bạn đạt {score} điểm. Chúc mừng bạn!
-              </Text>
-              <TouchableOpacity
-                style={styles.continueButton}
-                onPress={() => router.back()}
-              >
-                <Text style={styles.continueText}>QUAY LẠI</Text>
-              </TouchableOpacity>
             </View>
           )}
         </ScrollView>
@@ -786,20 +970,147 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
+  countdownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  countdownCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 30, 47, 0.9)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.15)',
+    overflow: 'hidden',
+    marginRight: 16,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+  },
+  countdownInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#1E1E2F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  countdownText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 6,
+  },
+  countdownUrgent: {
+    color: '#F44336',
+    fontSize: 9,
+  },
   scoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,215,0,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,215,0,0.15)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: 'rgba(255,215,0,0.4)',
   },
   scoreText: {
     color: '#FFD700',
     fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 6,
+    fontWeight: '900',
+    marginLeft: 8,
   },
+  completeContainer: {
+    marginTop: 60,
+    marginHorizontal: 24,
+    padding: 32,
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    borderRadius: 32,
+    borderWidth: 3,
+    borderColor: '#4CAF50',
+    alignItems: 'center',
+    elevation: 12,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+  },
+completeTrophy: {
+  marginBottom: 24,
+  shadowColor: '#FFD700',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.6,
+  shadowRadius: 10,
+},
+completeTitle: {
+  fontSize: 32,
+  fontWeight: 'bold',
+  color: '#4CAF50',
+  marginBottom: 16,
+  textAlign: 'center',
+},
+completeScoreBox: {
+  flexDirection: 'row',
+  alignItems: 'baseline',
+  marginVertical: 16,
+},
+completeScore: {
+  fontSize: 64,
+  fontWeight: '900',
+  color: '#FFD700',
+},
+completeScoreLabel: {
+  fontSize: 24,
+  color: '#FFD700',
+  marginLeft: 8,
+},
+completeMessage: {
+  fontSize: 18,
+  color: '#E0E0E0',
+  textAlign: 'center',
+  marginBottom: 32,
+  lineHeight: 28,
+},
+completeButtonPrimary: {
+  backgroundColor: '#4CAF50',
+  paddingVertical: 18,
+  paddingHorizontal: 60,
+  borderRadius: 30,
+  marginBottom: 16,
+  elevation: 10,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 6,
+},
+completeButtonText: {
+  color: 'white',
+  fontSize: 20,
+  fontWeight: 'bold',
+},
+completeButtonSecondary: {
+  backgroundColor: 'transparent',
+  borderWidth: 2,
+  borderColor: '#4CAF50',
+  paddingVertical: 16,
+  paddingHorizontal: 60,
+  borderRadius: 30,
+},
+completeButtonTextSecondary: {
+  color: '#4CAF50',
+  fontSize: 18,
+  fontWeight: 'bold',
+},
 });
