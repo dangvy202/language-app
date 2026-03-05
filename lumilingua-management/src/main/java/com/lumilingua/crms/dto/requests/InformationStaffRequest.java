@@ -12,7 +12,7 @@ import java.util.List;
 public class InformationStaffRequest {
     private String email;
     private int hourOfDay;
-    private int dayOfWeek;
+    private List<String> dayOfWeek;
     private int scoreSpeaking;
     private int scoreReading;
     private int scoreListening;

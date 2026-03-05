@@ -50,7 +50,8 @@
           "cameraPermission": "Cho phép ứng dụng sử dụng camera nếu cần"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

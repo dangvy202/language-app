@@ -42,6 +42,10 @@ public class Result<T> {
         return new Result<>(ResultApiConstant.StatusCode.OK, ResultApiConstant.MessageCode.SUCCESS, null, data);
     }
 
+    public static <T> Result<T> getIsExist(T data, String notification) {
+        return new Result<>(ResultApiConstant.StatusCode.OK, ResultApiConstant.MessageCode.SUCCESS, notification, data);
+    }
+
     public static <T> Result<T> forbidden(String msg) {
         return new Result<>(ResultApiConstant.StatusCode.FORBIDDEN, ResultApiConstant.MessageCode.FORBIDDEN_MESSAGE, msg, null);
     }

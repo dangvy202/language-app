@@ -1,6 +1,8 @@
+import Loading from '@/component/loading';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+    Alert,
     Image,
     KeyboardAvoidingView,
     Platform,
@@ -10,30 +12,157 @@ import {
     TextInput,
     TouchableOpacity,
     View,
-    Alert,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { registerTutor } from '@/services/api';
 
 const RegisterTutor = () => {
     const router = useRouter();
-    const [fullName, setFullName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [languages, setLanguages] = useState('');
-    const [level, setLevel] = useState('');
-    const [experience, setExperience] = useState('');
-    const [bio, setBio] = useState('');
 
-    const handleSubmit = () => {
-        if (!fullName || !email || !phone || !languages) {
-            Alert.alert('Thông báo', 'Vui lòng điền đầy đủ các trường bắt buộc!');
+    // State chính
+    const [email, setEmail] = useState('');
+    const [hourOfDay, setHourOfDay] = useState('');
+    const [selectedDays, setSelectedDays] = useState<number[]>([]);
+    const [scoreSpeaking, setScoreSpeaking] = useState('0');
+    const [scoreReading, setScoreReading] = useState('0');
+    const [scoreListening, setScoreListening] = useState('0');
+    const [scoreWriting, setScoreWriting] = useState('0');
+    const [certificatePath, setCertificatePath] = useState('');
+    const [expectedSalary, setExpectedSalary] = useState('');
+    const [experiences, setExperiences] = useState<
+        { companyName: string; fromDate: string; toDate: string }[]
+    >([]);
+
+    // State cho form thêm kinh nghiệm (ẩn/hiện)
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [newCompany, setNewCompany] = useState('');
+    const [newFromDate, setNewFromDate] = useState(new Date());
+    const [newToDate, setNewToDate] = useState(new Date());
+    const [showFromPicker, setShowFromPicker] = useState(false);
+    const [showToPicker, setShowToPicker] = useState(false);
+
+    const [loading, setLoading] = useState(false);
+
+    const daysOfWeek = [
+        { id: 1, label: 'Thứ 2' },
+        { id: 2, label: 'Thứ 3' },
+        { id: 3, label: 'Thứ 4' },
+        { id: 4, label: 'Thứ 5' },
+        { id: 5, label: 'Thứ 6' },
+        { id: 6, label: 'Thứ 7' },
+        { id: 7, label: 'CN' },
+    ];
+
+    const formatVND = (value: string) => {
+        if (!value) return '';
+        return Number(value).toLocaleString('vi-VN');
+    };
+
+    const unformatVND = (value: string) => {
+        return value.replace(/\D/g, '');
+    };
+
+    const toggleDay = (dayId: number) => {
+        setSelectedDays((prev) =>
+            prev.includes(dayId) ? prev.filter((d) => d !== dayId) : [...prev, dayId]
+        );
+    };
+
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const addExperience = () => {
+        console.log('ADD EXPERIENCE CLICKED');
+
+        if (!newCompany.trim() || !newFromDate || !newToDate) {
+            Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin kinh nghiệm!');
             return;
         }
-        Alert.alert(
-            'Đăng ký thành công',
-            'Cảm ơn bạn! Chúng tôi sẽ liên hệ trong vòng 24-48h để xác nhận.'
-        );
+
+        if (newFromDate > newToDate) {
+            Alert.alert('Thông báo', 'Ngày bắt đầu phải trước ngày kết thúc!');
+            return;
+        }
+
+        const newExp = {
+            companyName: newCompany.trim(),
+            fromDate: formatDate(newFromDate),
+            toDate: formatDate(newToDate),
+        };
+
+        console.log('Kinh nghiệm mới sẽ thêm:', newExp);
+
+        setExperiences((prev) => {
+            const updated = [...prev, newExp];
+            console.log('State experiences sau update:', updated);
+            return updated;
+        });
+
+        // Reset và ẩn form
+        setNewCompany('');
+        setNewFromDate(new Date());
+        setNewToDate(new Date());
+        setShowAddForm(false);
+    };
+
+    const removeExperience = (index: number) => {
+        setExperiences((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleScoreChange = (text: string, setter: (val: string) => void) => {
+        const number = text.replace(/[^0-9]/g, '');
+
+        if (!number) {
+            setter('');
+            return;
+        }
+
+        const value = parseInt(number, 10);
+
+        if (value >= 1 && value <= 10) {
+            setter(value.toString());
+        } else if (value > 10) {
+            setter('10');
+        }
+    };
+
+    const handleSubmit = async () => {
+        console.log('Experiences trước khi gửi:', experiences);
+
+        if (experiences.length === 0) {
+            Alert.alert('Thông báo', 'Vui lòng thêm ít nhất 1 kinh nghiệm!');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            await registerTutor({
+                email,
+                hourOfDay,
+                selectedDays,
+                scoreSpeaking,
+                scoreReading,
+                scoreListening,
+                scoreWriting,
+                certificatePath,
+                expectedSalary,
+                experiences,
+            });
+
+            Alert.alert('Đăng ký thành công', 'Cảm ơn bạn! Chúng tôi sẽ liên hệ trong 24-48h.');
+            router.back();
+        } catch (err: any) {
+            Alert.alert('Lỗi', 'Đăng ký thất bại. Vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -54,43 +183,21 @@ const RegisterTutor = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
             >
-                {/* Header */}
                 <LinearGradient
                     colors={['#FFB703', '#FB8500']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.header}
                 >
-                    <Image
-                        source={require('@/assets/images/accounts/logo.jpg')}
-                        style={styles.mascot}
-                    />
+                    <Image source={require('@/assets/images/accounts/logo.jpg')} style={styles.mascot} />
                     <Text style={styles.headerTitle}>Trở thành Gia sư</Text>
                     <Text style={styles.headerSubtitle}>
                         Chia sẻ kiến thức - Kiếm thu nhập - Lan tỏa niềm vui học ngôn ngữ!
                     </Text>
                 </LinearGradient>
 
-                <ScrollView
-                    style={styles.formScroll}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                >
+                <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                     <View style={styles.formContainer}>
-                        {/* Full Name */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Họ và tên <Text style={styles.required}>*</Text></Text>
-                            <View style={styles.inputWrapper}>
-                                <Ionicons name="person-outline" size={22} color="#FFA500" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Ví dụ: Nguyễn Văn A"
-                                    value={fullName}
-                                    onChangeText={setFullName}
-                                />
-                            </View>
-                        </View>
-
                         {/* Email */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
@@ -98,94 +205,219 @@ const RegisterTutor = () => {
                                 <Ionicons name="mail-outline" size={22} color="#FFA500" style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="example@gmail.com"
+                                    placeholder="Email đăng nhập"
+                                    placeholderTextColor="#999"
                                     keyboardType="email-address"
                                     value={email}
                                     onChangeText={setEmail}
+                                    autoCapitalize="none"
                                 />
                             </View>
                         </View>
 
-                        {/* Phone */}
+                        {/* Giờ dạy */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Số điện thoại <Text style={styles.required}>*</Text></Text>
-                            <View style={styles.inputWrapper}>
-                                <Ionicons name="call-outline" size={22} color="#FFA500" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="0123 456 789"
-                                    keyboardType="phone-pad"
-                                    value={phone}
-                                    onChangeText={setPhone}
-                                />
-                            </View>
-                        </View>
-
-                        {/* Languages */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Ngôn ngữ bạn dạy <Text style={styles.required}>*</Text></Text>
-                            <View style={styles.inputWrapper}>
-                                <Ionicons name="globe-outline" size={22} color="#FFA500" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Tiếng Anh, Tiếng Pháp, Tiếng Tây Ban Nha..."
-                                    value={languages}
-                                    onChangeText={setLanguages}
-                                />
-                            </View>
-                        </View>
-
-                        {/* Level */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Trình độ của bạn</Text>
-                            <View style={styles.inputWrapper}>
-                                <Ionicons name="school-outline" size={22} color="#FFA500" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="C1, Native speaker, TESOL, CELTA..."
-                                    value={level}
-                                    onChangeText={setLevel}
-                                />
-                            </View>
-                        </View>
-
-                        {/* Experience */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Kinh nghiệm giảng dạy</Text>
+                            <Text style={styles.label}>Giờ dạy trong ngày (0-23) <Text style={styles.required}>*</Text></Text>
                             <View style={styles.inputWrapper}>
                                 <Ionicons name="time-outline" size={22} color="#FFA500" style={styles.inputIcon} />
                                 <TextInput
-                                    style={[styles.input, styles.textArea]}
-                                    placeholder="Ví dụ: 3 năm dạy online, từng dạy cho học sinh cấp 3..."
-                                    multiline
-                                    numberOfLines={4}
-                                    value={experience}
-                                    onChangeText={setExperience}
+                                    style={styles.input}
+                                    placeholder="Ví dụ: 18 (6h tối)"
+                                    placeholderTextColor="#999"
+                                    keyboardType="numeric"
+                                    value={hourOfDay}
+                                    onChangeText={(text) => setHourOfDay(text.replace(/[^0-9]/g, ''))}
+                                    maxLength={2}
                                 />
                             </View>
                         </View>
 
-                        {/* Bio */}
+                        {/* Ngày dạy */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Giới thiệu bản thân</Text>
+                            <Text style={styles.label}>Ngày dạy trong tuần <Text style={styles.required}>*</Text></Text>
+                            <View style={styles.daysContainer}>
+                                {daysOfWeek.map((day) => (
+                                    <TouchableOpacity
+                                        key={day.id}
+                                        style={[styles.dayChip, selectedDays.includes(day.id) && styles.dayChipSelected]}
+                                        onPress={() => toggleDay(day.id)}
+                                    >
+                                        <Text style={[styles.dayText, selectedDays.includes(day.id) && styles.dayTextSelected]}>
+                                            {day.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        {/* Điểm kỹ năng */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Điểm kỹ năng (0-10) <Text style={styles.required}>*</Text></Text>
+                            <View style={styles.skillsRow}>
+                                <View style={styles.skillInput}>
+                                    <Text>Speaking</Text>
+                                    <TextInput
+                                        style={styles.skillNumber}
+                                        keyboardType="numeric"
+                                        value={scoreSpeaking}
+                                        maxLength={2}
+                                        onFocus={() => scoreSpeaking === '0' && setScoreSpeaking('')}
+                                        onChangeText={(text) => handleScoreChange(text, setScoreSpeaking)}
+                                    />
+                                </View>
+                                <View style={styles.skillInput}>
+                                    <Text>Reading</Text>
+                                    <TextInput
+                                        style={styles.skillNumber}
+                                        keyboardType="numeric"
+                                        value={scoreReading}
+                                        maxLength={2}
+                                        onFocus={() => scoreReading === '0' && setScoreReading('')}
+                                        onChangeText={(text) => handleScoreChange(text, setScoreReading)}
+                                    />
+                                </View>
+                            </View>
+                            <View style={styles.skillsRow}>
+                                <View style={styles.skillInput}>
+                                    <Text>Listening</Text>
+                                    <TextInput
+                                        style={styles.skillNumber}
+                                        keyboardType="numeric"
+                                        value={scoreListening}
+                                        maxLength={2}
+                                        onFocus={() => scoreListening === '0' && setScoreListening('')}
+                                        onChangeText={(text) => handleScoreChange(text, setScoreListening)}
+                                    />
+                                </View>
+                                <View style={styles.skillInput}>
+                                    <Text>Writing</Text>
+                                    <TextInput
+                                        style={styles.skillNumber}
+                                        keyboardType="numeric"
+                                        value={scoreWriting}
+                                        maxLength={2}
+                                        onFocus={() => scoreWriting === '0' && setScoreWriting('')}
+                                        onChangeText={(text) => handleScoreChange(text, setScoreWriting)}
+                                    />
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Chứng chỉ */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Link chứng chỉ (nếu có)</Text>
                             <View style={styles.inputWrapper}>
-                                <Ionicons name="information-circle-outline" size={22} color="#FFA500" style={styles.inputIcon} />
+                                <Ionicons name="document-attach-outline" size={22} color="#FFA500" style={styles.inputIcon} />
                                 <TextInput
-                                    style={[styles.input, styles.textArea]}
-                                    placeholder="Viết gì đó vui vẻ để học viên tin tưởng bạn..."
-                                    multiline
-                                    numberOfLines={5}
-                                    value={bio}
-                                    onChangeText={setBio}
+                                    style={styles.input}
+                                    placeholder="Link Google Drive / file path"
+                                    placeholderTextColor="#999"
+                                    value={certificatePath}
+                                    onChangeText={setCertificatePath}
                                 />
                             </View>
                         </View>
 
-                        {/* Submit Button */}
+                        {/* Lương mong muốn */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Mức lương mong muốn (VND) <Text style={styles.required}>*</Text></Text>
+                            <View style={styles.inputWrapper}>
+                                <Ionicons name="cash-outline" size={22} color="#FFA500" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    keyboardType="numeric"
+                                    value={formatVND(expectedSalary)}
+                                    onChangeText={(text) => {
+                                        const raw = unformatVND(text);
+                                        setExpectedSalary(raw);
+                                    }}
+                                />
+                            </View>
+                        </View>
+
+                        {/* Kinh nghiệm */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Kinh nghiệm làm việc</Text>
+
+                            {/* List kinh nghiệm */}
+                            {experiences.map((exp, index) => (
+                                <View key={index} style={styles.experienceItem}>
+                                    <Text style={styles.experienceText}>
+                                        {exp.companyName} ({exp.fromDate} → {exp.toDate})
+                                    </Text>
+                                    <TouchableOpacity onPress={() => removeExperience(index)}>
+                                        <Ionicons name="trash-outline" size={24} color="#FF6347" />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+
+                            {/* Button toggle form thêm mới */}
+                            <TouchableOpacity
+                                style={styles.addButton}
+                                onPress={() => setShowAddForm(!showAddForm)}
+                            >
+                                <Text style={styles.addButtonText}>
+                                    {showAddForm ? '- Ẩn form thêm' : '+ Thêm kinh nghiệm'}
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* Form thêm kinh nghiệm - chỉ hiện khi showAddForm = true */}
+                            {showAddForm && (
+                                <View style={styles.addExperience}>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Tên công ty"
+                                        value={newCompany}
+                                        onChangeText={setNewCompany}
+                                    />
+
+                                    {/* Từ ngày */}
+                                    <TouchableOpacity style={styles.dateInput} onPress={() => setShowFromPicker(true)}>
+                                        <Ionicons name="calendar-outline" size={22} color="#FFA500" style={styles.inputIcon} />
+                                        <Text style={styles.dateText}>Từ ngày: {formatDate(newFromDate)}</Text>
+                                    </TouchableOpacity>
+                                    {showFromPicker && (
+                                        <DateTimePicker
+                                            value={newFromDate}
+                                            mode="date"
+                                            display="default"
+                                            onChange={(event, selectedDate) => {
+                                                setShowFromPicker(Platform.OS === 'ios');
+                                                if (selectedDate) setNewFromDate(selectedDate);
+                                            }}
+                                        />
+                                    )}
+
+                                    {/* Đến ngày */}
+                                    <TouchableOpacity style={styles.dateInput} onPress={() => setShowToPicker(true)}>
+                                        <Ionicons name="calendar-outline" size={22} color="#FFA500" style={styles.inputIcon} />
+                                        <Text style={styles.dateText}>Đến ngày: {formatDate(newToDate)}</Text>
+                                    </TouchableOpacity>
+                                    {showToPicker && (
+                                        <DateTimePicker
+                                            value={newToDate}
+                                            mode="date"
+                                            display="default"
+                                            onChange={(event, selectedDate) => {
+                                                setShowToPicker(Platform.OS === 'ios');
+                                                if (selectedDate) setNewToDate(selectedDate);
+                                            }}
+                                        />
+                                    )}
+
+                                    <TouchableOpacity style={styles.addButton} onPress={addExperience}>
+                                        <Text style={styles.addButtonText}>Thêm kinh nghiệm này</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+
+                        {/* Submit */}
                         <TouchableOpacity
                             style={styles.submitButton}
                             activeOpacity={0.85}
                             onPress={handleSubmit}
+                            disabled={loading}
                         >
                             <LinearGradient
                                 colors={['#FFB703', '#FB8500']}
@@ -193,12 +425,12 @@ const RegisterTutor = () => {
                                 end={{ x: 1, y: 0 }}
                                 style={styles.submitGradient}
                             >
-                                <Text style={styles.submitText}>Gửi đăng ký ngay</Text>
+                                {loading ? <Text style={styles.submitText}>Đang gửi...</Text> : <Text style={styles.submitText}>Gửi đăng ký ngay</Text>}
                             </LinearGradient>
                         </TouchableOpacity>
 
                         <Text style={styles.note}>
-                            Chúng tôi sẽ xem xét và liên hệ qua email/SĐT trong 24-48h. Cảm ơn bạn đã quan tâm!
+                            Chúng tôi sẽ xem xét và liên hệ qua email trong 24-48h. Cảm ơn bạn!
                         </Text>
                     </View>
                 </ScrollView>
@@ -255,16 +487,14 @@ const styles = StyleSheet.create({
     },
     inputWrapper: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         backgroundColor: '#FAFAFA',
         borderRadius: 20,
         borderWidth: 1.5,
         borderColor: '#EEE',
         paddingHorizontal: 16,
-        paddingVertical: 4,
     },
     inputIcon: {
-        marginTop: 14,
         marginRight: 12,
     },
     input: {
@@ -273,10 +503,90 @@ const styles = StyleSheet.create({
         color: '#222',
         paddingVertical: 14,
     },
-    textArea: {
-        textAlignVertical: 'top',
-        minHeight: 110,
-        paddingTop: 12,
+    daysContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 8,
+    },
+    dayChip: {
+        backgroundColor: '#F0F0F0',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        marginRight: 8,
+        marginBottom: 8,
+    },
+    dayChipSelected: {
+        backgroundColor: '#FFA500',
+    },
+    dayText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    dayTextSelected: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    skillsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 8,
+    },
+    skillInput: {
+        flex: 1,
+        marginRight: 12,
+        alignItems: 'center',
+    },
+    skillNumber: {
+        backgroundColor: '#FAFAFA',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#EEE',
+        width: 60,
+        textAlign: 'center',
+        paddingVertical: 10,
+        marginTop: 4,
+        fontSize: 16,
+    },
+    dateInput: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FAFAFA',
+        borderRadius: 20,
+        borderWidth: 1.5,
+        borderColor: '#EEE',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginTop: 8,
+    },
+    dateText: {
+        fontSize: 16,
+        color: '#222',
+    },
+    experienceItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#F9F9F9',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 8,
+    },
+    experienceText: {
+        flex: 1,
+        fontSize: 14,
+    },
+    addExperience: { marginTop: 12, },
+    addButton: {
+        backgroundColor: '#FFA500',
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 12,
+    },
+    addButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
     submitButton: {
         marginTop: 32,

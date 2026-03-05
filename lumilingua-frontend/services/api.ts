@@ -1,8 +1,8 @@
-import { Exercise, HistoryProgressCreatePayload, Level, UserNoteCreatePayLoad } from "@/interfaces/interfaces";
+import { Exercise, HistoryProgressCreatePayload, Level, RegisterTutorPayload, UserNoteCreatePayLoad } from "@/interfaces/interfaces";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const fetchLogin = async (email: string, password: string) => {
-  const endpoint = "https://closure-observation-galaxy-drug.trycloudflare.com/api/v1/user/login"
+  const endpoint = "https://units-willing-redeem-engaging.trycloudflare.com/api/v1/user/login"
 
   try {
     const response = await fetch(endpoint, {
@@ -28,7 +28,7 @@ export const fetchLogin = async (email: string, password: string) => {
 };
 
 export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://johns-opinion-mazda-more.trycloudflare.com/api/level/"
+  const endpoint = "https://withdrawal-broken-metres-yea.trycloudflare.com/api/level/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -46,7 +46,7 @@ export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]>
 };
 
 export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://johns-opinion-mazda-more.trycloudflare.com/api/topic/"
+  const endpoint = "https://withdrawal-broken-metres-yea.trycloudflare.com/api/topic/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -67,7 +67,7 @@ export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
+    const endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -95,7 +95,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/vocabulary/?level=${levelId}`;
+    const endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/vocabulary/?level=${levelId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -122,7 +122,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
 export const fetchMeanByVocabularyAndLanguage = async ({ vocabulary, language }: { vocabulary: number, language: number }): Promise<any[]> => {
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-    const endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
+    const endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -151,7 +151,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
     const token = await AsyncStorage.getItem('token');
     const email = await AsyncStorage.getItem('email');
 
-    const endpoint = `https://closure-observation-galaxy-drug.trycloudflare.com/api/v1/user/${email}`;
+    const endpoint = `https://units-willing-redeem-engaging.trycloudflare.com/api/v1/user/${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -177,7 +177,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<an
 
 export const fetchUserCache = async ({ email }: { email: string }): Promise<any[]> => {
   try {
-    const endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/user_cache/?email=${email}`;
+    const endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/user_cache/?email=${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -229,7 +229,7 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
       streak,
     };
 
-    const endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/user_cache/`;
+    const endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/user_cache/`;
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -287,7 +287,7 @@ export const saveHistoryProgress = async ({
       payload.duration = duration;
     }
 
-    const endpoint = "https://johns-opinion-mazda-more.trycloudflare.com/api/history_progress/";
+    const endpoint = "https://withdrawal-broken-metres-yea.trycloudflare.com/api/history_progress/";
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -325,7 +325,7 @@ export const saveHistoryProgress = async ({
 };
 
 export const getHistoryProgress = async (userCacheId: number) => {
-  let endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
+  let endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -342,7 +342,7 @@ export const getHistoryProgress = async (userCacheId: number) => {
 };
 
 export const getExerciseProgress = async (userCacheId: number) => {
-  let endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/exercise_progress/?user_cache=${userCacheId}`;
+  let endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/exercise_progress/?user_cache=${userCacheId}`;
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -373,7 +373,7 @@ export const saveNoteVocabulary = async ({
   };
 
   const response = await fetch(
-    "https://johns-opinion-mazda-more.trycloudflare.com/api/user_note/",
+    "https://withdrawal-broken-metres-yea.trycloudflare.com/api/user_note/",
     {
       method: "POST",
       headers: {
@@ -392,7 +392,7 @@ export const saveNoteVocabulary = async ({
 
 export const fetchUserNotes = async (userCacheId: number) => {
   const response = await fetch(
-    `https://johns-opinion-mazda-more.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
+    `https://withdrawal-broken-metres-yea.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
   );
 
   if (!response.ok) {
@@ -403,7 +403,7 @@ export const fetchUserNotes = async (userCacheId: number) => {
 };
 
 export const fetchExercise = async ({ query }: { query: string }): Promise<Exercise[]> => {
-  const endpoint = "https://johns-opinion-mazda-more.trycloudflare.com/api/exercise/"
+  const endpoint = "https://withdrawal-broken-metres-yea.trycloudflare.com/api/exercise/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -422,7 +422,7 @@ export const fetchExercise = async ({ query }: { query: string }): Promise<Exerc
 
 export const fetchExerciseQuestions = async (exerciseId: number) => {
   try {
-    const endpoint = `https://johns-opinion-mazda-more.trycloudflare.com/api/question/?exercise=${exerciseId}`;
+    const endpoint = `https://withdrawal-broken-metres-yea.trycloudflare.com/api/question/?exercise=${exerciseId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -456,7 +456,7 @@ export const submitExerciseProgress = async ({
   score: number;
   completed_at: string;
 }) => {
-  const response = await fetch('https://johns-opinion-mazda-more.trycloudflare.com/api/exercise_progress/', {
+  const response = await fetch('https://withdrawal-broken-metres-yea.trycloudflare.com/api/exercise_progress/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -474,4 +474,109 @@ export const submitExerciseProgress = async ({
   }
 
   return response.json();
+};
+
+export const registerTutor = async (data: {
+  email: string;
+  hourOfDay: string;
+  selectedDays: number[];
+  scoreSpeaking: string;
+  scoreReading: string;
+  scoreListening: string;
+  scoreWriting: string;
+  certificatePath: string;
+  expectedSalary: string;
+  experiences: { companyName: string; fromDate: string; toDate: string }[];
+}): Promise<any> => {
+  try {
+    console.log('Data nhận trong api:', { experiences: data.experiences });
+    if (
+      !data.email ||
+      !data.hourOfDay ||
+      data.selectedDays.length === 0 ||
+      !data.scoreSpeaking ||
+      !data.scoreReading ||
+      !data.scoreListening ||
+      !data.scoreWriting ||
+      !data.expectedSalary
+    ) {
+      throw new Error('Vui lòng điền đầy đủ các trường bắt buộc!');
+    }
+
+    const dayNumberToText = (dayId: number): string => {
+      const daysMap: { [key: number]: string } = {
+        1: 'Thứ Hai',
+        2: 'Thứ Ba',
+        3: 'Thứ Tư',
+        4: 'Thứ Năm',
+        5: 'Thứ Sáu',
+        6: 'Thứ Bảy',
+        7: 'Chủ Nhật',
+      };
+      return daysMap[dayId] || 'Không xác định';
+    };
+
+    const payload = {
+      email: data.email.trim(),
+      hourOfDay: parseInt(data.hourOfDay, 10),
+      dayOfWeek: data.selectedDays.map(dayNumberToText),
+      scoreSpeaking: parseInt(data.scoreSpeaking, 10),
+      scoreReading: parseInt(data.scoreReading, 10),
+      scoreListening: parseInt(data.scoreListening, 10),
+      scoreWriting: parseInt(data.scoreWriting, 10),
+      certificatePath: data.certificatePath.trim() || null,
+      expectedSalary: parseFloat(data.expectedSalary),
+      experienced: data.experiences.map(exp => ({
+        companyName: exp.companyName.trim(),
+        fromDate: exp.fromDate,
+        toDate: exp.toDate,
+      })),
+    };
+
+    console.log('Payload gửi đi:', JSON.stringify(payload, null, 2));
+
+    const token = await AsyncStorage.getItem('token');
+
+    if (!token) {
+      throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
+    }
+
+    const endpoint = 'https://units-willing-redeem-engaging.trycloudflare.com/api/v1/information-staff';
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = {};
+      }
+
+      const errorMessage =
+        errorData.error ||
+        errorData.detail ||
+        errorData.message ||
+        errorData.non_field_errors?.[0] ||
+        `Server error: ${response.status} ${response.statusText}`;
+
+      console.error('API Error Full:', { status: response.status, data: errorData });
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('API Success:', result);
+    return result;
+  } catch (err: any) {
+    console.error('Error registerTutor:', err);
+    throw new Error(err.message || 'Không thể đăng ký gia sư. Vui lòng thử lại!');
+  }
 };

@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Entity
@@ -45,7 +46,7 @@ public class InformationStaff {
     private int hourOfDay;
 
     @Column(name = "day_of_week")
-    private int dayOfWeek;
+    private List<String> dayOfWeek;
 
     @Column(name = "id_user")
     private long idUser;

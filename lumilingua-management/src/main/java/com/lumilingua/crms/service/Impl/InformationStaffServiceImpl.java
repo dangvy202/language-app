@@ -45,6 +45,14 @@ public class InformationStaffServiceImpl implements InformationStaffService {
         if(user.isEmpty()) {
             return Result.badRequestError("The Email does NOT exists");
         }
+
+        Optional<InformationStaff> informationStaffEntity = informationStaffRepository.findByIdUser(user.get().getIdUser());
+
+        if (informationStaffEntity.isPresent()) {
+            List<ExperiencedStaff> experiencedStaffs = experiencedStaffRepository.findExperiencedStaffByIdInformationStaff(informationStaffEntity.get().getIdInformationStaff());
+            InformationStaffResponse response = InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaffEntity.get(), experiencedStaffs);
+            return Result.getIsExist(response, "The information staff is exists, please redirect to update information");
+        }
         InformationStaff informationStaff = informationStaffRepository.save(InformationStaffMapper.INSTANT.toInformationStaff(request, request.getCertificatePath(), user.get().getIdUser()));
         List<ExperiencedStaff> experiencedStaffGenerate = request.getExperienced().stream().map(x -> ExperiencedStaffMapper.INSTANT.toExperiencedStaff(x, DateTimeUtils.calculateYearsExperience(x.getFromDate(), x.getToDate())))
                 .peek(es -> es.setIdInformationStaff(informationStaff.getIdInformationStaff()))

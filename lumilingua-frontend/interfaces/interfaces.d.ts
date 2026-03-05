@@ -68,3 +68,22 @@ export interface UserNoteCreatePayLoad {
   id_vocabulary: string;
   id_user_cache: number;
 }
+
+interface ExperiencedStaff {
+  companyName: string;
+  fromDate: string;
+  toDate: string;
+}
+
+interface RegisterTutorPayload {
+  email: string;
+  hourOfDay: number;
+  dayOfWeek: number;
+  scoreSpeaking: number;
+  scoreReading: number;
+  scoreListening: number;
+  scoreWriting: number;
+  certificatePath?: string | null;
+  expectedSalary: number;
+  experienced: ExperiencedStaff[];
+}

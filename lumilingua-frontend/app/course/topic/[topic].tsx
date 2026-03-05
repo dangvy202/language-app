@@ -247,12 +247,7 @@ export default function VocabularyByTopic() {
             duration = msToHHMMSS(diffMs);
         }
 
-        const onePercentWord = 100 / vocabulary.length
-        let progressPercent = 0
-
-        for (let i = 0; i <= index; i++) {
-            progressPercent += onePercentWord
-        }
+        const progressPercent = isFinished ? 100 : Math.round(((index + 1) / vocabulary.length) * 100);
 
         try {
             const result = await saveHistoryProgress({
@@ -485,11 +480,11 @@ export default function VocabularyByTopic() {
                             </TouchableOpacity>
 
                             <View className="items-center mt-12">
-                                <Text className="text-5xl font-extrabold text-center mb-3">
+                                <Text className="text-5xl font-extrabold text-center mb-2">
                                     {word.name_vocabulary}
                                 </Text>
 
-                                <Text className="text-xl text-gray-400 mb-8">
+                                <Text className="text-xl text-gray-400 mb-4">
                                     {word.ipa}
                                 </Text>
 
