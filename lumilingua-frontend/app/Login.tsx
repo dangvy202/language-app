@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const loginApi = async (email: string, password: string) => {
-    const endpoint = "https://units-willing-redeem-engaging.trycloudflare.com/api/v1/user/login";
+    const endpoint = "https://compare-auditor-suse-mediterranean.trycloudflare.com/api/v1/user/login";
 
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -32,7 +32,7 @@ const loginApi = async (email: string, password: string) => {
 };
 
 const refreshTokenApi = async (refreshToken: string) => {
-    const endpoint = "https://units-willing-redeem-engaging.trycloudflare.com/api/v1/user/refresh";
+    const endpoint = "https://compare-auditor-suse-mediterranean.trycloudflare.com/api/v1/user/refresh";
 
     const response = await fetch(endpoint, {
         method: 'POST',

@@ -17,11 +17,13 @@ import { useState, useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { registerTutor } from '@/services/api';
+import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RegisterTutor = () => {
     const router = useRouter();
 
-    // State chính
+    const [loadingLogin, setLoadingLogin] = useState(false);
     const [email, setEmail] = useState('');
     const [hourOfDay, setHourOfDay] = useState('');
     const [selectedDays, setSelectedDays] = useState<number[]>([]);
@@ -29,13 +31,12 @@ const RegisterTutor = () => {
     const [scoreReading, setScoreReading] = useState('0');
     const [scoreListening, setScoreListening] = useState('0');
     const [scoreWriting, setScoreWriting] = useState('0');
-    const [certificatePath, setCertificatePath] = useState('');
+    const [certificateFile, setCertificateFile] = useState<any>(null);
     const [expectedSalary, setExpectedSalary] = useState('');
     const [experiences, setExperiences] = useState<
         { companyName: string; fromDate: string; toDate: string }[]
     >([]);
 
-    // State cho form thêm kinh nghiệm (ẩn/hiện)
     const [showAddForm, setShowAddForm] = useState(false);
     const [newCompany, setNewCompany] = useState('');
     const [newFromDate, setNewFromDate] = useState(new Date());
@@ -54,6 +55,68 @@ const RegisterTutor = () => {
         { id: 6, label: 'Thứ 7' },
         { id: 7, label: 'CN' },
     ];
+
+    const refreshTokenApi = async (refreshToken: string) => {
+        const endpoint = "https://compare-auditor-suse-mediterranean.trycloudflare.com/api/v1/user/refresh";
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.notification);
+        }
+
+        return await response.json();
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkAuth = async () => {
+            if (!isMounted) return;
+
+            const token = await AsyncStorage.getItem('token');
+            const expiredStr = await AsyncStorage.getItem('expired');
+            const expired = expiredStr ? parseInt(expiredStr, 10) : null;
+
+            if (token && expired && Date.now() < expired) {
+                setLoadingLogin(false);
+                return;
+            }
+
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
+
+            if (refreshToken) {
+                setLoadingLogin(true);
+                try {
+                    const response = await refreshTokenApi(refreshToken);
+                    await AsyncStorage.setItem('token', response.data.token || '');
+                    await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
+                } catch (err) {
+                    console.log('Refresh error:', err);
+                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
+                    router.replace('/Login');
+                } finally {
+                    if (isMounted) setLoadingLogin(false);
+                }
+            } else {
+                router.replace('/Login');
+            }
+        };
+
+        checkAuth();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [router]);
 
     const formatVND = (value: string) => {
         if (!value) return '';
@@ -75,6 +138,16 @@ const RegisterTutor = () => {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    };
+
+    const pickCertificate = async () => {
+        const result = await DocumentPicker.getDocumentAsync({
+            type: '*/*',
+        });
+
+        if (!result.canceled) {
+            setCertificateFile(result.assets[0]);
+        }
     };
 
     const addExperience = () => {
@@ -104,7 +177,6 @@ const RegisterTutor = () => {
             return updated;
         });
 
-        // Reset và ẩn form
         setNewCompany('');
         setNewFromDate(new Date());
         setNewToDate(new Date());
@@ -133,17 +205,20 @@ const RegisterTutor = () => {
     };
 
     const handleSubmit = async () => {
-        console.log('Experiences trước khi gửi:', experiences);
-
         if (experiences.length === 0) {
             Alert.alert('Thông báo', 'Vui lòng thêm ít nhất 1 kinh nghiệm!');
+            return;
+        }
+
+        if (!certificateFile) {
+            Alert.alert('Thông báo', 'Vui lòng chọn file chứng chỉ!');
             return;
         }
 
         setLoading(true);
 
         try {
-            await registerTutor({
+            const result = await registerTutor({
                 email,
                 hourOfDay,
                 selectedDays,
@@ -151,15 +226,41 @@ const RegisterTutor = () => {
                 scoreReading,
                 scoreListening,
                 scoreWriting,
-                certificatePath,
+                certificateFile,
                 expectedSalary,
                 experiences,
             });
 
-            Alert.alert('Đăng ký thành công', 'Cảm ơn bạn! Chúng tôi sẽ liên hệ trong 24-48h.');
+            if (result?.conflict === true) {
+                Alert.alert(
+                    "Thông báo",
+                    result.notification || "Bạn đã đăng ký gia sư rồi",
+                    [
+                        {
+                            text: "Xem đăng ký",
+                            // onPress: () => router.push("/TutorRegister")
+                        },
+                        {
+                            text: "Đóng",
+                            style: "cancel"
+                        }
+                    ]
+                );
+                return;
+            }
+
+            Alert.alert(
+                "Đăng ký thành công",
+                "Cảm ơn bạn! Chúng tôi sẽ liên hệ trong 24-48h."
+            );
+
             router.back();
+
         } catch (err: any) {
-            Alert.alert('Lỗi', 'Đăng ký thất bại. Vui lòng thử lại.');
+            Alert.alert(
+                "Lỗi",
+                err.message || "Đăng ký thất bại. Vui lòng thử lại."
+            );
         } finally {
             setLoading(false);
         }
@@ -306,16 +407,32 @@ const RegisterTutor = () => {
                         {/* Chứng chỉ */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Link chứng chỉ (nếu có)</Text>
-                            <View style={styles.inputWrapper}>
-                                <Ionicons name="document-attach-outline" size={22} color="#FFA500" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Link Google Drive / file path"
-                                    placeholderTextColor="#999"
-                                    value={certificatePath}
-                                    onChangeText={setCertificatePath}
+                            <TouchableOpacity
+                                style={styles.filePicker}
+                                onPress={pickCertificate}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons
+                                    name="document-attach-outline"
+                                    size={22}
+                                    color="#FFA500"
+                                    style={styles.inputIcon}
                                 />
-                            </View>
+
+                                <Text
+                                    style={[
+                                        styles.fileText,
+                                        !certificateFile && styles.filePlaceholder
+                                    ]}
+                                    numberOfLines={1}
+                                >
+                                    {certificateFile ? certificateFile.name : "Chọn file chứng chỉ"}
+                                </Text>
+
+                                {certificateFile && (
+                                    <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                                )}
+                            </TouchableOpacity>
                         </View>
 
                         {/* Lương mong muốn */}
@@ -614,6 +731,26 @@ const styles = StyleSheet.create({
         marginTop: 24,
         marginBottom: 60,
         lineHeight: 20,
+    },
+    filePicker: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FAFAFA',
+        borderRadius: 20,
+        borderWidth: 1.5,
+        borderColor: '#EEE',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+    },
+
+    fileText: {
+        flex: 1,
+        fontSize: 16,
+        color: '#222',
+    },
+
+    filePlaceholder: {
+        color: '#999',
     },
 });
 

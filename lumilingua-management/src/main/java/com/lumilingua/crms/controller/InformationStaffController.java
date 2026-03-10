@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +21,8 @@ public class InformationStaffController {
 
     private final InformationStaffService service;
 
-    @PostMapping
-    public ResponseEntity<Result<InformationStaffResponse>> createInformationStaff(@RequestBody InformationStaffRequest request) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Result<InformationStaffResponse>> createInformationStaff(@ModelAttribute InformationStaffRequest request) {
         LOG.info("Call api create information staff by api '%s'".formatted("/api/v1/information-staff"));
         Result<InformationStaffResponse> result = service.createInformationStaff(request);
         if(result.code == ResultApiConstant.StatusCode.CREATED) {

@@ -78,9 +78,6 @@ export default function Index() {
 
     if (data && data.length > 0) {
       const userCache = data[0];
-      console.log('userCache object:', userCache);
-      console.log('Call API streak:', userCache?.streak);
-
       const fetchedStreak = userCache?.streak ?? 0;
       setStreak(fetchedStreak);
       AsyncStorage.setItem('streak', fetchedStreak.toString());

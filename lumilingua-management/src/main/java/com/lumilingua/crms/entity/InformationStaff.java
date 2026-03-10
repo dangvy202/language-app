@@ -3,7 +3,9 @@ package com.lumilingua.crms.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -45,8 +47,9 @@ public class InformationStaff {
     @Column(name = "hour_of_day")
     private int hourOfDay;
 
-    @Column(name = "day_of_week")
-    private List<String> dayOfWeek;
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "day_of_week", columnDefinition = "text[]")
+    private String[] dayOfWeek;
 
     @Column(name = "id_user")
     private long idUser;

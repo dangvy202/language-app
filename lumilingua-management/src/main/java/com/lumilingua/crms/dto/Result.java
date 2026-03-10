@@ -43,7 +43,7 @@ public class Result<T> {
     }
 
     public static <T> Result<T> getIsExist(T data, String notification) {
-        return new Result<>(ResultApiConstant.StatusCode.OK, ResultApiConstant.MessageCode.SUCCESS, notification, data);
+        return new Result<>(ResultApiConstant.StatusCode.CONFLICT, ResultApiConstant.MessageCode.CONFLICT_MESSAGE, notification, data);
     }
 
     public static <T> Result<T> forbidden(String msg) {

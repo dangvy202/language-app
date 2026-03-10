@@ -8,6 +8,7 @@ import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.entity.ExperiencedStaff;
 import com.lumilingua.crms.entity.InformationStaff;
 import com.lumilingua.crms.entity.User;
+import com.lumilingua.crms.helper.Helper;
 import com.lumilingua.crms.mapper.ExperiencedStaffMapper;
 import com.lumilingua.crms.mapper.InformationStaffMapper;
 import com.lumilingua.crms.repository.ExperiencedStaffRepository;
@@ -53,12 +54,17 @@ public class InformationStaffServiceImpl implements InformationStaffService {
             InformationStaffResponse response = InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaffEntity.get(), experiencedStaffs);
             return Result.getIsExist(response, "The information staff is exists, please redirect to update information");
         }
-        InformationStaff informationStaff = informationStaffRepository.save(InformationStaffMapper.INSTANT.toInformationStaff(request, request.getCertificatePath(), user.get().getIdUser()));
+        String fileName = Helper.uploadFile(request.getCertificatePath());
+
+        if(fileName == null) {
+            return Result.serverError("Unable upload file, try again");
+        }
+        InformationStaff informationStaff = informationStaffRepository.save(InformationStaffMapper.INSTANT.toInformationStaff(request, fileName, user.get().getIdUser()));
         List<ExperiencedStaff> experiencedStaffGenerate = request.getExperienced().stream().map(x -> ExperiencedStaffMapper.INSTANT.toExperiencedStaff(x, DateTimeUtils.calculateYearsExperience(x.getFromDate(), x.getToDate())))
                 .peek(es -> es.setIdInformationStaff(informationStaff.getIdInformationStaff()))
                 .toList();
         experiencedStaffRepository.saveAll(experiencedStaffGenerate);
-        return Result.create(InformationStaffMapper.INSTANT.toInformationStaffResponse(request));
+        return Result.create(InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaff, experiencedStaffGenerate));
     }
 
     @Override
@@ -118,13 +124,13 @@ public class InformationStaffServiceImpl implements InformationStaffService {
         }
         InformationStaff informationStaffBuilder = informationStaff.get();
         informationStaffBuilder.setHourOfDay(request.getHourOfDay());
-        informationStaffBuilder.setDayOfWeek(request.getDayOfWeek());
+//        informationStaffBuilder.setDayOfWeek(request.getDayOfWeek());
         informationStaffBuilder.setScoreReading(request.getScoreReading());
         informationStaffBuilder.setScoreListening(request.getScoreListening());
         informationStaffBuilder.setScoreSpeaking(request.getScoreSpeaking());
         informationStaffBuilder.setScoreWriting(request.getScoreWriting());
         informationStaffBuilder.setExpectedSalary(request.getExpectedSalary());
-        informationStaffBuilder.setCertificatePath(request.getCertificatePath());
+        informationStaffBuilder.setCertificatePath(request.getCertificatePath().getOriginalFilename());
 
         for(int i = 0 ; i < experiencedStaffs.size(); i++) {
             ExperiencedStaff experiencedStaff = experiencedStaffs.get(i);

@@ -22,9 +22,8 @@ public interface InformationStaffMapper {
     @Mapping(target = "status", constant = "INACTIVE")
     @Mapping(target = "expectedSalary", source = "request.expectedSalary")
     @Mapping(target = "idUser", source = "idUser")
+    @Mapping(target = "dayOfWeek", source = "request.dayOfWeek")
     InformationStaff toInformationStaff(InformationStaffRequest request, String certificatePath, long idUser);
-
-    InformationStaffResponse toInformationStaffResponse(InformationStaffRequest request);
 
     InformationStaffResponse toInformationStaffResponseMapper(InformationStaff informationStaff, List<ExperiencedStaff> experienced);
 }
