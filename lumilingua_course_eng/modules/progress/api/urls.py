@@ -1,7 +1,7 @@
 from rest_framework import routers
 
 from modules.progress.api.views import UserCacheViewSet, CertificateViewSet, CertificateCacheViewSet, UserNoteViewSet, \
-    HistoryProgressViewSet
+    HistoryProgressViewSet, CategoryLevelViewSet
 
 # User Cache
 users_cache_router = routers.SimpleRouter()
@@ -22,3 +22,7 @@ certificates_router.register(r'certificate', CertificateViewSet)
 # Certificate Cache
 certificate_caches_router = routers.SimpleRouter()
 certificate_caches_router.register(r'certificate_cache', CertificateCacheViewSet)
+
+# Category Level
+category_level_router = routers.SimpleRouter()
+category_level_router.register(r'category_level', CategoryLevelViewSet)

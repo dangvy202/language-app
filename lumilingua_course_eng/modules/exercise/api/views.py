@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from modules.exercise.api.serializers import ExerciseSerializer, ExerciseProgressSerializer, QuestionSerializer, \
     QuestionOptionsSerializer
 from modules.exercise.models import Exercise, ExerciseProgress, Question, QuestionOptions
+from modules.progress.models import UserCache, CategoryLevel
+from django.db.models import F
 
 
 class ExerciseViewSet(viewsets.ModelViewSet):
@@ -43,6 +45,32 @@ class ExerciseProgressViewSet(viewsets.ModelViewSet):
                 is_completed=True,
                 completed_at=request.data.get('completed_at')
             )
+
+            exercises = Exercise.objects.get(id_exercise=id_exercise)
+            user_cache = UserCache.objects.get(id_user_cache=id_user)
+            category_level = list(CategoryLevel.objects.all())
+
+            left = 0
+            right = len(category_level) - 1
+
+            target = user_cache.gain_xp + exercises.xp_receive
+            best_level = category_level[0]
+
+            while left <= right:
+                mid = left + (right - left) // 2
+                level = category_level[mid]
+
+                if target >= level.xp_level:
+                    best_level = level
+                    left = mid + 1
+                else:
+                    right = mid - 1
+
+            user_cache.gain_xp = target
+            user_cache.category_level = best_level
+            print("check gain xp = ", user_cache.gain_xp)
+            print("check level = ", user_cache.category_level)
+            user_cache.save(update_fields=['gain_xp', 'category_level'])
         else:
             exercise_progress.score = request.data.get('score')
             exercise_progress.attempts = exercise_progress.attempts + 1

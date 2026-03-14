@@ -21,6 +21,7 @@ class Exercise(models.Model):
     name = models.TextField()
     description = models.TextField()
     icon = models.TextField()
+    xp_receive = models.IntegerField()
     type = models.CharField(
         max_length=50,
         validators=[validate_exercise_type],

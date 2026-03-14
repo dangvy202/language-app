@@ -30,7 +30,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://compare-auditor-suse-mediterranean.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "http://localhost:8888/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -166,7 +166,7 @@ export default function LearnVocabulary() {
             pathname: '/course/exercise/[id]',
             params: { 
                 id: exercise.id_exercise,
-                time_limit: exercise.time_limit
+                time_limit: 10
             },
         })
     };

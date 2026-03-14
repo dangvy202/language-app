@@ -148,7 +148,7 @@ const Profile = () => {
                 {/* Settings List */}
                 <Text style={styles.sectionTitle}>Settings</Text>
                 <View style={styles.settingsList}>
-                    <TouchableOpacity style={styles.settingItem}>
+                    <TouchableOpacity onPress={() => router.push("/Information")} style={styles.settingItem}>
                         <Ionicons name="person-outline" size={24} color="#FFA500" />
                         <Text style={styles.settingText}>Edit information</Text>
                         <Ionicons name="chevron-forward" size={20} color="#ccc" />

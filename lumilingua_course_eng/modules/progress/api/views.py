@@ -4,8 +4,8 @@ from django.utils import timezone
 from datetime import timedelta
 
 from .serializers import CertificateSerializer, CertificateCacheSerializer, UserNoteSerializer, \
-    HistoryProgressSerializer
-from ..models import UserCache, Certificate, CertificateCache, UserNote, HistoryProgress
+    HistoryProgressSerializer, CategoryLevelSerializer
+from ..models import UserCache, Certificate, CertificateCache, UserNote, HistoryProgress, CategoryLevel
 from .serializers import UserCacheSerializer
 
 class UserCacheViewSet(viewsets.ModelViewSet):
@@ -188,3 +188,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
 class CertificateCacheViewSet(viewsets.ModelViewSet):
     queryset = CertificateCache.objects.all()
     serializer_class = CertificateCacheSerializer
+
+class CategoryLevelViewSet(viewsets.ModelViewSet):
+    queryset = CategoryLevel.objects.all()
+    serializer_class = CategoryLevelSerializer

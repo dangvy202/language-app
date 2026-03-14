@@ -4,7 +4,7 @@ from modules.course.api.urls import levels_router, topics_router, vocabularies_r
 from modules.exercise.api.urls import exercises_router, exercise_progress_router, questions_router, \
     question_option_router
 from modules.progress.api.urls import users_cache_router, certificates_router, certificate_caches_router, \
-    users_note_router, histories_progress_router
+    users_note_router, histories_progress_router, category_level_router
 
 router = routers.DefaultRouter()
 # course
@@ -19,6 +19,7 @@ router.registry.extend(certificates_router.registry)
 router.registry.extend(certificate_caches_router.registry)
 router.registry.extend(users_note_router.registry)
 router.registry.extend(histories_progress_router.registry)
+router.registry.extend(category_level_router.registry)
 # exercise
 router.registry.extend(exercises_router.registry)
 router.registry.extend(exercise_progress_router.registry)

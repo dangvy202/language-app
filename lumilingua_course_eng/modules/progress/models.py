@@ -6,6 +6,14 @@ class UserCache(models.Model):
     id_user = models.IntegerField(null=False,blank=False)
     email = models.CharField(max_length=255,null=False,blank=False)
     phone = models.CharField(max_length=255,null=False,blank=False)
+    gain_xp = models.BigIntegerField(default=0)
+    category_level = models.ForeignKey(
+        'CategoryLevel',
+        on_delete=models.CASCADE,
+        db_column='id_category_level',
+        related_name='category_level_user_cache',
+        default=1
+    )
     last_login = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -90,7 +98,7 @@ class Certificate(models.Model):
 
 class CertificateCache(models.Model):
     id_certificate_cache = models.AutoField(primary_key=True)
-    received_date = models.DateTimeField(null=False, blank=False,)
+    received_date = models.DateTimeField(null=False, blank=False)
     user_cache = models.ForeignKey(
         'UserCache',
         on_delete=models.CASCADE,
@@ -111,4 +119,25 @@ class CertificateCache(models.Model):
         managed = False
         constraints = [
             models.UniqueConstraint(fields=['user_cache', 'certificate'], name='unique_user_certificate')
+        ]
+
+class CategoryLevel(models.Model):
+    id_category_level = models.AutoField(primary_key=True)
+    level = models.PositiveIntegerField()
+    xp_level = models.BigIntegerField()
+    condition = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'tbl_category_level'
+        managed = False
+        ordering = ['xp_level']
+        indexes = [
+            models.Index(fields=['level'], name='idx_level'),
+            models.Index(fields=['xp_level'], name='idx_xp_level'),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['level'], name='unique_level'),
+            models.UniqueConstraint(fields=['xp_level'], name='unique_xp_level')
         ]
