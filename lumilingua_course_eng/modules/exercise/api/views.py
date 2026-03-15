@@ -5,7 +5,6 @@ from modules.exercise.api.serializers import ExerciseSerializer, ExerciseProgres
     QuestionOptionsSerializer
 from modules.exercise.models import Exercise, ExerciseProgress, Question, QuestionOptions
 from modules.progress.models import UserCache, CategoryLevel
-from django.db.models import F
 
 
 class ExerciseViewSet(viewsets.ModelViewSet):
@@ -92,7 +91,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if exercise_id:
             queryset = queryset.filter(exercise_id=exercise_id)
         return queryset
-
 
 class QuestionOptionsViewSet(viewsets.ModelViewSet):
     queryset = QuestionOptions.objects.all()

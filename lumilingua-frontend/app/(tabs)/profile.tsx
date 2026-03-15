@@ -12,10 +12,78 @@ import {
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from "react";
+import { useUserCache } from '@/hook/useUserCache';
+import { getLevelByCategoryId } from '@/services/api';
+import Loading from '@/component/loading';
 
 const Profile = () => {
     const router = useRouter();
     const [userName, setUserName] = useState<string | null>(null);
+    const [loadingLogin, setLoadingLogin] = useState(false);
+    const { cache: userCache, loadingCache, cacheError } = useUserCache();
+    const [categoryLevel, setCategoryLevel] = useState<any>(null);
+
+    const refreshTokenApi = async (refreshToken: string) => {
+        const endpoint = "http://localhost:8888/api/v1/user/refresh";
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.notification);
+        }
+
+        return await response.json();
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkAuth = async () => {
+            if (!isMounted) return;
+
+            const token = await AsyncStorage.getItem('token');
+            const expiredStr = await AsyncStorage.getItem('expired');
+            const expired = expiredStr ? parseInt(expiredStr, 10) : null;
+
+            if (token && expired && Date.now() < expired) {
+                setLoadingLogin(false);
+                return;
+            }
+
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
+
+            if (refreshToken) {
+                setLoadingLogin(true);
+                try {
+                    const response = await refreshTokenApi(refreshToken);
+                    await AsyncStorage.setItem('token', response.data.token || '');
+                    await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
+                } catch (err) {
+                    console.log('Refresh error:', err);
+                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
+                    router.replace('/Login');
+                } finally {
+                    if (isMounted) setLoadingLogin(false);
+                }
+            } else {
+                router.replace('/Login');
+            }
+        };
+
+        checkAuth();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [router]);
 
     useEffect(() => {
         const loadUserName = async () => {
@@ -25,6 +93,25 @@ const Profile = () => {
 
         loadUserName();
     }, []);
+
+    useEffect(() => {
+        const fetchLevel = async () => {
+            try {
+                if (userCache && userCache.length > 0) {
+                    const categoryId = userCache[0].category_level;
+
+                    console.log("asdasd = ", categoryId)
+
+                    const data = await getLevelByCategoryId(categoryId);
+                    setCategoryLevel(data);
+                }
+            } catch (err) {
+                console.error("Error loading category level:", err);
+            }
+        };
+
+        fetchLevel();
+    }, [userCache]);
 
     const handleLogout = async () => {
         Alert.alert(
@@ -53,6 +140,9 @@ const Profile = () => {
             ]
         );
     };
+    if (loadingCache || loadingLogin) {
+        return <Loading />;
+    }
     return (
         <View style={styles.container}>
             {/* Header Gradient */}
@@ -73,7 +163,8 @@ const Profile = () => {
                 </TouchableOpacity>
 
                 <Text style={styles.userName}>{userName}</Text>
-                <Text style={styles.userLevel}>Level 12 • 4,850 XP</Text>
+                <Text style={styles.userLevel}>
+                    Level {categoryLevel?.[0]?.level ?? 0} • {userCache?.[0]?.gain_xp ?? 0} XP</Text>
 
                 <View style={styles.statsRow}>
                     <View style={styles.statItem}>

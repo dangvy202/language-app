@@ -1,4 +1,4 @@
-import { Exercise, HistoryProgressCreatePayload, Level, RegisterTutorPayload, UserNoteCreatePayLoad } from "@/interfaces/interfaces";
+import { Exercise, HistoryProgressCreatePayload, Level, UserNoteCreatePayLoad } from "@/interfaces/interfaces";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const fetchLogin = async (email: string, password: string) => {
@@ -572,5 +572,30 @@ export const registerTutor = async (data: {
     throw new Error(
       err.message || "Không thể đăng ký gia sư. Vui lòng thử lại!"
     );
+  }
+};
+
+export const getLevelByCategoryId = async (categoryId: number) => {
+  try {
+    const endpoint = `http://localhost:8000/api/category_level/?id_category_level=${categoryId}`;
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Unable to get category level');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (err: any) {
+    console.error('Unable to get category level:', err);
+    throw err;
   }
 };

@@ -192,3 +192,11 @@ class CertificateCacheViewSet(viewsets.ModelViewSet):
 class CategoryLevelViewSet(viewsets.ModelViewSet):
     queryset = CategoryLevel.objects.all()
     serializer_class = CategoryLevelSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        id_category_level = self.request.query_params.get('id_category_level')
+
+        if id_category_level:
+            queryset = queryset.filter(id_category_level=id_category_level)
+        return queryset

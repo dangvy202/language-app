@@ -90,6 +90,7 @@ export default function LearnVocabulary() {
             isMounted = false;
         };
     }, [router]);
+    
     useFocusEffect(
         useCallback(() => {
             if (!userCache || userCache.length === 0) return;
@@ -166,7 +167,7 @@ export default function LearnVocabulary() {
             pathname: '/course/exercise/[id]',
             params: { 
                 id: exercise.id_exercise,
-                time_limit: 10
+                time_limit: exercise.time_limit
             },
         })
     };
