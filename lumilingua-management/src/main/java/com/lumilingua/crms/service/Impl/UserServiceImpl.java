@@ -1,5 +1,6 @@
 package com.lumilingua.crms.service.Impl;
 
+import com.lumilingua.crms.constant.CrmsConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.AuthenticationRequest;
 import com.lumilingua.crms.dto.requests.RefreshTokenRequest;
@@ -10,6 +11,7 @@ import com.lumilingua.crms.dto.responses.UserResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.enums.StatusEnum;
+import com.lumilingua.crms.helper.Helper;
 import com.lumilingua.crms.mapper.AuthenticationMapper;
 import com.lumilingua.crms.mapper.InformationAccountMapper;
 import com.lumilingua.crms.mapper.UserMapper;
@@ -34,6 +36,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 import java.util.Optional;
@@ -64,7 +67,27 @@ public class UserServiceImpl implements UserService {
         User userEntity = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Unableo to get information account by email '%s'".formatted(email)));
         return Result.get(InformationAccountMapper.INSTANT
-                .toInformationAccountResponse(Integer.parseInt(String.valueOf(userEntity.getIdUser())), userEntity.getPhone(), userEntity.getEmail()));
+                .toInformationAccountResponse(Integer.parseInt(String.valueOf(userEntity.getIdUser())), userEntity.getPhone(), userEntity.getEmail(), userEntity.getAvatar()));
+    }
+
+    @Override
+    public Result<UserResponse> editImageAccount(MultipartFile imgFile, long idUser) {
+        try {
+            LOG.info("Edit image user in service...");
+            User user = userRepository.findById(idUser).orElseThrow(() -> new RuntimeException("User not found"));
+            String fileName = Helper.uploadFile(imgFile, CrmsConstant.AVATAR_DIR);
+            boolean isDeleteOldPicturte = user.getAvatar() != null ? Helper.deleteFile(CrmsConstant.AVATAR_DIR, user.getAvatar()) : true;
+            if (fileName == null || !isDeleteOldPicturte) {
+                return Result.serverError("Upload/Delete image failed");
+            }
+            user.setAvatar(fileName);
+            userRepository.save(user);
+            UserResponse response = UserMapper.INSTANT.toUserResponse(user);
+            return Result.updateContent(response);
+        } catch (Exception e) {
+            LOG.error("Edit image user in service fail " + e);
+            return Result.serverError("Edit image failed: " + e.getMessage());
+        }
     }
 
     @Override

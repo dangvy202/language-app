@@ -13,8 +13,9 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from "react";
 import { useUserCache } from '@/hook/useUserCache';
-import { getLevelByCategoryId } from '@/services/api';
+import { fetchInformation, getCertificateByUserId, getLevelByCategoryId, getRankByUserId, uploadAvatar } from '@/services/api';
 import Loading from '@/component/loading';
+import * as ImagePicker from 'expo-image-picker'
 
 const Profile = () => {
     const router = useRouter();
@@ -22,9 +23,12 @@ const Profile = () => {
     const [loadingLogin, setLoadingLogin] = useState(false);
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
     const [categoryLevel, setCategoryLevel] = useState<any>(null);
+    const [certificateCache, setCertificateCache] = useState<any>(null);
+    const [rank, setRank] = useState<any>(null);
+    const [avatar, setAvatar] = useState<string | null>(null);
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "http://localhost:8888/api/v1/user/refresh";
+        const endpoint = "https://wma-verde-understanding-misc.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -95,23 +99,64 @@ const Profile = () => {
     }, []);
 
     useEffect(() => {
-        const fetchLevel = async () => {
+        const fetchInformationAccount = async () => {
             try {
                 if (userCache && userCache.length > 0) {
                     const categoryId = userCache[0].category_level;
-
-                    console.log("asdasd = ", categoryId)
-
                     const data = await getLevelByCategoryId(categoryId);
+
+                    const userId = userCache[0].id_user_cache
+                    const dataCertificate = await getCertificateByUserId(userId)
+
+                    const dataRank = await getRankByUserId(userId)
+
+                    const dataInformation = await fetchInformation(userCache[0].email);
+
+                    if (dataInformation?.avatar) {
+                        setAvatar("https://wma-verde-understanding-misc.trycloudflare.com/avatars/" + dataInformation.avatar);
+                    } else {
+                        setAvatar(null);
+                    }
                     setCategoryLevel(data);
+                    setCertificateCache(dataCertificate)
+                    setRank(dataRank)
                 }
             } catch (err) {
                 console.error("Error loading category level:", err);
             }
         };
 
-        fetchLevel();
+        fetchInformationAccount();
     }, [userCache]);
+
+    const pickAvatar = async () => {
+
+        if (!userCache || userCache.length === 0) return;
+
+        const userId = userCache[0].id_user;
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+        });
+
+        if (result.canceled) return;
+
+        try {
+
+            const uri = result.assets[0].uri;
+
+            const response = await uploadAvatar(uri, userId);
+
+            const avatarUrl ="https://wma-verde-understanding-misc.trycloudflare.com/avatars/" + response.data.avatar;
+
+            setAvatar(avatarUrl);
+        } catch (error) {
+            console.log("Upload error:", error);
+        }
+    };
 
     const handleLogout = async () => {
         Alert.alert(
@@ -152,9 +197,13 @@ const Profile = () => {
                 end={{ x: 1, y: 1 }}
                 style={styles.header}
             >
-                <TouchableOpacity style={styles.avatarContainer}>
+                <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatar}>
                     <Image
-                        source={require('@/assets/images/accounts/logo.jpg')}
+                    source={
+                            avatar
+                            ? { uri: avatar }
+                            : require('@/assets/images/accounts/logo.jpg')
+                        }
                         style={styles.avatar}
                     />
                     <View style={styles.editBadge}>
@@ -169,18 +218,18 @@ const Profile = () => {
                 <View style={styles.statsRow}>
                     <View style={styles.statItem}>
                         <Ionicons name="flame" size={28} color="white" />
-                        <Text style={styles.statValue}>7</Text>
+                        <Text style={styles.statValue}>{userCache?.[0]?.streak}</Text>
                         <Text style={styles.statLabel}>Streak</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Ionicons name="trophy" size={28} color="white" />
-                        <Text style={styles.statValue}>15</Text>
+                        <Ionicons name="ribbon" size={28} color="white" />
+                        <Text style={styles.statValue}>{certificateCache?.length ?? 0}</Text>
                         <Text style={styles.statLabel}>Badges</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Ionicons name="globe" size={28} color="white" />
-                        <Text style={styles.statValue}>3</Text>
-                        <Text style={styles.statLabel}>Ngôn ngữ</Text>
+                        <Ionicons name="podium" size={28} color="white" />
+                        <Text style={styles.statValue}>{rank?.rank ?? 0}</Text>
+                        <Text style={styles.statLabel}>Rank</Text>
                     </View>
                 </View>
             </LinearGradient>

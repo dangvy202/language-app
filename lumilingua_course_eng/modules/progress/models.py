@@ -21,6 +21,7 @@ class UserCache(models.Model):
     class Meta:
         db_table = "tbl_user_cache"
         managed = False
+        ordering = ['-gain_xp']
         constraints = [
             models.UniqueConstraint(fields=['id_user'], name='unique_id_user'),
             models.UniqueConstraint(fields=['email'], name='unique_email'),

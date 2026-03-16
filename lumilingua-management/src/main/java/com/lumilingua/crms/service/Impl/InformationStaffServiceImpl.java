@@ -1,6 +1,7 @@
 package com.lumilingua.crms.service.Impl;
 
 import com.lumilingua.crms.common.DateTimeUtils;
+import com.lumilingua.crms.constant.CrmsConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.ExperiencedStaffRequest;
 import com.lumilingua.crms.dto.requests.InformationStaffRequest;
@@ -54,7 +55,7 @@ public class InformationStaffServiceImpl implements InformationStaffService {
             InformationStaffResponse response = InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaffEntity.get(), experiencedStaffs);
             return Result.getIsExist(response, "The information staff is exists, please redirect to update information");
         }
-        String fileName = Helper.uploadFile(request.getCertificatePath());
+        String fileName = Helper.uploadFile(request.getCertificatePath(), CrmsConstant.UPLOAD_DIR);
 
         if(fileName == null) {
             return Result.serverError("Unable upload file, try again");

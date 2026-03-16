@@ -13,16 +13,29 @@ import com.lumilingua.crms.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
+@CrossOrigin
 public class UserController {
     private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
+
+    @PostMapping(value = "/edit-image/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Result<UserResponse>> editImageUserAccount(@PathVariable("id") long idUser, @RequestParam("avatar") MultipartFile image) {
+        LOG.info("User register account in controller by api '%s'".formatted("/api/v1/user/edit-image"));
+        Result<UserResponse> result = userService.editImageAccount(image, idUser);
+        if(result.code == ResultApiConstant.StatusCode.INTERNAL_SERVER_ERROR) {
+            return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<Result<UserResponse>> userRegisterAccount(@RequestBody UserRequest userRequest) {
@@ -33,16 +46,6 @@ public class UserController {
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
-
-//    @PostMapping("/authentication/cache/login")
-//    public ResponseEntity<Object> getTokenWhenLoginSuccess(@RequestHeader("key-cache") @Nullable String keyRedis) {
-//        var response = userService.getTokenInRedis(keyRedis);
-//
-//        if(response.equals(UserMessage.FAIL) || response.getMessage().equals(UserMessage.EXPIRED_USER) || keyRedis.isEmpty()) {
-//            return new ResponseEntity<>(response,HttpStatus.FORBIDDEN);
-//        }
-//        return new ResponseEntity<>(response,HttpStatus.OK);
-//    }
 
     @PostMapping("/login")
     public ResponseEntity<Result<AuthenticationResponse>> login(@RequestBody AuthenticationRequest request) {

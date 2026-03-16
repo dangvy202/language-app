@@ -1,3 +1,5 @@
+from linecache import cache
+
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.utils import timezone
@@ -18,6 +20,30 @@ class UserCacheViewSet(viewsets.ModelViewSet):
         if email:
             queryset = queryset.filter(email=email)
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        id_user_cache = request.query_params.get('id_user_cache')
+
+        if id_user_cache:
+            users = UserCache.objects.all().order_by('-gain_xp')
+
+            rank = 0
+            gain_xp = 0
+            for index, user in enumerate(users, start=1):
+                if str(user.id_user_cache) == id_user_cache:
+                    rank = index
+                    gain_xp = user.gain_xp
+                    break
+
+            return Response({
+                "id_user_cache": id_user_cache,
+                "gain_xp": gain_xp,
+                "rank": rank
+            })
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         id_user = request.data.get('id_user')
@@ -188,6 +214,14 @@ class CertificateViewSet(viewsets.ModelViewSet):
 class CertificateCacheViewSet(viewsets.ModelViewSet):
     queryset = CertificateCache.objects.all()
     serializer_class = CertificateCacheSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        id_user_cache = self.request.query_params.get('id_user_cache')
+
+        if id_user_cache:
+            queryset = queryset.filter(user_cache_id=id_user_cache)
+        return queryset
 
 class CategoryLevelViewSet(viewsets.ModelViewSet):
     queryset = CategoryLevel.objects.all()

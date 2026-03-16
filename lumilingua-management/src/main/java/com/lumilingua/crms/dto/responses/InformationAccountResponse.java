@@ -9,4 +9,5 @@ public class InformationAccountResponse {
     private int idUser;
     private String phone;
     private String email;
+    private String avatar;
 }

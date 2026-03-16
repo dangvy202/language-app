@@ -87,3 +87,10 @@ interface RegisterTutorPayload {
   expectedSalary: number;
   experienced: ExperiencedStaff[];
 }
+
+interface UserInformation {
+  avatar: string;
+  email: string;
+  idUser: number;
+  phone: string;
+}

@@ -7,6 +7,7 @@ import com.lumilingua.crms.dto.requests.UserRequest;
 import com.lumilingua.crms.dto.responses.AuthenticationResponse;
 import com.lumilingua.crms.dto.responses.InformationAccountResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 //  User register
@@ -14,4 +15,5 @@ public interface UserService {
     Result<AuthenticationResponse> login(AuthenticationRequest request);
     Result<AuthenticationResponse> refreshToken(RefreshTokenRequest request);
     Result<InformationAccountResponse> getInformationAccountByEmail(String email);
+    Result<UserResponse> editImageAccount(MultipartFile imgFile, long idUser);
 }

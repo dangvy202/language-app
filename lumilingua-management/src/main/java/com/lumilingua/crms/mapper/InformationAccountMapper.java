@@ -8,5 +8,5 @@ import org.mapstruct.factory.Mappers;
 public interface InformationAccountMapper {
     InformationAccountMapper INSTANT = Mappers.getMapper(InformationAccountMapper.class);
 
-    InformationAccountResponse toInformationAccountResponse(int idUser, String phone, String email);
+    InformationAccountResponse toInformationAccountResponse(int idUser, String phone, String email, String avatar);
 }

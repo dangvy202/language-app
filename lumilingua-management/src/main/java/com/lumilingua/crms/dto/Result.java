@@ -30,6 +30,10 @@ public class Result<T> {
         return new Result<>(ResultApiConstant.StatusCode.NO_CONTENT, ResultApiConstant.MessageCode.NO_CONTENT_MESSAGE, null, null);
     }
 
+    public static <T> Result<T> updateContent(T data) {
+        return new Result<>(ResultApiConstant.StatusCode.OK, ResultApiConstant.MessageCode.SUCCESS, null, data);
+    }
+
     public static <T> Result<T> delete() {
         return new Result<>(ResultApiConstant.StatusCode.NO_CONTENT, ResultApiConstant.MessageCode.NO_CONTENT_MESSAGE, null, null);
     }
