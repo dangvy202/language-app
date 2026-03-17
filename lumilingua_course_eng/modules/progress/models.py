@@ -87,6 +87,7 @@ class Certificate(models.Model):
     id_certificate = models.AutoField(primary_key=True)
     name_certificate = models.TextField()
     description_certificate = models.TextField()
+    icon = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

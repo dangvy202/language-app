@@ -24,14 +24,19 @@ class UserNoteSerializer(serializers.ModelSerializer):
 class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certificate
-        fields = ['id_certificate', 'name_certificate', 'description_certificate']
+        fields = "__all__"
         read_only_fields = ['created_at', 'updated_at']
 
 class CertificateCacheSerializer(serializers.ModelSerializer):
+    certificate_detail = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = CertificateCache
-        fields = ['id_certificate_cache', 'received_date', 'user_cache', 'certificate']
+        fields = "__all__"
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_certificate_detail(self, obj):
+        return CertificateSerializer(obj.certificate).data
 
 class CategoryLevelSerializer(serializers.ModelSerializer):
     class Meta:

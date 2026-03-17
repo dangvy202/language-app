@@ -205,8 +205,6 @@ class UserNoteViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(user_note)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
-
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer
@@ -220,6 +218,7 @@ class CertificateCacheViewSet(viewsets.ModelViewSet):
         id_user_cache = self.request.query_params.get('id_user_cache')
 
         if id_user_cache:
+
             queryset = queryset.filter(user_cache_id=id_user_cache)
         return queryset
 

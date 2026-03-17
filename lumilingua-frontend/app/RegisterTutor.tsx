@@ -57,7 +57,7 @@ const RegisterTutor = () => {
     ];
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://wma-verde-understanding-misc.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/refresh";
 
         const response = await fetch(endpoint, {
             method: 'POST',

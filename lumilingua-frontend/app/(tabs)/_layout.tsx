@@ -119,9 +119,9 @@ export default function RootLayout() {
         <Tabs.Screen
           name="search"
           options={{
-            title: 'Search',
+            title: 'Ranking',
             headerShown: false,
-            tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="search-outline" title="Search" />,
+            tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="podium-outline" title="Ranking" />,
           }}
         />
         <Tabs.Screen

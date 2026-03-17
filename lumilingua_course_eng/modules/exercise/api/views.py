@@ -67,8 +67,6 @@ class ExerciseProgressViewSet(viewsets.ModelViewSet):
 
             user_cache.gain_xp = target
             user_cache.category_level = best_level
-            print("check gain xp = ", user_cache.gain_xp)
-            print("check level = ", user_cache.category_level)
             user_cache.save(update_fields=['gain_xp', 'category_level'])
         else:
             exercise_progress.score = request.data.get('score')

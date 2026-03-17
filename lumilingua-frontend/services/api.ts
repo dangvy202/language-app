@@ -2,7 +2,7 @@ import { Exercise, HistoryProgressCreatePayload, Level, UserInformation, UserNot
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const fetchLogin = async (email: string, password: string) => {
-  const endpoint = "https://wma-verde-understanding-misc.trycloudflare.com/api/v1/user/login"
+  const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/login"
 
   try {
     const response = await fetch(endpoint, {
@@ -28,7 +28,7 @@ export const fetchLogin = async (email: string, password: string) => {
 };
 
 export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/level/"
+  const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/level/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -46,7 +46,7 @@ export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]>
 };
 
 export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/topic/"
+  const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/topic/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -67,7 +67,7 @@ export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -95,7 +95,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
 
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/vocabulary/?level=${levelId}`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/vocabulary/?level=${levelId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -122,7 +122,7 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
 export const fetchMeanByVocabularyAndLanguage = async ({ vocabulary, language }: { vocabulary: number, language: number }): Promise<any[]> => {
   try {
     // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -151,7 +151,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<Us
     const token = await AsyncStorage.getItem('token');
     const email = await AsyncStorage.getItem('email');
 
-    const endpoint = `https://wma-verde-understanding-misc.trycloudflare.com/api/v1/user/${email}`;
+    const endpoint = `https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -177,7 +177,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<Us
 
 export const fetchUserCache = async ({ email }: { email: string }): Promise<any[]> => {
   try {
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/user_cache/?email=${email}`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/user_cache/?email=${email}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -229,7 +229,7 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
       streak,
     };
 
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/user_cache/`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/user_cache/`;
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -287,7 +287,7 @@ export const saveHistoryProgress = async ({
       payload.duration = duration;
     }
 
-    const endpoint = "https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/history_progress/";
+    const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/history_progress/";
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -325,7 +325,7 @@ export const saveHistoryProgress = async ({
 };
 
 export const getHistoryProgress = async (userCacheId: number) => {
-  let endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
+  let endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -342,7 +342,7 @@ export const getHistoryProgress = async (userCacheId: number) => {
 };
 
 export const getExerciseProgress = async (userCacheId: number) => {
-  let endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/exercise_progress/?user_cache=${userCacheId}`;
+  let endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/exercise_progress/?user_cache=${userCacheId}`;
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -373,7 +373,7 @@ export const saveNoteVocabulary = async ({
   };
 
   const response = await fetch(
-    "https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/user_note/",
+    "https://political-dial-hits-choice.trycloudflare.com/api/user_note/",
     {
       method: "POST",
       headers: {
@@ -392,7 +392,7 @@ export const saveNoteVocabulary = async ({
 
 export const fetchUserNotes = async (userCacheId: number) => {
   const response = await fetch(
-    `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
+    `https://political-dial-hits-choice.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
   );
 
   if (!response.ok) {
@@ -403,7 +403,7 @@ export const fetchUserNotes = async (userCacheId: number) => {
 };
 
 export const fetchExercise = async ({ query }: { query: string }): Promise<Exercise[]> => {
-  const endpoint = "https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/exercise/"
+  const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/exercise/"
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -422,7 +422,7 @@ export const fetchExercise = async ({ query }: { query: string }): Promise<Exerc
 
 export const fetchExerciseQuestions = async (exerciseId: number) => {
   try {
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/question/?exercise=${exerciseId}`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/question/?exercise=${exerciseId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -456,7 +456,7 @@ export const submitExerciseProgress = async ({
   score: number;
   completed_at: string;
 }) => {
-  const response = await fetch('https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/exercise_progress/', {
+  const response = await fetch('https://political-dial-hits-choice.trycloudflare.com/api/exercise_progress/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -537,7 +537,7 @@ export const registerTutor = async (data: {
       throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
     }
 
-    const endpoint = "https://wma-verde-understanding-misc.trycloudflare.com/api/v1/information-staff";
+    const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/information-staff";
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -577,7 +577,7 @@ export const registerTutor = async (data: {
 
 export const getLevelByCategoryId = async (categoryId: number) => {
   try {
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/category_level/?id_category_level=${categoryId}`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/category_level/?id_category_level=${categoryId}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -602,7 +602,7 @@ export const getLevelByCategoryId = async (categoryId: number) => {
 
 export const getCertificateByUserId = async (user_cache_id: number) => {
   try {
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/certificate_cache/?id_user_cache=${user_cache_id}`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/certificate_cache/?id_user_cache=${user_cache_id}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -627,7 +627,7 @@ export const getCertificateByUserId = async (user_cache_id: number) => {
 
 export const getRankByUserId = async (user_cache_id: number) => {
   try {
-    const endpoint = `https://pretty-nebraska-molecules-incorporated.trycloudflare.com/api/user_cache/?id_user_cache=${user_cache_id}`;
+    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/user_cache/?id_user_cache=${user_cache_id}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -674,7 +674,7 @@ export const uploadAvatar = async (
       throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
     }
 
-    const endpoint = `https://wma-verde-understanding-misc.trycloudflare.com/api/v1/user/edit-image/${userId}`;
+    const endpoint = `https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/edit-image/${userId}`;
 
     const response = await fetch(endpoint, {
       method: "POST",
