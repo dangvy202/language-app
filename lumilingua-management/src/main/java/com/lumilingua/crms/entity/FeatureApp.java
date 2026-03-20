@@ -25,6 +25,9 @@ public class FeatureApp {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "icon")
+    private String icon;
+
     @CreationTimestamp
     private Date createdAt;
 

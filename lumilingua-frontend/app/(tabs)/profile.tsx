@@ -468,7 +468,7 @@ const Profile = () => {
             <Text style={styles.settingText}>Setting application</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/SupportFaq')}>
             <Ionicons name="help-circle-outline" size={24} color="#FFA500" />
             <Text style={styles.settingText}>Support & FAQ</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />

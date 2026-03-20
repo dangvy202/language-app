@@ -9,4 +9,5 @@ public class FeatureAppResponse {
     private long idFeatureApp;
     private String featureName;
     private String description;
+    private String icon;
 }

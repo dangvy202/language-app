@@ -670,3 +670,34 @@ export const getApplicationSubmitted = async (email: string): Promise<any> => {
     throw new Error(err.message || "Unable to get application submitted");
   }
 };
+
+export const getSupportFAQ = async (): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
+    }
+
+    const endpoint = getCrmsEndpoint(`v1/support-faq`);
+
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || `Server error ${response.status}`);
+    }
+
+    return responseData;
+  } catch (err: any) {
+    console.error("Unable to get support faq ", err);
+    throw new Error(err.message || "Unable to get support faq");
+  }
+};

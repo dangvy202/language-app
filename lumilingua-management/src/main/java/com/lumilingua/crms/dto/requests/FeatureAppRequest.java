@@ -5,5 +5,6 @@ import lombok.Data;
 @Data
 public class FeatureAppRequest {
     private String featureName;
+    private String icon;
     private String description;
 }

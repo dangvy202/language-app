@@ -18,7 +18,8 @@ public interface SupportFAQRepository extends JpaRepository<SupportFAQ, Long> {
             new com.lumilingua.crms.dto.responses.FeatureAppResponse(
                 f.idFeatureApp,
                 f.featureName,
-                f.description
+                f.description,
+                f.icon
             )
         )
         FROM SupportFAQ s
