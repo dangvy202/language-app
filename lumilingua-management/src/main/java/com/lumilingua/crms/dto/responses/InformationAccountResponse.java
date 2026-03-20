@@ -1,5 +1,6 @@
 package com.lumilingua.crms.dto.responses;
 
+import com.lumilingua.crms.enums.StatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -10,4 +11,5 @@ public class InformationAccountResponse {
     private String phone;
     private String email;
     private String avatar;
+    private StatusEnum status;
 }

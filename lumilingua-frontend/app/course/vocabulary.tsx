@@ -19,6 +19,8 @@ import { fetchExercise, fetchLevel, fetchTopic, getExerciseProgress, getHistoryP
 import useFetch from '@/services/useFetch';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import { getCrmsEndpoint, getClientEndpoint } from "@/constants/configApi";
+
 
 type VocabularyItem = Level | Topic | Exercise;
 
@@ -30,7 +32,7 @@ export default function LearnVocabulary() {
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = getCrmsEndpoint("v1/user/refresh");
 
         const response = await fetch(endpoint, {
             method: 'POST',

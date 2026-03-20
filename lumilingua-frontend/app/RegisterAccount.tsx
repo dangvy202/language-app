@@ -13,8 +13,9 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getCrmsEndpoint, getClientEndpoint } from "@/constants/configApi";
 
-// Hàm gọi API register (tùy chỉnh endpoint Java)
+
 const registerApi = async (userData: {
     username: string;
     email: string;
@@ -22,7 +23,7 @@ const registerApi = async (userData: {
     phone: string;
     gender: string
 }) => {
-    const endpoint = "http://127.0.0.1:8888/api/v1/user/register";
+    const endpoint = getCrmsEndpoint("v1/user/register");
 
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -42,7 +43,7 @@ const registerApi = async (userData: {
 };
 
 const refreshTokenApi = async (refreshToken: string) => {
-    const endpoint = "https://scuba-existing-alabama-mistress.trycloudflare.com/api/v1/user/refresh";
+    const endpoint = getCrmsEndpoint("v1/user/refresh");
 
     const response = await fetch(endpoint, {
         method: 'POST',

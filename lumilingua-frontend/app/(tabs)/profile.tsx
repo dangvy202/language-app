@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 import { useUserCache } from '@/hook/useUserCache';
 import {
   fetchInformation,
+  getApplicationSubmitted,
   getCertificateByUserId,
   getLevelByCategoryId,
   getRankByUserId,
@@ -25,8 +26,9 @@ import {
 } from '@/services/api';
 import Loading from '@/component/loading';
 import * as ImagePicker from 'expo-image-picker';
+import { getCrmsEndpoint, getClientEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
 
-// Lấy chiều rộng màn hình một lần
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CERTIFICATE_ASPECT_RATIO = 880 / 1184;
 
@@ -41,10 +43,11 @@ const Profile = () => {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [selectedCert, setSelectedCert] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [isCertificateLoaded, setIsCertificateLoaded] = useState(false);
+  const [certificateLoaded, setIsCertificateLoaded] = useState(false);
+  const [applications, setApplications] = useState<any[]>([]);
 
   const refreshTokenApi = async (refreshToken: string) => {
-    const endpoint = 'https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/refresh';
+    const endpoint = getCrmsEndpoint("v1/user/refresh");
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -119,26 +122,35 @@ const Profile = () => {
       try {
         if (userCache && userCache.length > 0) {
           const categoryId = userCache[0].category_level;
-          const data = await getLevelByCategoryId(categoryId);
-
           const userId = userCache[0].id_user_cache;
-          const dataCertificate = await getCertificateByUserId(userId);
+          const email = userCache[0].email;
 
-          const dataRank = await getRankByUserId(userId);
-
-          const dataInformation = await fetchInformation(userCache[0].email);
+          const [dataLevel, dataCertificate, dataRank, dataInformation, dataApplications] = await Promise.all([
+            getLevelByCategoryId(categoryId),
+            getCertificateByUserId(userId),
+            getRankByUserId(userId),
+            fetchInformation(email),
+            getApplicationSubmitted(email),
+          ]);
 
           if (dataInformation?.avatar) {
-            setAvatar('https://officials-grey-signature-caps.trycloudflare.com/avatars/' + dataInformation.avatar);
+            setAvatar(getCrmsImgEndpoint("avatars/") + dataInformation.avatar);
           } else {
             setAvatar(null);
           }
-          setCategoryLevel(data);
+
+          setCategoryLevel(dataLevel);
           setCertificateCache(dataCertificate);
           setRank(dataRank);
+
+          if (dataApplications?.data && Array.isArray(dataApplications.data)) {
+            setApplications(dataApplications.data);
+          } else {
+            setApplications([]);
+          }
         }
       } catch (err) {
-        console.error('Error loading category level:', err);
+        console.error('Error loading profile data:', err);
       }
     };
 
@@ -162,7 +174,7 @@ const Profile = () => {
     try {
       const uri = result.assets[0].uri;
       const response = await uploadAvatar(uri, userId);
-      const avatarUrl = 'https://officials-grey-signature-caps.trycloudflare.com/avatars/' + response.data.avatar;
+      const avatarUrl = getCrmsImgEndpoint("avatars/") + response.data.avatar;
       setAvatar(avatarUrl);
     } catch (error) {
       console.log('Upload error:', error);
@@ -247,19 +259,134 @@ const Profile = () => {
       {/* Body */}
       <ScrollView style={styles.body}>
         {/* Current Languages */}
-        <Text style={styles.sectionTitle}>Languages Learned</Text>
-        <View style={styles.languagesRow}>
-          <View style={styles.languageCard}>
-            <Text style={styles.flag}>🇬🇧</Text>
-            <Text style={styles.languageName}>Tiếng Anh</Text>
-            <Text style={styles.languageLevel}>Intermediate</Text>
+        <Text style={styles.sectionTitle}>Application Submitted</Text>
+        {applications.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginVertical: 8 }}
+          >
+            {applications.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginVertical: 12 }}
+              >
+                {applications.map((app, index) => {
+                  const status = (app.status || 'PENDING').toUpperCase();
+                  const isActive = status === 'ACTIVE';
+                  const isInactive = status === 'INACTIVE';
+
+                  return (
+                    <View
+                      key={`app-${index}`}
+                      style={[
+                        styles.applicationCard,
+                        { marginRight: index < applications.length - 1 ? 16 : 0 },
+                      ]}
+                    >
+                      {/* Scores - dạng badge tròn */}
+                      <View style={styles.scoreContainer}>
+                        <View style={styles.scoreBadge}>
+                          <Text style={styles.scoreLabelSmall}>Speaking</Text>
+                          <Text style={styles.scoreValue}>{app.scoreSpeaking ?? '-'}</Text>
+                        </View>
+                        <View style={styles.scoreBadge}>
+                          <Text style={styles.scoreLabelSmall}>Reading</Text>
+                          <Text style={styles.scoreValue}>{app.scoreReading ?? '-'}</Text>
+                        </View>
+                        <View style={styles.scoreBadge}>
+                          <Text style={styles.scoreLabelSmall}>Listening</Text>
+                          <Text style={styles.scoreValue}>{app.scoreListening ?? '-'}</Text>
+                        </View>
+                        <View style={styles.scoreBadge}>
+                          <Text style={styles.scoreLabelSmall}>Writing</Text>
+                          <Text style={styles.scoreValue}>{app.scoreWriting ?? '-'}</Text>
+                        </View>
+                      </View>
+
+                      {/* Expected Salary */}
+                      <View style={styles.infoRow}>
+                        <Ionicons name="cash-outline" size={20} color="#FF9500" />
+                        <Text style={styles.infoText}>
+                          Lương mong muốn:{' '}
+                          {app.expectedSalary
+                            ? new Intl.NumberFormat('vi-VN', {
+                              style: 'currency',
+                              currency: 'VND',
+                            }).format(app.expectedSalary)
+                            : 'Chưa có thông tin'}
+                        </Text>
+                      </View>
+
+                      {/* Experience */}
+                      {app.experienced && app.experienced.length > 0 ? (
+                        <View style={styles.experienceSection}>
+                          <View style={styles.infoRow}>
+                            <Ionicons name="briefcase-outline" size={20} color="#FF9500" />
+                            <Text style={styles.sectionSubtitle}>Kinh nghiệm</Text>
+                          </View>
+                          {app.experienced.map((exp: any, expIdx: number) => (
+                            <View key={`exp-${expIdx}`} style={styles.experienceItem}>
+                              <Text style={styles.companyName}>{exp.companyName}</Text>
+                              <Text style={styles.dateRange}>
+                                {new Date(exp.fromDate).toLocaleDateString('vi-VN', {
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}{' '}
+                                →{' '}
+                                {new Date(exp.toDate).toLocaleDateString('vi-VN', {
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </Text>
+                              <Text style={styles.years}>
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      ) : (
+                        <Text style={styles.noDataText}>Chưa có kinh nghiệm được liệt kê</Text>
+                      )}
+
+                      {/* Certificate Path */}
+                      {app.certificatePath && (
+                        <View style={styles.infoRow}>
+                          <Ionicons name="document-text-outline" size={20} color="#FF9500" />
+                          <Text style={styles.infoText}>
+                            Chứng chỉ: {app.certificatePath.split('/').pop() || app.certificatePath}
+                          </Text>
+                        </View>
+                      )}
+                      {/* Status Badge */}
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          isActive
+                            ? styles.statusActive
+                            : isInactive
+                              ? styles.statusInactive
+                              : styles.statusPending,
+                        ]}
+                      >
+                        <Text style={styles.statusText}>Trạng thái: {status==="ACTIVE" ? "XÁC NHẬN" : "CHƯA XÁC NHẬN"}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="document-text-outline" size={48} color="#d0d0d0" />
+                <Text style={styles.emptyText}>Chưa có đơn ứng tuyển nào</Text>
+              </View>
+            )}
+          </ScrollView>
+        ) : (
+          <View style={{ paddingVertical: 20, alignItems: 'center', opacity: 0.7 }}>
+            <Text>Chưa có đơn ứng tuyển nào</Text>
           </View>
-          <View style={styles.languageCard}>
-            <Text style={styles.flag}>🇫🇷</Text>
-            <Text style={styles.languageName}>Tiếng Pháp</Text>
-            <Text style={styles.languageLevel}>Beginner</Text>
-          </View>
-        </View>
+        )}
 
         {/* Achievements / Badges */}
         <Text style={styles.sectionTitle}>Achieves</Text>
@@ -368,8 +495,8 @@ const Profile = () => {
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => {
-            setModalVisible(false);
-            setIsCertificateLoaded(false);
+          setModalVisible(false);
+          setIsCertificateLoaded(false);
         }}
       >
         <View style={styles.modalOverlay}>
@@ -505,7 +632,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333',
     marginTop: 24,
-    marginBottom: 12,
+    marginBottom: 2,
   },
   languagesRow: { flexDirection: 'row', justifyContent: 'space-between' },
   languageCard: {
@@ -720,6 +847,161 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderRadius: 20,
     padding: 4,
+  },
+  applicationCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    width: SCREEN_WIDTH - 32,
+    marginHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#f3f3f3',
+  },
+
+  statusBadge: {
+  top: 16,
+  right: 16,
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 14,
+  alignItems: 'center',
+  justifyContent: 'center',
+  alignSelf: 'center',
+  minWidth: 300,
+  marginLeft:25,
+  marginBottom:10,
+  minHeight: 70,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.15,
+  shadowRadius: 4,
+  elevation: 3,
+},
+
+  statusActive: {
+    backgroundColor: '#34C759',
+  },
+
+  statusInactive: {
+    backgroundColor: '#FF3B30',
+  },
+
+  statusPending: {
+    backgroundColor: '#8E8E93',
+  },
+
+  statusText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  scoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+
+  },
+
+  scoreBadge: {
+    backgroundColor: '#FFF5E6',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    minWidth: 70,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  scoreLabelSmall: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+
+  scoreValue: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FF9500',
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  infoText: {
+    fontSize: 15,
+    color: '#333',
+    marginLeft: 10,
+    fontWeight: '500',
+  },
+
+  sectionSubtitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FF9500',
+    marginLeft: 10,
+  },
+
+  experienceSection: {
+    marginTop: 12,
+  },
+
+  experienceItem: {
+    marginTop: 8,
+    paddingLeft: 30,
+  },
+
+  companyName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+  },
+
+  dateRange: {
+    fontSize: 13,
+    color: '#555',
+  },
+
+  years: {
+    fontSize: 13,
+    color: '#777',
+    fontStyle: 'italic',
+  },
+
+  noDataText: {
+    color: '#888',
+    fontStyle: 'italic',
+    marginTop: 12,
+    textAlign: 'center',
+    fontSize: 14,
+  },
+
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 16,
+    marginHorizontal: 8,
+  },
+
+  emptyText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#777',
+    fontWeight: '500',
   },
 });
 

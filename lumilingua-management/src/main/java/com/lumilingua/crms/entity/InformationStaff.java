@@ -1,5 +1,6 @@
 package com.lumilingua.crms.entity;
 
+import com.lumilingua.crms.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -39,7 +40,8 @@ public class InformationStaff {
     private String certificatePath;
 
     @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private StatusEnum status;
 
     @Column(name = "expected_salary")
     private BigDecimal expectedSalary;

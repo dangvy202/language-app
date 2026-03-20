@@ -10,10 +10,11 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getCrmsEndpoint, getClientEndpoint } from "@/constants/configApi";
+
 
 const loginApi = async (email: string, password: string) => {
-    const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/login";
-
+    const endpoint = getCrmsEndpoint("v1/user/login");
     const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -32,7 +33,7 @@ const loginApi = async (email: string, password: string) => {
 };
 
 const refreshTokenApi = async (refreshToken: string) => {
-    const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/refresh";
+    const endpoint = getCrmsEndpoint("v1/user/refresh");
 
     const response = await fetch(endpoint, {
         method: 'POST',

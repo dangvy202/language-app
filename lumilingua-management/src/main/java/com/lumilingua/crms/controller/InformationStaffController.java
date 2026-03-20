@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/information-staff")
@@ -71,13 +73,10 @@ public class InformationStaffController {
         return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
     }
 
-    @GetMapping
-    public ResponseEntity<Result<InformationStaffResponse>> getInformationResponse(@RequestBody InformationStaffRequest request) {
+    @GetMapping("/{email}")
+    public ResponseEntity<Result<List<InformationStaffResponse>>> getInformationResponse(@PathVariable("email") String request) {
         LOG.info("Call api get information staff by api '%s'".formatted("/api/v1/information-staff"));
-        Result<InformationStaffResponse> result = service.getInformationStaffByEmail(request);
-        if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        Result<List<InformationStaffResponse>> result = service.getInformationStaffByEmail(request);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

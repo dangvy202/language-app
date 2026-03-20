@@ -65,9 +65,9 @@ public class UserServiceImpl implements UserService {
     public Result<InformationAccountResponse> getInformationAccountByEmail(String email) {
         LOG.info("Get information account by email in service...");
         User userEntity = userRepository.findUserByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("Unableo to get information account by email '%s'".formatted(email)));
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get information account by email '%s'".formatted(email)));
         return Result.get(InformationAccountMapper.INSTANT
-                .toInformationAccountResponse(Integer.parseInt(String.valueOf(userEntity.getIdUser())), userEntity.getPhone(), userEntity.getEmail(), userEntity.getAvatar()));
+                .toInformationAccountResponse(Integer.parseInt(String.valueOf(userEntity.getIdUser())), userEntity.getPhone(), userEntity.getEmail(), userEntity.getAvatar(), userEntity.getStatus()));
     }
 
     @Override

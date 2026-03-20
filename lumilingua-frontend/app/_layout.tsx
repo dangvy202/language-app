@@ -33,6 +33,12 @@ export default function RootLayout() {
               headerShown: false,
             }}
           />
+          {/* <Stack.Screen
+            name="Information"
+            options={{
+              headerShown: false,
+            }}
+          /> */}
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -9,6 +9,7 @@ import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.entity.ExperiencedStaff;
 import com.lumilingua.crms.entity.InformationStaff;
 import com.lumilingua.crms.entity.User;
+import com.lumilingua.crms.enums.StatusEnum;
 import com.lumilingua.crms.helper.Helper;
 import com.lumilingua.crms.mapper.ExperiencedStaffMapper;
 import com.lumilingua.crms.mapper.InformationStaffMapper;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +57,7 @@ public class InformationStaffServiceImpl implements InformationStaffService {
             InformationStaffResponse response = InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaffEntity.get(), experiencedStaffs);
             return Result.getIsExist(response, "The information staff is exists, please redirect to update information");
         }
+
         String fileName = Helper.uploadFile(request.getCertificatePath(), CrmsConstant.UPLOAD_DIR);
 
         if(fileName == null) {
@@ -90,21 +93,22 @@ public class InformationStaffServiceImpl implements InformationStaffService {
     }
 
     @Override
-    public Result<InformationStaffResponse> getInformationStaffByEmail(InformationStaffRequest request) {
+    public Result<List<InformationStaffResponse>> getInformationStaffByEmail(String email) {
         LOG.info("Get information staff in service...");
-        Optional<User> user = userRepository.findUserByEmail(request.getEmail());
+        Optional<User> user = userRepository.findUserByEmail(email);
         if(user.isEmpty()) {
             return Result.badRequestError("The Email does NOT exists");
         }
-        Optional<InformationStaff> informationStaff = informationStaffRepository.findByIdUser(user.get().getIdUser());
-        if(informationStaff.isEmpty()) {
-            return Result.badRequestError("The Information Staff does NOT exists");
+        List<InformationStaff> informationStaffs = informationStaffRepository.getListInformationByIdUser(user.get().getIdUser());
+        if(informationStaffs.isEmpty()) {
+            return Result.getAll(List.of());
         }
-        List<ExperiencedStaff> experiencedStaff = experiencedStaffRepository.findExperiencedStaffByIdInformationStaff(informationStaff.get().getIdInformationStaff());
-        if(experiencedStaff.isEmpty()) {
-            return Result.badRequestError("The Experienced Staff does NOT exists");
-        }
-        return Result.get(InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaff.get(), experiencedStaff));
+        List<InformationStaffResponse> response = new ArrayList<>();
+        informationStaffs.forEach(information -> {
+            List<ExperiencedStaff> experiencedStaff = experiencedStaffRepository.findExperiencedStaffByIdInformationStaff(information.getIdInformationStaff());
+            response.add(InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(information, experiencedStaff));
+        });
+        return Result.getAll(response);
     }
 
     @Override
@@ -156,7 +160,7 @@ public class InformationStaffServiceImpl implements InformationStaffService {
         if(informationStaff.isEmpty()) {
             return Result.badRequestError("The information staff does NOT exists");
         }
-        informationStaff.get().setStatus("ACTIVE");
+        informationStaff.get().setStatus(StatusEnum.ACTIVE);
         informationStaffRepository.save(informationStaff.get());
         return Result.update();
     }
@@ -168,7 +172,7 @@ public class InformationStaffServiceImpl implements InformationStaffService {
         if(informationStaff.isEmpty()) {
             return Result.badRequestError("The information staff does NOT exists");
         }
-        informationStaff.get().setStatus("REJECT");
+        informationStaff.get().setStatus(StatusEnum.REJECT);
         informationStaffRepository.save(informationStaff.get());
         return Result.update();
     }

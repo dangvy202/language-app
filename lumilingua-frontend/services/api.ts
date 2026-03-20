@@ -1,8 +1,9 @@
 import { Exercise, HistoryProgressCreatePayload, Level, UserInformation, UserNoteCreatePayLoad } from "@/interfaces/interfaces";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getCrmsEndpoint, getClientEndpoint } from "@/constants/configApi";
 
 export const fetchLogin = async (email: string, password: string) => {
-  const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/login"
+  const endpoint = getCrmsEndpoint("v1/user/login");
 
   try {
     const response = await fetch(endpoint, {
@@ -12,7 +13,7 @@ export const fetchLogin = async (email: string, password: string) => {
         'Accept': 'application/json',
       },
       body: JSON.stringify({ email, password }),
-    })
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -20,7 +21,6 @@ export const fetchLogin = async (email: string, password: string) => {
     }
 
     const data = await response.json();
-
     return data;
   } catch (error: any) {
     throw new Error(error.message || 'Có lỗi xảy ra khi kết nối server');
@@ -28,53 +28,48 @@ export const fetchLogin = async (email: string, password: string) => {
 };
 
 export const fetchLevel = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/level/"
+  const endpoint = getClientEndpoint("level/");
 
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
       accept: 'application/json'
     }
-  })
+  });
 
   if (!response.ok) {
     throw new Error('Fail to fetch level');
   }
   const data = await response.json();
-
   return data;
 };
 
 export const fetchTopic = async ({ query }: { query: string }): Promise<Level[]> => {
-  const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/topic/"
+  const endpoint = getClientEndpoint("topic/");
 
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
       accept: 'application/json'
     }
-  })
+  });
 
   if (!response.ok) {
-    throw new Error('Fail to fetch level');
+    throw new Error('Fail to fetch topic');
   }
   const data = await response.json();
-
   return data;
 };
 
 export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string }): Promise<any[]> => {
   try {
-    // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/vocabulary/?topic=${nameTopic}`;
+    const endpoint = getClientEndpoint(`vocabulary/?topic=${nameTopic}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        // ...(token ? { 'Authorization': `Bearer ${token}` } : {}), // Thêm token nếu có
       },
     });
 
@@ -93,16 +88,13 @@ export const fetchVocabularyByTopic = async ({ nameTopic }: { nameTopic: string 
 
 export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | string }): Promise<any[]> => {
   try {
-    // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/vocabulary/?level=${levelId}`;
+    const endpoint = getClientEndpoint(`vocabulary/?level=${levelId}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        // ...(token ? { 'Authorization': `Bearer ${token}` } : {}), // Thêm token nếu có
       },
     });
 
@@ -121,15 +113,13 @@ export const fetchVocabularyByLevelId = async ({ levelId }: { levelId: number | 
 
 export const fetchMeanByVocabularyAndLanguage = async ({ vocabulary, language }: { vocabulary: number, language: number }): Promise<any[]> => {
   try {
-    // const token = await AsyncStorage.getItem('accessToken'); // Lấy token nếu cần auth
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/mean/?vocabulary=${vocabulary}&language=${language}`
+    const endpoint = getClientEndpoint(`mean/?vocabulary=${vocabulary}&language=${language}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        // ...(token ? { 'Authorization': `Bearer ${token}` } : {}), // Thêm token nếu có
       },
     });
 
@@ -151,7 +141,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<Us
     const token = await AsyncStorage.getItem('token');
     const email = await AsyncStorage.getItem('email');
 
-    const endpoint = `https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/${email}`;
+    const endpoint = getCrmsEndpoint(`v1/user/${email}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -177,7 +167,7 @@ export const fetchInformation = async ({ query }: { query: string }): Promise<Us
 
 export const fetchUserCache = async ({ email }: { email: string }): Promise<any[]> => {
   try {
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/user_cache/?email=${email}`;
+    const endpoint = getClientEndpoint(`user_cache/?email=${email}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -211,7 +201,7 @@ export const fetchUserCache = async ({ email }: { email: string }): Promise<any[
   }
 };
 
-export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0, }: {
+export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0 }: {
   id_user: number;
   email: string;
   phone: string;
@@ -222,14 +212,9 @@ export const saveOrUpdateUserCache = async ({ id_user, email, phone, streak = 0,
   }
 
   try {
-    const payload = {
-      id_user,
-      email,
-      phone,
-      streak,
-    };
+    const payload = { id_user, email, phone, streak };
 
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/user_cache/`;
+    const endpoint = getClientEndpoint("user_cache/");
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -280,14 +265,10 @@ export const saveHistoryProgress = async ({
       id_vocabulary_progress,
     };
 
-    if (finished_date !== undefined) {
-      payload.finished_date = finished_date;
-    }
-    if (duration !== undefined) {
-      payload.duration = duration;
-    }
+    if (finished_date !== undefined) payload.finished_date = finished_date;
+    if (duration !== undefined) payload.duration = duration;
 
-    const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/history_progress/";
+    const endpoint = getClientEndpoint("history_progress/");
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -325,13 +306,11 @@ export const saveHistoryProgress = async ({
 };
 
 export const getHistoryProgress = async (userCacheId: number) => {
-  let endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/history_progress/?user_cache=${userCacheId}`;
+  const endpoint = getClientEndpoint(`history_progress/?user_cache=${userCacheId}`);
 
   const response = await fetch(endpoint, {
     method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
+    headers: { Accept: "application/json" },
   });
 
   if (!response.ok) {
@@ -342,17 +321,15 @@ export const getHistoryProgress = async (userCacheId: number) => {
 };
 
 export const getExerciseProgress = async (userCacheId: number) => {
-  let endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/exercise_progress/?user_cache=${userCacheId}`;
+  const endpoint = getClientEndpoint(`exercise_progress/?user_cache=${userCacheId}`);
 
   const response = await fetch(endpoint, {
     method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
+    headers: { Accept: "application/json" },
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch history progress");
+    throw new Error("Failed to fetch exercise progress");
   }
 
   return response.json();
@@ -364,7 +341,6 @@ export const saveNoteVocabulary = async ({
   content_note,
   description_note
 }: UserNoteCreatePayLoad): Promise<any> => {
-
   const payload: Record<string, any> = {
     id_user_cache,
     id_vocabulary,
@@ -372,16 +348,13 @@ export const saveNoteVocabulary = async ({
     description_note,
   };
 
-  const response = await fetch(
-    "https://political-dial-hits-choice.trycloudflare.com/api/user_note/",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    }
-  );
+  const endpoint = getClientEndpoint("user_note/");
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
   if (!response.ok) {
     throw new Error("Failed to save note");
@@ -391,9 +364,9 @@ export const saveNoteVocabulary = async ({
 };
 
 export const fetchUserNotes = async (userCacheId: number) => {
-  const response = await fetch(
-    `https://political-dial-hits-choice.trycloudflare.com/api/user_note/?id_user_cache=${userCacheId}`
-  );
+  const endpoint = getClientEndpoint(`user_note/?id_user_cache=${userCacheId}`);
+
+  const response = await fetch(endpoint);
 
   if (!response.ok) {
     throw new Error("Failed to fetch notes");
@@ -403,26 +376,23 @@ export const fetchUserNotes = async (userCacheId: number) => {
 };
 
 export const fetchExercise = async ({ query }: { query: string }): Promise<Exercise[]> => {
-  const endpoint = "https://political-dial-hits-choice.trycloudflare.com/api/exercise/"
+  const endpoint = getClientEndpoint("exercise/");
 
   const response = await fetch(endpoint, {
     method: 'GET',
-    headers: {
-      accept: 'application/json'
-    }
-  })
+    headers: { accept: 'application/json' }
+  });
 
   if (!response.ok) {
     throw new Error('Fail to fetch exercise');
   }
   const data = await response.json();
-
   return data;
 };
 
 export const fetchExerciseQuestions = async (exerciseId: number) => {
   try {
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/question/?exercise=${exerciseId}`;
+    const endpoint = getClientEndpoint(`question/?exercise=${exerciseId}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -456,17 +426,12 @@ export const submitExerciseProgress = async ({
   score: number;
   completed_at: string;
 }) => {
-  const response = await fetch('https://political-dial-hits-choice.trycloudflare.com/api/exercise_progress/', {
+  const endpoint = getClientEndpoint("exercise_progress/");
+
+  const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id_user,
-      id_exercise,
-      score,
-      completed_at,
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id_user, id_exercise, score, completed_at }),
   });
 
   if (!response.ok) {
@@ -475,6 +440,7 @@ export const submitExerciseProgress = async ({
 
   return response.json();
 };
+
 export const registerTutor = async (data: {
   email: string;
   hourOfDay: string;
@@ -487,18 +453,11 @@ export const registerTutor = async (data: {
   expectedSalary: string;
   experiences: { companyName: string; fromDate: string; toDate: string }[];
 }): Promise<any> => {
-
   try {
-
     const dayNumberToText = (dayId: number): string => {
       const daysMap: { [key: number]: string } = {
-        1: 'Thứ Hai',
-        2: 'Thứ Ba',
-        3: 'Thứ Tư',
-        4: 'Thứ Năm',
-        5: 'Thứ Sáu',
-        6: 'Thứ Bảy',
-        7: 'Chủ Nhật',
+        1: 'Thứ Hai', 2: 'Thứ Ba', 3: 'Thứ Tư', 4: 'Thứ Năm',
+        5: 'Thứ Sáu', 6: 'Thứ Bảy', 7: 'Chủ Nhật',
       };
       return daysMap[dayId] || 'Không xác định';
     };
@@ -524,7 +483,6 @@ export const registerTutor = async (data: {
       formData.append(`experienced[${index}].toDate`, exp.toDate);
     });
 
-    // upload file
     formData.append("certificatePath", {
       uri: data.certificateFile.uri,
       name: data.certificateFile.name,
@@ -532,12 +490,11 @@ export const registerTutor = async (data: {
     } as any);
 
     const token = await AsyncStorage.getItem('token');
-
     if (!token) {
       throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
     }
 
-    const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/information-staff";
+    const endpoint = getCrmsEndpoint("v1/information-staff");
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -558,26 +515,19 @@ export const registerTutor = async (data: {
     }
 
     if (!response.ok) {
-      throw new Error(
-        responseData.message || `Server error ${response.status}`
-      );
+      throw new Error(responseData.message || `Server error ${response.status}`);
     }
 
     return responseData;
-
   } catch (err: any) {
-
     console.error("registerTutor error:", err);
-
-    throw new Error(
-      err.message || "Không thể đăng ký gia sư. Vui lòng thử lại!"
-    );
+    throw new Error(err.message || "Không thể đăng ký gia sư. Vui lòng thử lại!");
   }
 };
 
 export const getLevelByCategoryId = async (categoryId: number) => {
   try {
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/category_level/?id_category_level=${categoryId}`;
+    const endpoint = getClientEndpoint(`category_level/?id_category_level=${categoryId}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -602,7 +552,7 @@ export const getLevelByCategoryId = async (categoryId: number) => {
 
 export const getCertificateByUserId = async (user_cache_id: number) => {
   try {
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/certificate_cache/?id_user_cache=${user_cache_id}`;
+    const endpoint = getClientEndpoint(`certificate_cache/?id_user_cache=${user_cache_id}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -627,7 +577,7 @@ export const getCertificateByUserId = async (user_cache_id: number) => {
 
 export const getRankByUserId = async (user_cache_id: number) => {
   try {
-    const endpoint = `https://political-dial-hits-choice.trycloudflare.com/api/user_cache/?id_user_cache=${user_cache_id}`;
+    const endpoint = getClientEndpoint(`user_cache/?id_user_cache=${user_cache_id}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -650,31 +600,23 @@ export const getRankByUserId = async (user_cache_id: number) => {
   }
 };
 
-export const uploadAvatar = async (
-  uri: string,
-  userId: number
-): Promise<any> => {
-
+export const uploadAvatar = async (uri: string, userId: number): Promise<any> => {
   try {
-
     const formData = new FormData();
-
     const fileName = uri.split("/").pop() || "avatar.jpg";
 
     formData.append("avatar", {
-      uri: uri,
+      uri,
       name: fileName,
       type: "image/jpeg",
     } as any);
 
-    
     const token = await AsyncStorage.getItem('token');
-
     if (!token) {
       throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
     }
 
-    const endpoint = `https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/edit-image/${userId}`;
+    const endpoint = getCrmsEndpoint(`v1/user/edit-image/${userId}`);
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -686,18 +628,45 @@ export const uploadAvatar = async (
     });
 
     if (!response.ok) {
-
       const text = await response.text();
-
       console.log("SERVER ERROR:", text);
-
       throw new Error("Upload avatar failed");
     }
+
     return await response.json();
   } catch (err: any) {
-
     console.error("Upload avatar error:", err);
-
     throw new Error(err.message || "Unable to upload avatar");
+  }
+};
+
+export const getApplicationSubmitted = async (email: string): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
+    }
+
+    const endpoint = getCrmsEndpoint(`v1/information-staff/${email}`);
+
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || `Server error ${response.status}`);
+    }
+
+    return responseData;
+  } catch (err: any) {
+    console.error("Unable to get application submitted ", err);
+    throw new Error(err.message || "Unable to get application submitted");
   }
 };

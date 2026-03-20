@@ -18,6 +18,7 @@ import { Stack, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { registerTutor } from '@/services/api';
 import * as DocumentPicker from 'expo-document-picker';
+import { getCrmsEndpoint, getClientEndpoint } from "@/constants/configApi";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RegisterTutor = () => {
@@ -57,7 +58,7 @@ const RegisterTutor = () => {
     ];
 
     const refreshTokenApi = async (refreshToken: string) => {
-        const endpoint = "https://officials-grey-signature-caps.trycloudflare.com/api/v1/user/refresh";
+        const endpoint = getCrmsEndpoint("v1/user/refresh");
 
         const response = await fetch(endpoint, {
             method: 'POST',

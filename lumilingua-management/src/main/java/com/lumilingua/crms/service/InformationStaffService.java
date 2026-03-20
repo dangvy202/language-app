@@ -4,11 +4,13 @@ import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.InformationStaffRequest;
 import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 
+import java.util.List;
+
 public interface InformationStaffService {
 //  user
     Result<InformationStaffResponse> createInformationStaff(InformationStaffRequest request);
     Result<InformationStaffResponse> deleteInformationStaff(InformationStaffRequest request);
-    Result<InformationStaffResponse> getInformationStaffByEmail(InformationStaffRequest request);
+    Result<List<InformationStaffResponse>> getInformationStaffByEmail(String email);
     Result<InformationStaffResponse> editInformationStaffByEmail(InformationStaffRequest request);
 //  admin
     Result<InformationStaffResponse> activeContractStaff(long id);

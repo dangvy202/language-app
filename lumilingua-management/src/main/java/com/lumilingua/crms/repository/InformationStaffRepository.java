@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +18,12 @@ public interface InformationStaffRepository extends JpaRepository<InformationSta
         """
     )
     Optional<InformationStaff> findByIdUser(@Param("idUser") long idUser);
+    @Query("""
+        SELECT i
+        FROM InformationStaff i
+        WHERE i.idUser = :idUser
+        """
+    )
+    List<InformationStaff> getListInformationByIdUser(@Param("idUser") long idUser);
+
 }

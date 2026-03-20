@@ -1,5 +1,6 @@
 package com.lumilingua.crms.dto.responses;
 
+import com.lumilingua.crms.enums.StatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -15,5 +16,6 @@ public class InformationStaffResponse {
     private int scoreWriting;
     private String certificatePath;
     private BigDecimal expectedSalary;
+    private StatusEnum status;
     private List<ExperiencedStaffResponse> experienced;
 }

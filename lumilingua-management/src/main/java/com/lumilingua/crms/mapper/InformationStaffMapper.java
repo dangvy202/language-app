@@ -26,4 +26,5 @@ public interface InformationStaffMapper {
     InformationStaff toInformationStaff(InformationStaffRequest request, String certificatePath, long idUser);
 
     InformationStaffResponse toInformationStaffResponseMapper(InformationStaff informationStaff, List<ExperiencedStaff> experienced);
+
 }
