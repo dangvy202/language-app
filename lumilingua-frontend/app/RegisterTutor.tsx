@@ -54,7 +54,7 @@ const RegisterTutor = () => {
         { id: 4, label: 'Thứ 5' },
         { id: 5, label: 'Thứ 6' },
         { id: 6, label: 'Thứ 7' },
-        { id: 7, label: 'Chủ Nhật' },
+        { id: 7, label: 'CN' },
     ];
 
     const refreshTokenApi = async (refreshToken: string) => {

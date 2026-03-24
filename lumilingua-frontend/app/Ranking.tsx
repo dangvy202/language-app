@@ -91,7 +91,6 @@ const Ranking = () => {
       isCurrentUser: false,
     }));
 
-    // Xác định người dùng hiện tại (ưu tiên id_user)
     const currentUserId = userCache?.[0]?.id_user || userCache?.[0]?.idUser;
     const currentEmail = userCache?.[0]?.email?.toLowerCase();
 

@@ -28,7 +28,7 @@ public class InformationStaffController {
         LOG.info("Call api create information staff by api '%s'".formatted("/api/v1/information-staff"));
         Result<InformationStaffResponse> result = service.createInformationStaff(request);
         if(result.code == ResultApiConstant.StatusCode.CREATED) {
-            return new ResponseEntity<>(result, HttpStatus.CREATED);
+            return new ResponseEntity<>(null, HttpStatus.CREATED);
         }
         return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }

@@ -1,9 +1,9 @@
 import Constants from 'expo-constants';
 
 const API_CONFIG = {
-  CRMS_BASE_URL: 'http://localhost:8888/api',
-  CLIENT_BASE_URL: 'http://localhost:8000/api',
-  CRMS_IMG_URL: 'http://localhost:8888',
+  CRMS_BASE_URL: 'https://reasons-elected-standing-receptor.trycloudflare.com/api',
+  CLIENT_BASE_URL: 'https://every-century-collectables-financing.trycloudflare.com/api',
+  CRMS_IMG_URL: 'https://reasons-elected-standing-receptor.trycloudflare.com',
 };
 
 export const {
