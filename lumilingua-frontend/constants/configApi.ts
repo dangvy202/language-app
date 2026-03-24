@@ -1,9 +1,9 @@
 import Constants from 'expo-constants';
 
 const API_CONFIG = {
-  CRMS_BASE_URL: 'https://iowa-deadline-travel-has.trycloudflare.com/api',
-  CLIENT_BASE_URL: 'https://successfully-tommy-civilization-turner.trycloudflare.com/api',
-  CRMS_IMG_URL: 'https://iowa-deadline-travel-has.trycloudflare.com',
+  CRMS_BASE_URL: 'http://localhost:8888/api',
+  CLIENT_BASE_URL: 'http://localhost:8000/api',
+  CRMS_IMG_URL: 'http://localhost:8888',
 };
 
 export const {

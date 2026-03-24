@@ -91,6 +91,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Result<InformationAccountResponse> getInformationAccountById(long id) {
+        LOG.info("Get information account by id in service...");
+
+        Optional<User> user = userRepository.findById(id);
+
+        if(user.isEmpty()) {
+            return Result.badRequestError("Unable to get user by id '%s'".formatted(id));
+        }
+        User userEntity = user.get();
+        return Result.get(InformationAccountMapper.INSTANT.toInformationAccountResponse(
+                Integer.parseInt(String.valueOf(userEntity.getIdUser())),
+                userEntity.getPhone(), userEntity.getEmail(),
+                userEntity.getAvatar(), userEntity.getStatus()));
+    }
+
+    @Override
     @Transactional
     public Result<UserResponse> registerAccountByCustomer(UserRequest userRequest) {
         LOG.info("Register user in service...");

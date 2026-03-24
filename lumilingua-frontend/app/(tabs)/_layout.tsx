@@ -52,6 +52,7 @@ const TabIcon = ({ focused, icon, title }: any) => {
 export default function RootLayout() {
   const router = useRouter();
   const [isLearnSheetOpen, setIsLearnSheetOpen] = useState(false);
+  const [isOptionSheetOpen, setIsOptionSheetOpen] = useState(false);
 
   const snapPoints = ['40%'];
 
@@ -61,6 +62,14 @@ export default function RootLayout() {
 
   const closeSheet = () => {
     setIsLearnSheetOpen(false);
+  };
+
+  const handleOptionPress = () => {
+    setIsOptionSheetOpen(true);
+  };
+
+  const closeOptionSheet = () => {
+    setIsOptionSheetOpen(false);
   };
 
   const pendingRoute = useRef<string | null>(null);
@@ -115,13 +124,20 @@ export default function RootLayout() {
             headerShown: false,
             tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="home-outline" title="Home" />,
           }}
-        />
-        <Tabs.Screen
+        /><Tabs.Screen
           name="search"
           options={{
-            title: 'Ranking',
+            title: 'Option',
             headerShown: false,
-            tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="podium-outline" title="Ranking" />,
+            tabBarButton: () => (
+              <TouchableOpacity
+                onPress={handleOptionPress}
+                activeOpacity={0.7}
+                className="items-center flex-1"
+              >
+                <TabIcon focused={false} icon="options-outline" title="Option" />
+              </TouchableOpacity>
+            ),
           }}
         />
         <Tabs.Screen
@@ -144,6 +160,49 @@ export default function RootLayout() {
 
       {/* Bottom Sheet */}
       <BottomSheet
+        index={isOptionSheetOpen ? 0 : -1}
+        snapPoints={snapPoints}
+        onClose={closeOptionSheet}
+        enablePanDownToClose
+        backgroundStyle={{ backgroundColor: '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+        handleIndicatorStyle={{ backgroundColor: '#FFA500', width: 40, height: 5 }}
+      >
+        <BottomSheetView className="flex-1 px-6 pt-4 pb-10">
+
+          {/* Ranking */}
+          <TouchableOpacity
+            className="bg-orange-50 p-5 rounded-2xl mb-5 flex-row items-center shadow-sm"
+            onPress={() => {
+              closeOptionSheet();
+              setTimeout(() => {
+                router.push('/Ranking');
+              }, 200);
+            }}
+          >
+            <Ionicons name="trophy-outline" size={28} color="#FFA500" />
+            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
+              Ranking
+            </Text>
+          </TouchableOpacity>
+
+          {/* Social */}
+          <TouchableOpacity
+            className="bg-orange-50 p-5 rounded-2xl flex-row items-center shadow-sm"
+            onPress={() => {
+              closeOptionSheet();
+              setTimeout(() => {
+                router.push('/social');
+              }, 200);
+            }}
+          >
+            <Ionicons name="people-outline" size={28} color="#FFA500" />
+            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
+              Social App
+            </Text>
+          </TouchableOpacity>
+        </BottomSheetView>
+      </BottomSheet>
+      <BottomSheet
         index={isLearnSheetOpen ? 0 : -1}
         snapPoints={snapPoints}
         onClose={closeSheet}
@@ -160,7 +219,7 @@ export default function RootLayout() {
               closeSheet();
               setTimeout(() => {
                 router.push('/learn');
-              }, 200);  // Delay 200ms để animation đóng sheet hoàn tất (tùy chỉnh nếu cần)
+              }, 200);
             }}
           >
             <Ionicons name="git-network-outline" size={28} color="#FFA500" />

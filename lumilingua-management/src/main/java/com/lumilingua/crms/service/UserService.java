@@ -16,4 +16,5 @@ public interface UserService {
     Result<AuthenticationResponse> refreshToken(RefreshTokenRequest request);
     Result<InformationAccountResponse> getInformationAccountByEmail(String email);
     Result<UserResponse> editImageAccount(MultipartFile imgFile, long idUser);
+    Result<InformationAccountResponse> getInformationAccountById(long id);
 }

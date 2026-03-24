@@ -9,6 +9,8 @@ from .serializers import CertificateSerializer, CertificateCacheSerializer, User
     HistoryProgressSerializer, CategoryLevelSerializer
 from ..models import UserCache, Certificate, CertificateCache, UserNote, HistoryProgress, CategoryLevel
 from .serializers import UserCacheSerializer
+from ...services.UserRestApi import get_user
+
 
 class UserCacheViewSet(viewsets.ModelViewSet):
     queryset = UserCache.objects.all()
@@ -24,26 +26,26 @@ class UserCacheViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         id_user_cache = request.query_params.get('id_user_cache')
-
-        if id_user_cache:
-            users = UserCache.objects.all().order_by('-gain_xp')
-
-            rank = 0
-            gain_xp = 0
-            for index, user in enumerate(users, start=1):
+        users = UserCache.objects.all().order_by('-gain_xp')
+        for index, user in enumerate(users, start=1):
+            if id_user_cache:
                 if str(user.id_user_cache) == id_user_cache:
                     rank = index
                     gain_xp = user.gain_xp
-                    break
+                    return Response({
+                        "id_user_cache": id_user_cache,
+                        "gain_xp": gain_xp,
+                        "rank": rank
+                    })
 
-            return Response({
-                "id_user_cache": id_user_cache,
-                "gain_xp": gain_xp,
-                "rank": rank
-            })
+        serializer = self.get_serializer(users, many=True)
+        data = serializer.data
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        for index, user in enumerate(data, start=1):
+            user["rank"] = index
+            user["information"] = get_user(user["id_user"])
+
+        return Response(data)
 
     def create(self, request, *args, **kwargs):
         id_user = request.data.get('id_user')

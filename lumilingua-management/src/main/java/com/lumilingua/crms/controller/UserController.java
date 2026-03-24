@@ -76,4 +76,15 @@ public class UserController {
         var result = userService.getInformationAccountByEmail(email);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
+
+    @GetMapping("/info/{id}")
+    public ResponseEntity<Result<InformationAccountResponse>> getInformationAccountById(@PathVariable("id") long id) {
+        LOG.info("Call api get information account by id '%s'".formatted("/api/v1/user/info/'" + id));
+        var result = userService.getInformationAccountById(id);
+
+        if(result.getCode() == ResultApiConstant.StatusCode.BAD_REQUEST) {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }
