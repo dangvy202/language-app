@@ -24,7 +24,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const RegisterTutor = () => {
     const router = useRouter();
 
+    // ==================== STATES ====================
     const [loadingLogin, setLoadingLogin] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    // Form states
     const [email, setEmail] = useState('');
     const [hourOfDay, setHourOfDay] = useState('');
     const [selectedDays, setSelectedDays] = useState<number[]>([]);
@@ -38,6 +42,7 @@ const RegisterTutor = () => {
         { companyName: string; fromDate: string; toDate: string }[]
     >([]);
 
+    // States cho thêm kinh nghiệm
     const [showAddForm, setShowAddForm] = useState(false);
     const [newCompany, setNewCompany] = useState('');
     const [newFromDate, setNewFromDate] = useState(new Date());
@@ -45,7 +50,9 @@ const RegisterTutor = () => {
     const [showFromPicker, setShowFromPicker] = useState(false);
     const [showToPicker, setShowToPicker] = useState(false);
 
-    const [loading, setLoading] = useState(false);
+    // ==================== STATES CHO SKILLS ====================
+    const [skills, setSkills] = useState<any[]>([]);           // Danh sách skill từ API
+    const [selectedSkills, setSelectedSkills] = useState<number[]>([]); // Mảng idStaffSkill đã chọn
 
     const daysOfWeek = [
         { id: 1, label: 'Thứ 2' },
@@ -57,6 +64,7 @@ const RegisterTutor = () => {
         { id: 7, label: 'CN' },
     ];
 
+    // ==================== REFRESH TOKEN ====================
     const refreshTokenApi = async (refreshToken: string) => {
         const endpoint = getCrmsEndpoint("v1/user/refresh");
 
@@ -71,12 +79,13 @@ const RegisterTutor = () => {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.notification);
+            throw new Error(errorData.notification || 'Refresh token thất bại');
         }
 
         return await response.json();
     };
 
+    // Check auth & Fetch Skills
     useEffect(() => {
         let isMounted = true;
 
@@ -89,36 +98,69 @@ const RegisterTutor = () => {
 
             if (token && expired && Date.now() < expired) {
                 setLoadingLogin(false);
-                return;
-            }
-
-            const refreshToken = await AsyncStorage.getItem('refreshToken');
-
-            if (refreshToken) {
-                setLoadingLogin(true);
-                try {
-                    const response = await refreshTokenApi(refreshToken);
-                    await AsyncStorage.setItem('token', response.data.token || '');
-                    await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
-                } catch (err) {
-                    console.log('Refresh error:', err);
-                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
-                    router.replace('/Login');
-                } finally {
-                    if (isMounted) setLoadingLogin(false);
-                }
             } else {
-                router.replace('/Login');
+                const refreshToken = await AsyncStorage.getItem('refreshToken');
+                if (refreshToken) {
+                    setLoadingLogin(true);
+                    try {
+                        const response = await refreshTokenApi(refreshToken);
+                        await AsyncStorage.setItem('token', response.data.token || '');
+                        await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
+                    } catch (err) {
+                        console.log('Refresh error:', err);
+                        await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
+                        router.replace('/Login');
+                    } finally {
+                        if (isMounted) setLoadingLogin(false);
+                    }
+                } else {
+                    router.replace('/Login');
+                }
+            }
+        };
+
+        const fetchSkills = async () => {
+            try {
+                const token = await AsyncStorage.getItem('token');
+                
+                if (!token) {
+                    throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
+                }
+
+                const response = await fetch(getCrmsEndpoint("v1/skill"), {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Lỗi server: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.code === 200 && Array.isArray(result.data)) {
+                    setSkills(result.data);
+                } else {
+                    throw new Error(result.notification || 'Dữ liệu không hợp lệ');
+                }
+            } catch (error) {
+                console.error('Fetch skills error:', error);
+                Alert.alert('Lỗi', 'Không thể tải danh sách kỹ năng. Vui lòng thử lại sau.');
             }
         };
 
         checkAuth();
+        fetchSkills();
 
         return () => {
             isMounted = false;
         };
     }, [router]);
 
+    // ==================== HELPER FUNCTIONS ====================
     const formatVND = (value: string) => {
         if (!value) return '';
         return Number(value).toLocaleString('vi-VN');
@@ -131,6 +173,14 @@ const RegisterTutor = () => {
     const toggleDay = (dayId: number) => {
         setSelectedDays((prev) =>
             prev.includes(dayId) ? prev.filter((d) => d !== dayId) : [...prev, dayId]
+        );
+    };
+
+    const toggleSkill = (skillId: number) => {
+        setSelectedSkills((prev) =>
+            prev.includes(skillId)
+                ? prev.filter((id) => id !== skillId)
+                : [...prev, skillId]
         );
     };
 
@@ -152,8 +202,6 @@ const RegisterTutor = () => {
     };
 
     const addExperience = () => {
-        console.log('ADD EXPERIENCE CLICKED');
-
         if (!newCompany.trim() || !newFromDate || !newToDate) {
             Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin kinh nghiệm!');
             return;
@@ -170,13 +218,7 @@ const RegisterTutor = () => {
             toDate: formatDate(newToDate),
         };
 
-        console.log('Kinh nghiệm mới sẽ thêm:', newExp);
-
-        setExperiences((prev) => {
-            const updated = [...prev, newExp];
-            console.log('State experiences sau update:', updated);
-            return updated;
-        });
+        setExperiences((prev) => [...prev, newExp]);
 
         setNewCompany('');
         setNewFromDate(new Date());
@@ -190,14 +232,11 @@ const RegisterTutor = () => {
 
     const handleScoreChange = (text: string, setter: (val: string) => void) => {
         const number = text.replace(/[^0-9]/g, '');
-
         if (!number) {
             setter('');
             return;
         }
-
         const value = parseInt(number, 10);
-
         if (value >= 1 && value <= 10) {
             setter(value.toString());
         } else if (value > 10) {
@@ -205,6 +244,7 @@ const RegisterTutor = () => {
         }
     };
 
+    // ==================== SUBMIT ====================
     const handleSubmit = async () => {
         if (experiences.length === 0) {
             Alert.alert('Thông báo', 'Vui lòng thêm ít nhất 1 kinh nghiệm!');
@@ -213,6 +253,11 @@ const RegisterTutor = () => {
 
         if (!certificateFile) {
             Alert.alert('Thông báo', 'Vui lòng chọn file chứng chỉ!');
+            return;
+        }
+
+        if (selectedSkills.length === 0) {
+            Alert.alert('Thông báo', 'Vui lòng chọn ít nhất 1 kỹ năng!');
             return;
         }
 
@@ -230,22 +275,13 @@ const RegisterTutor = () => {
                 certificateFile,
                 expectedSalary,
                 experiences,
+                selectedSkills,
             });
-
             if (result?.conflict === true) {
                 Alert.alert(
                     "Thông báo",
                     result.notification || "Bạn đã đăng ký gia sư rồi",
-                    [
-                        {
-                            text: "Xem đăng ký",
-                            // onPress: () => router.push("/TutorRegister")
-                        },
-                        {
-                            text: "Đóng",
-                            style: "cancel"
-                        }
-                    ]
+                    [{ text: "Đóng", style: "cancel" }]
                 );
                 return;
             }
@@ -281,6 +317,7 @@ const RegisterTutor = () => {
                     ),
                 }}
             />
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
@@ -300,6 +337,7 @@ const RegisterTutor = () => {
 
                 <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                     <View style={styles.formContainer}>
+
                         {/* Email */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
@@ -350,6 +388,48 @@ const RegisterTutor = () => {
                                     </TouchableOpacity>
                                 ))}
                             </View>
+                        </View>
+
+                        {/* ==================== KỸ NĂNG CHUYÊN MÔN ==================== */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>
+                                Kỹ năng chuyên môn <Text style={styles.required}>*</Text>
+                            </Text>
+                            <Text style={{ fontSize: 13, color: '#666', marginBottom: 10 }}>
+                                Chọn một hoặc nhiều kỹ năng bạn có thể dạy
+                            </Text>
+
+                            <View style={styles.daysContainer}>
+                                {skills.length > 0 ? (
+                                    skills.map((skill) => (
+                                        <TouchableOpacity
+                                            key={skill.idStaffSkill}
+                                            style={[
+                                                styles.dayChip,
+                                                selectedSkills.includes(skill.idStaffSkill) && styles.dayChipSelected,
+                                            ]}
+                                            onPress={() => toggleSkill(skill.idStaffSkill)}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.dayText,
+                                                    selectedSkills.includes(skill.idStaffSkill) && styles.dayTextSelected,
+                                                ]}
+                                            >
+                                                {skill.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))
+                                ) : (
+                                    <Text style={{ color: '#999', paddingVertical: 10 }}>Đang tải danh sách kỹ năng...</Text>
+                                )}
+                            </View>
+
+                            {selectedSkills.length > 0 && (
+                                <Text style={{ marginTop: 8, fontSize: 13, color: '#FFA500', fontWeight: '600' }}>
+                                    Đã chọn: {selectedSkills.length} kỹ năng
+                                </Text>
+                            )}
                         </View>
 
                         {/* Điểm kỹ năng */}
@@ -407,29 +487,16 @@ const RegisterTutor = () => {
 
                         {/* Chứng chỉ */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Link chứng chỉ (nếu có)</Text>
+                            <Text style={styles.label}>Chứng chỉ (File)</Text>
                             <TouchableOpacity
                                 style={styles.filePicker}
                                 onPress={pickCertificate}
                                 activeOpacity={0.8}
                             >
-                                <Ionicons
-                                    name="document-attach-outline"
-                                    size={22}
-                                    color="#FFA500"
-                                    style={styles.inputIcon}
-                                />
-
-                                <Text
-                                    style={[
-                                        styles.fileText,
-                                        !certificateFile && styles.filePlaceholder
-                                    ]}
-                                    numberOfLines={1}
-                                >
+                                <Ionicons name="document-attach-outline" size={22} color="#FFA500" style={styles.inputIcon} />
+                                <Text style={[styles.fileText, !certificateFile && styles.filePlaceholder]} numberOfLines={1}>
                                     {certificateFile ? certificateFile.name : "Chọn file chứng chỉ"}
                                 </Text>
-
                                 {certificateFile && (
                                     <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
                                 )}
@@ -457,7 +524,6 @@ const RegisterTutor = () => {
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Kinh nghiệm làm việc</Text>
 
-                            {/* List kinh nghiệm */}
                             {experiences.map((exp, index) => (
                                 <View key={index} style={styles.experienceItem}>
                                     <Text style={styles.experienceText}>
@@ -469,7 +535,6 @@ const RegisterTutor = () => {
                                 </View>
                             ))}
 
-                            {/* Button toggle form thêm mới */}
                             <TouchableOpacity
                                 style={styles.addButton}
                                 onPress={() => setShowAddForm(!showAddForm)}
@@ -479,7 +544,6 @@ const RegisterTutor = () => {
                                 </Text>
                             </TouchableOpacity>
 
-                            {/* Form thêm kinh nghiệm - chỉ hiện khi showAddForm = true */}
                             {showAddForm && (
                                 <View style={styles.addExperience}>
                                     <TextInput
@@ -489,7 +553,6 @@ const RegisterTutor = () => {
                                         onChangeText={setNewCompany}
                                     />
 
-                                    {/* Từ ngày */}
                                     <TouchableOpacity style={styles.dateInput} onPress={() => setShowFromPicker(true)}>
                                         <Ionicons name="calendar-outline" size={22} color="#FFA500" style={styles.inputIcon} />
                                         <Text style={styles.dateText}>Từ ngày: {formatDate(newFromDate)}</Text>
@@ -506,7 +569,6 @@ const RegisterTutor = () => {
                                         />
                                     )}
 
-                                    {/* Đến ngày */}
                                     <TouchableOpacity style={styles.dateInput} onPress={() => setShowToPicker(true)}>
                                         <Ionicons name="calendar-outline" size={22} color="#FFA500" style={styles.inputIcon} />
                                         <Text style={styles.dateText}>Đến ngày: {formatDate(newToDate)}</Text>
@@ -530,7 +592,7 @@ const RegisterTutor = () => {
                             )}
                         </View>
 
-                        {/* Submit */}
+                        {/* Submit Button */}
                         <TouchableOpacity
                             style={styles.submitButton}
                             activeOpacity={0.85}
@@ -543,7 +605,11 @@ const RegisterTutor = () => {
                                 end={{ x: 1, y: 0 }}
                                 style={styles.submitGradient}
                             >
-                                {loading ? <Text style={styles.submitText}>Đang gửi...</Text> : <Text style={styles.submitText}>Gửi đăng ký ngay</Text>}
+                                {loading ? (
+                                    <Text style={styles.submitText}>Đang gửi...</Text>
+                                ) : (
+                                    <Text style={styles.submitText}>Gửi đăng ký ngay</Text>
+                                )}
                             </LinearGradient>
                         </TouchableOpacity>
 
@@ -694,7 +760,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 14,
     },
-    addExperience: { marginTop: 12, },
+    addExperience: { marginTop: 12 },
     addButton: {
         backgroundColor: '#FFA500',
         paddingVertical: 12,
@@ -743,13 +809,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 14,
     },
-
     fileText: {
         flex: 1,
         fontSize: 16,
         color: '#222',
     },
-
     filePlaceholder: {
         color: '#999',
     },

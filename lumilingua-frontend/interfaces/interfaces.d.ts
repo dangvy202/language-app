@@ -94,3 +94,9 @@ interface UserInformation {
   idUser: number;
   phone: string;
 }
+
+interface FileData {
+  uri: string;
+  name: string;
+  type: string;
+}

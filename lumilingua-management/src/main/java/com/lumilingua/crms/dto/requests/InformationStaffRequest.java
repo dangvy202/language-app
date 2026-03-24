@@ -23,4 +23,5 @@ public class InformationStaffRequest {
     private MultipartFile certificatePath;
     private BigDecimal expectedSalary;
     private List<ExperiencedStaffRequest> experienced;
+    private List<StaffSkillRequest> staffSkills;
 }

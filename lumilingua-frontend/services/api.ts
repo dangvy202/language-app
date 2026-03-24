@@ -452,6 +452,7 @@ export const registerTutor = async (data: {
   certificateFile: any;
   expectedSalary: string;
   experiences: { companyName: string; fromDate: string; toDate: string }[];
+  selectedSkills: number[];
 }): Promise<any> => {
   try {
     const dayNumberToText = (dayId: number): string => {
@@ -481,6 +482,10 @@ export const registerTutor = async (data: {
       formData.append(`experienced[${index}].companyName`, exp.companyName);
       formData.append(`experienced[${index}].fromDate`, exp.fromDate);
       formData.append(`experienced[${index}].toDate`, exp.toDate);
+    });
+
+    data.selectedSkills.forEach((skillId, index) => {
+        formData.append(`staffSkills[${index}].idSkill`, skillId.toString());
     });
 
     formData.append("certificatePath", {

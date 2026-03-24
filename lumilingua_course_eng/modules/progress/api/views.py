@@ -24,21 +24,20 @@ class UserCacheViewSet(viewsets.ModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().order_by('-gain_xp')
+
         id_user_cache = request.query_params.get('id_user_cache')
-        users = UserCache.objects.all().order_by('-gain_xp')
-        for index, user in enumerate(users, start=1):
-            if id_user_cache:
+
+        if id_user_cache:
+            for index, user in enumerate(queryset, start=1):
                 if str(user.id_user_cache) == id_user_cache:
-                    rank = index
-                    gain_xp = user.gain_xp
                     return Response({
                         "id_user_cache": id_user_cache,
-                        "gain_xp": gain_xp,
-                        "rank": rank
+                        "gain_xp": user.gain_xp,
+                        "rank": index
                     })
 
-        serializer = self.get_serializer(users, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         data = serializer.data
 
         for index, user in enumerate(data, start=1):

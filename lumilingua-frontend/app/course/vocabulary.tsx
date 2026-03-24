@@ -181,16 +181,8 @@ export default function LearnVocabulary() {
         return "#EF4444";
     };
 
-    const rs = {
-        score: 85,
-        attempts: 3,
-        isCompleted: true,
-        completedAt: "2026-02-25T10:20:00"
-    }
-
     const renderItem = ({ item, index }: { item: VocabularyItem; index: number }) => {
         const isTopic = 'id_topic' in item;
-        const isExercise = 'id_exercise' in item;
 
         const progress =
             'id_topic' in item

@@ -244,7 +244,7 @@ export default function RootLayout() {
             onPress={() => {
               closeSheet();
               setTimeout(() => {
-                // router.push('/learn/find-tutor');
+                router.push('/FindTutor');
               }, 200);
             }}
           >

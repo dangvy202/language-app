@@ -5,6 +5,7 @@ import com.lumilingua.crms.constant.CrmsConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.ExperiencedStaffRequest;
 import com.lumilingua.crms.dto.requests.InformationStaffRequest;
+import com.lumilingua.crms.dto.requests.StaffSkillRequest;
 import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.entity.ExperiencedStaff;
 import com.lumilingua.crms.entity.InformationStaff;
@@ -18,6 +19,7 @@ import com.lumilingua.crms.repository.InformationStaffRepository;
 import com.lumilingua.crms.repository.UserRepository;
 import com.lumilingua.crms.service.ExperiencedStaffService;
 import com.lumilingua.crms.service.InformationStaffService;
+import com.lumilingua.crms.service.StaffSkillService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,7 @@ public class InformationStaffServiceImpl implements InformationStaffService {
 
     // service
     private final ExperiencedStaffService experiencedStaffService;
+    private final StaffSkillService staffSkillService;
 
     @Override
     @Transactional
@@ -68,6 +71,8 @@ public class InformationStaffServiceImpl implements InformationStaffService {
                 .peek(es -> es.setIdInformationStaff(informationStaff.getIdInformationStaff()))
                 .toList();
         experiencedStaffRepository.saveAll(experiencedStaffGenerate);
+        List<StaffSkillRequest> staffSkills = request.getStaffSkills().stream().peek(x -> x.setIdInformationStaff(informationStaff.getIdInformationStaff())).toList();
+        staffSkillService.createSkillOfStaff(staffSkills);
         return Result.create(InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaff, experiencedStaffGenerate));
     }
 

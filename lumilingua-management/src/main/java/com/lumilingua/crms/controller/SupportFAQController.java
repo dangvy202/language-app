@@ -3,7 +3,6 @@ package com.lumilingua.crms.controller;
 import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.SupportFAQRequest;
-import com.lumilingua.crms.dto.responses.FeatureAppResponse;
 import com.lumilingua.crms.dto.responses.SupportFAQResponse;
 import com.lumilingua.crms.service.SupportFAQService;
 import lombok.RequiredArgsConstructor;

@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { useUserCache } from '@/hook/useUserCache';
 import Loading from '@/component/loading';
 import { useRouter } from 'expo-router';
-import { getCrmsImgEndpoint } from '@/constants/configApi';
+import { getClientEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -44,12 +44,11 @@ const Ranking = () => {
   const [filteredList, setFilteredList] = useState<RankUser[]>([]);
   const [myRank, setMyRank] = useState<RankUser | null>(null);
 
-  // Fetch dữ liệu từ API
   useEffect(() => {
     const fetchRanking = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8000/api/user_cache/');
+        const response = await fetch(getClientEndpoint('user_cache/'));
         const data = await response.json();
         setRawData(data);
       } catch (error) {
@@ -62,13 +61,11 @@ const Ranking = () => {
     fetchRanking();
   }, []);
 
-  // Xử lý sort và format dữ liệu
   useEffect(() => {
     if (rawData.length === 0) return;
 
     let sorted = [...rawData];
 
-    // Sort theo tab
     if (tab === 'xp') {
       sorted.sort((a, b) => b.gain_xp - a.gain_xp);
     } else if (tab === 'streak') {
@@ -77,7 +74,6 @@ const Ranking = () => {
       sorted.sort((a, b) => b.category.level - a.category.level);
     }
 
-    // Format thành RankUser
     const formatted: RankUser[] = sorted.map((item, index) => ({
       rank: index + 1,
       username: item.email.split('@')[0] || 'User',
@@ -254,14 +250,12 @@ const Ranking = () => {
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        {/* Podium Top 3 */}
         <View style={styles.podiumContainer}>
           {topUsers[1] && renderTopPodium(topUsers[1], 2)}
           {topUsers[0] && renderTopPodium(topUsers[0], 1)}
           {topUsers[2] && renderTopPodium(topUsers[2], 3)}
         </View>
 
-        {/* Danh sách xếp hạng */}
         <FlatList
           data={filteredList}
           renderItem={renderRankItem}
@@ -276,7 +270,6 @@ const Ranking = () => {
           ListHeaderComponent={<View style={{ height: 16 }} />}
         />
 
-        {/* Vị trí của bạn (nếu ngoài top 3) */}
         {myRank && (
           <View style={styles.myPositionCard}>
             <Text style={styles.myPositionTitle}>Vị trí của bạn</Text>
