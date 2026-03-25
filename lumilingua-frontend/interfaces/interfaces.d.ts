@@ -100,3 +100,17 @@ interface FileData {
   name: string;
   type: string;
 }
+
+interface Tutor {
+    id: number;
+    name: string;
+    avatar: string;
+    specialty: string;
+    rating: number;
+    reviews: number;
+    students: number;
+    pricePerHour: number;
+    bio: string;
+    isOnline: boolean;
+    skills: number[];
+}

@@ -6,6 +6,8 @@ import com.lumilingua.crms.entity.Skills;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface SkillMapper {
     SkillMapper INSTANT = Mappers.getMapper(SkillMapper.class);
@@ -13,4 +15,6 @@ public interface SkillMapper {
     Skills toSkillEntity(SkillRequest request);
 
     SkillResponse toSkillResponse(Skills skill);
+
+    List<SkillResponse> toSkillResponses(List<Skills> skill);
 }

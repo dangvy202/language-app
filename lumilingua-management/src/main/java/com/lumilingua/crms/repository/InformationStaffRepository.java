@@ -1,5 +1,6 @@
 package com.lumilingua.crms.repository;
 
+import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.entity.InformationStaff;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,5 +26,4 @@ public interface InformationStaffRepository extends JpaRepository<InformationSta
         """
     )
     List<InformationStaff> getListInformationByIdUser(@Param("idUser") long idUser);
-
 }

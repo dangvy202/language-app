@@ -12,6 +12,7 @@ public interface InformationStaffService {
     Result<InformationStaffResponse> deleteInformationStaff(InformationStaffRequest request);
     Result<List<InformationStaffResponse>> getInformationStaffByEmail(String email);
     Result<InformationStaffResponse> editInformationStaffByEmail(InformationStaffRequest request);
+    Result<List<InformationStaffResponse>> getAllStaffTutor();
 //  admin
     Result<InformationStaffResponse> activeContractStaff(long id);
     Result<InformationStaffResponse> rejectContractStaff(long id);

@@ -8,7 +8,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 public class SkillResponse {
-    private long idStaffSkill;
+    private long idSkill;
     private String name;
     private String description;
     private Date createdAt;

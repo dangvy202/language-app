@@ -51,8 +51,8 @@ const RegisterTutor = () => {
     const [showToPicker, setShowToPicker] = useState(false);
 
     // ==================== STATES CHO SKILLS ====================
-    const [skills, setSkills] = useState<any[]>([]);           // Danh sách skill từ API
-    const [selectedSkills, setSelectedSkills] = useState<number[]>([]); // Mảng idStaffSkill đã chọn
+    const [skills, setSkills] = useState<any[]>([]);
+    const [selectedSkills, setSelectedSkills] = useState<number[]>([]);
 
     const daysOfWeek = [
         { id: 1, label: 'Thứ 2' },

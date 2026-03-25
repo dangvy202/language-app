@@ -79,4 +79,11 @@ public class InformationStaffController {
         Result<List<InformationStaffResponse>> result = service.getInformationStaffByEmail(request);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
+
+    @GetMapping
+    public ResponseEntity<Result<List<InformationStaffResponse>>> getAllStaffTutor() {
+        LOG.info("Call api get all staff by api '%s'".formatted("/api/v1/information-staff"));
+        Result<List<InformationStaffResponse>> result = service.getAllStaffTutor();
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }

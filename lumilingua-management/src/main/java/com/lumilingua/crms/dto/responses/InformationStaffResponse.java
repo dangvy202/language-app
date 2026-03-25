@@ -1,14 +1,16 @@
 package com.lumilingua.crms.dto.responses;
 
+import com.lumilingua.crms.entity.Skills;
+import com.lumilingua.crms.entity.StaffSkill;
 import com.lumilingua.crms.enums.StatusEnum;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class InformationStaffResponse {
     private int scoreSpeaking;
     private int scoreReading;
@@ -18,4 +20,6 @@ public class InformationStaffResponse {
     private BigDecimal expectedSalary;
     private StatusEnum status;
     private List<ExperiencedStaffResponse> experienced;
+    private List<SkillResponse> skills;
+    private UserResponse user;
 }

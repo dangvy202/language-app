@@ -1,5 +1,10 @@
+import Loading from '@/component/loading';
+import { getClientEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
+import { useUserCache } from '@/hook/useUserCache';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -11,11 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useUserCache } from '@/hook/useUserCache';
-import Loading from '@/component/loading';
-import { useRouter } from 'expo-router';
-import { getClientEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

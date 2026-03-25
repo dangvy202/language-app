@@ -6,20 +6,22 @@ import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.ExperiencedStaffRequest;
 import com.lumilingua.crms.dto.requests.InformationStaffRequest;
 import com.lumilingua.crms.dto.requests.StaffSkillRequest;
+import com.lumilingua.crms.dto.responses.ExperiencedStaffResponse;
 import com.lumilingua.crms.dto.responses.InformationStaffResponse;
-import com.lumilingua.crms.entity.ExperiencedStaff;
-import com.lumilingua.crms.entity.InformationStaff;
-import com.lumilingua.crms.entity.User;
+import com.lumilingua.crms.dto.responses.SkillResponse;
+import com.lumilingua.crms.dto.responses.StaffSkillResponse;
+import com.lumilingua.crms.entity.*;
 import com.lumilingua.crms.enums.StatusEnum;
 import com.lumilingua.crms.helper.Helper;
 import com.lumilingua.crms.mapper.ExperiencedStaffMapper;
 import com.lumilingua.crms.mapper.InformationStaffMapper;
-import com.lumilingua.crms.repository.ExperiencedStaffRepository;
-import com.lumilingua.crms.repository.InformationStaffRepository;
-import com.lumilingua.crms.repository.UserRepository;
+import com.lumilingua.crms.mapper.SkillMapper;
+import com.lumilingua.crms.mapper.UserMapper;
+import com.lumilingua.crms.repository.*;
 import com.lumilingua.crms.service.ExperiencedStaffService;
 import com.lumilingua.crms.service.InformationStaffService;
 import com.lumilingua.crms.service.StaffSkillService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +41,35 @@ public class InformationStaffServiceImpl implements InformationStaffService {
     private final InformationStaffRepository informationStaffRepository;
     private final ExperiencedStaffRepository experiencedStaffRepository;
     private final UserRepository userRepository;
+    private final StaffSkillRepository staffSkillRepository;
+    private final SkillRepository skillRepository;
 
     // service
     private final ExperiencedStaffService experiencedStaffService;
     private final StaffSkillService staffSkillService;
+
+
+    @Override
+    public Result<List<InformationStaffResponse>> getAllStaffTutor() {
+        LOG.info("Get all staff tutor in service...");
+        List<InformationStaff> informationStaffs = informationStaffRepository.findAll().stream()
+                .filter(x -> x.getStatus() == StatusEnum.ACTIVE).toList();
+        List<InformationStaffResponse> result = new ArrayList<>();
+        informationStaffs.forEach(informationStaff -> {
+            InformationStaffResponse informationStaffResponse = new InformationStaffResponse();
+            User user = userRepository.findById(informationStaff.getIdUser())
+                    .orElseThrow(() -> new EntityNotFoundException("Unable to get user"));
+            List<ExperiencedStaff> experiencedStaff = experiencedStaffRepository.findExperiencedStaffByIdInformationStaff(informationStaff.getIdInformationStaff());
+            List<StaffSkill> staffSkills = staffSkillRepository.findStaffSkillByidInformationStaff(informationStaff.getIdInformationStaff());
+            List<Long> idSkills = staffSkills.stream().map(StaffSkill::getIdSkill).toList();
+            List<Skills> skillResponses = skillRepository.findStaffSkillByIdInformation(idSkills);
+            informationStaffResponse = InformationStaffMapper.INSTANT.toInformationStaffResponseMapper(informationStaff, experiencedStaff);
+            informationStaffResponse.setSkills(SkillMapper.INSTANT.toSkillResponses(skillResponses));
+            informationStaffResponse.setUser(UserMapper.INSTANT.toUserResponse(user));
+            result.add(informationStaffResponse);
+        });
+        return Result.getAll(result);
+    }
 
     @Override
     @Transactional
