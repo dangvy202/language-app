@@ -112,5 +112,6 @@ interface Tutor {
     pricePerHour: number;
     bio: string;
     isOnline: boolean;
+    certificate: string;
     skills: number[];
 }

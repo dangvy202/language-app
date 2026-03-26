@@ -122,7 +122,7 @@ const RegisterTutor = () => {
         const fetchSkills = async () => {
             try {
                 const token = await AsyncStorage.getItem('token');
-                
+
                 if (!token) {
                     throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại!');
                 }
@@ -193,11 +193,25 @@ const RegisterTutor = () => {
 
     const pickCertificate = async () => {
         const result = await DocumentPicker.getDocumentAsync({
-            type: '*/*',
+            type: ['image/*', 'application/pdf'],
         });
 
         if (!result.canceled) {
-            setCertificateFile(result.assets[0]);
+            const file = result.assets[0];
+
+            const validTypes = [
+                'image/jpeg',
+                'image/png',
+                'image/jpg',
+                'application/pdf'
+            ];
+
+            if (!validTypes.includes(file.mimeType || '')) {
+                Alert.alert("Thông báo", "Chỉ chấp nhận file ảnh hoặc PDF!");
+                return;
+            }
+
+            setCertificateFile(file);
         }
     };
 
@@ -366,7 +380,12 @@ const RegisterTutor = () => {
                                     placeholderTextColor="#999"
                                     keyboardType="numeric"
                                     value={hourOfDay}
-                                    onChangeText={(text) => setHourOfDay(text.replace(/[^0-9]/g, ''))}
+                                    onChangeText={(text) => {
+                                        const num = text.replace(/[^0-9]/g, '');
+                                        if (parseInt(num) <= 24 || num === '') {
+                                            setHourOfDay(num);
+                                        }
+                                    }}
                                     maxLength={2}
                                 />
                             </View>
@@ -403,17 +422,17 @@ const RegisterTutor = () => {
                                 {skills.length > 0 ? (
                                     skills.map((skill) => (
                                         <TouchableOpacity
-                                            key={skill.idStaffSkill}
+                                            key={skill.idSkill}
                                             style={[
                                                 styles.dayChip,
-                                                selectedSkills.includes(skill.idStaffSkill) && styles.dayChipSelected,
+                                                selectedSkills.includes(skill.idSkill) && styles.dayChipSelected,
                                             ]}
-                                            onPress={() => toggleSkill(skill.idStaffSkill)}
+                                            onPress={() => toggleSkill(skill.idSkill)}
                                         >
                                             <Text
                                                 style={[
                                                     styles.dayText,
-                                                    selectedSkills.includes(skill.idStaffSkill) && styles.dayTextSelected,
+                                                    selectedSkills.includes(skill.idSkill) && styles.dayTextSelected,
                                                 ]}
                                             >
                                                 {skill.name}

@@ -10,7 +10,6 @@ import {
     Modal,
     ScrollView,
     Alert,
-    ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,6 +19,9 @@ import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
 import { Tutor } from "@/interfaces/interfaces";
 import { fetchTutor } from "@/services/api";
 import Loading from "@/component/loading";
+import { GestureHandlerRootView, PinchGestureHandler } from "react-native-gesture-handler";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { State } from "react-native-gesture-handler";
 
 const FindTutor = () => {
     const router = useRouter();
@@ -27,6 +29,7 @@ const FindTutor = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [showFilter, setShowFilter] = useState(false);
     const [sortBy, setSortBy] = useState<"rating" | "price">("rating");
+    const scale = useSharedValue(1);
 
     const [skills, setSkills] = useState<any[]>([]);
     const [selectedSkills, setSelectedSkills] = useState<number[]>([]);
@@ -34,6 +37,8 @@ const FindTutor = () => {
     const [tutors, setTutors] = useState<Tutor[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+    const [showCertificate, setShowCertificate] = useState(false);
 
     const [filters, setFilters] = useState({
         onlineOnly: false,
@@ -46,6 +51,22 @@ const FindTutor = () => {
             style: "currency",
             currency: "VND",
         }).format(price);
+    };
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ scale: scale.value }],
+        };
+    });
+
+    const onPinchEvent = (event: any) => {
+        scale.value = event.nativeEvent.scale;
+    };
+
+    const onPinchEnd = (event: any) => {
+        if (event.nativeEvent.state === State.END) {
+            scale.value = withSpring(1);
+        }
     };
 
     // ==================== REFRESH TOKEN ====================
@@ -85,6 +106,7 @@ const FindTutor = () => {
                         id: staff.id || index + 1,
                         name: staff.user.username,
                         avatar: getCrmsImgEndpoint("avatars/") + staff.user.avatar,
+                        certificate: getCrmsImgEndpoint("uploads/") + staff.certificatePath,
                         specialty: staff.skills && staff.skills.length > 0
                             ? staff.skills.map((s: any) => s.name).join(" & ")
                             : "Chưa cập nhật chuyên môn",
@@ -236,7 +258,10 @@ const FindTutor = () => {
         <TouchableOpacity
             style={styles.card}
             activeOpacity={0.92}
-            onPress={() => router.push(`/tutor-detail/${item.id}`)}
+            onPress={() => {
+                setSelectedTutor(item);
+                setShowCertificate(true);
+            }}
         >
             <View style={styles.cardTop}>
                 <View style={styles.avatarWrap}>
@@ -286,173 +311,211 @@ const FindTutor = () => {
     );
 
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <LinearGradient colors={["#FF8C00", "#FF6B00"]} style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={28} color="white" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Tìm Gia Sư Tiếng Anh</Text>
-            </LinearGradient>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <View style={styles.container}>
+                {/* Header */}
+                <LinearGradient colors={["#FF8C00", "#FF6B00"]} style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" size={28} color="white" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Tìm Gia Sư Tiếng Anh</Text>
+                </LinearGradient>
 
-            {/* Search + Filter Button */}
-            <View style={styles.searchContainer}>
-                <View style={styles.searchBox}>
-                    <Ionicons name="search" size={20} color="#777" />
-                    <TextInput
-                        style={styles.input}
-                        placeholderTextColor="#999"
-                        placeholder="Tìm theo tên..."
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
-                </View>
-
-                <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
-                    <Ionicons name="funnel" size={24} color="#FF8C00" />
-                </TouchableOpacity>
-            </View>
-
-            {/* Active Filters */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.activeFilters}
-                contentContainerStyle={styles.activeFiltersContent}
-            >
-                {filters.onlineOnly && (
-                    <View key="filter-online" style={styles.chip}>
-                        <Text style={styles.chipText}>Online</Text>
-                        <TouchableOpacity onPress={() => toggleFilter("onlineOnly")}>
-                            <Ionicons name="close" size={16} color="#FF8C00" />
-                        </TouchableOpacity>
+                {/* Search + Filter Button */}
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchBox}>
+                        <Ionicons name="search" size={20} color="#777" />
+                        <TextInput
+                            style={styles.input}
+                            placeholderTextColor="#999"
+                            placeholder="Tìm theo tên..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
                     </View>
-                )}
-                {filters.ieltsOnly && (
-                    <View key="filter-ielts" style={styles.chip}>
-                        <Text style={styles.chipText}>IELTS</Text>
-                        <TouchableOpacity onPress={() => toggleFilter("ieltsOnly")}>
-                            <Ionicons name="close" size={16} color="#FF8C00" />
-                        </TouchableOpacity>
-                    </View>
-                )}
 
-                {selectedSkills
-                    .map((skillId, index) => {
-                        const skill = skills.find(
-                            (s) => s.idSkill === skillId
-                        );
-
-                        if (!skill) return null;
-
-                        return (
-                            <View key={`skill-chip-${skillId}-${index}`} style={styles.chip}>
-                                <Text style={styles.chipText}>
-                                    {skill.name || skill.skill_name}
-                                </Text>
-
-                                <TouchableOpacity onPress={() => toggleSkill(skillId)}>
-                                    <Ionicons name="close" size={16} color="#FF8C00" />
-                                </TouchableOpacity>
-                            </View>
-                        );
-                    })
-                    .filter(Boolean)}
-            </ScrollView>
-
-            {/* Sort */}
-            <View style={styles.sortRow}>
-                <Text style={styles.sortLabel}>Sắp xếp:</Text>
-                <TouchableOpacity
-                    style={[styles.sortOption, sortBy === "rating" && styles.sortActive]}
-                    onPress={() => setSortBy("rating")}
-                >
-                    <Text style={[styles.sortText, sortBy === "rating" && styles.sortTextActive]}>Đánh giá cao</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.sortOption, sortBy === "price" && styles.sortActive]}
-                    onPress={() => setSortBy("price")}
-                >
-                    <Text style={[styles.sortText, sortBy === "price" && styles.sortTextActive]}>Giá thấp nhất</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Tutor List */}
-            {loading ? (
-                <Loading />
-            ) : error ? (
-                <View style={styles.loadingContainer}>
-                    <Ionicons name="cloud-offline" size={60} color="#FF6B00" />
-                    <Text style={{ marginTop: 12, color: "red", textAlign: "center" }}>{error}</Text>
-                    <TouchableOpacity
-                        style={styles.retryBtn}
-                        onPress={fetchTutors}
-                    >
-                        <Text style={{ color: "white", fontWeight: "600" }}>Thử lại</Text>
+                    <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
+                        <Ionicons name="funnel" size={24} color="#FF8C00" />
                     </TouchableOpacity>
                 </View>
-            ) : (
-                <FlatList
-                    data={filteredTutors}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={renderTutor}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={
-                        <View style={styles.empty}>
-                            <Ionicons name="search-outline" size={70} color="#ccc" />
-                            <Text style={styles.emptyText}>Không tìm thấy gia sư phù hợp</Text>
+
+                {/* Active Filters */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.activeFilters}
+                    contentContainerStyle={styles.activeFiltersContent}
+                >
+                    {filters.onlineOnly && (
+                        <View key="filter-online" style={styles.chip}>
+                            <Text style={styles.chipText}>Online</Text>
+                            <TouchableOpacity onPress={() => toggleFilter("onlineOnly")}>
+                                <Ionicons name="close" size={16} color="#FF8C00" />
+                            </TouchableOpacity>
                         </View>
-                    }
-                />
-            )}
-
-            {/* Filter Modal */}
-            <Modal visible={showFilter} transparent animationType="slide">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Bộ lọc</Text>
-
-                        <ScrollView style={{ maxHeight: 300 }}>
-                            {skills.length > 0 ? (
-                                skills.map((skill: any, index: number) => {
-                                    const skillId = skill.idSkill;
-                                    return (
-                                        <TouchableOpacity
-                                            key={`skill-${skillId}-${index}`}
-                                            style={styles.filterRow}
-                                            onPress={() => toggleSkill(skillId)}
-                                        >
-                                            <Text style={styles.filterLabel}>
-                                                {skill.name || skill.skill_name}
-                                            </Text>
-                                            <Ionicons
-                                                name={selectedSkills.includes(skillId) ? "checkbox" : "square-outline"}
-                                                size={24}
-                                                color="#FF8C00"
-                                            />
-                                        </TouchableOpacity>
-                                    );
-                                })
-                            ) : (
-                                <Text style={{ color: "#888", paddingVertical: 20, textAlign: "center" }}>
-                                    Đang tải danh sách kỹ năng...
-                                </Text>
-                            )}
-                        </ScrollView>
-
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
-                                <Text style={styles.resetText}>Đặt lại</Text>
+                    )}
+                    {filters.ieltsOnly && (
+                        <View key="filter-ielts" style={styles.chip}>
+                            <Text style={styles.chipText}>IELTS</Text>
+                            <TouchableOpacity onPress={() => toggleFilter("ieltsOnly")}>
+                                <Ionicons name="close" size={16} color="#FF8C00" />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.applyBtn} onPress={applyFilters}>
-                                <Text style={styles.applyText}>Áp dụng</Text>
-                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {selectedSkills
+                        .map((skillId, index) => {
+                            const skill = skills.find(
+                                (s) => s.idSkill === skillId
+                            );
+
+                            if (!skill) return null;
+
+                            return (
+                                <View key={`skill-chip-${skillId}-${index}`} style={styles.chip}>
+                                    <Text style={styles.chipText}>
+                                        {skill.name || skill.skill_name}
+                                    </Text>
+
+                                    <TouchableOpacity onPress={() => toggleSkill(skillId)}>
+                                        <Ionicons name="close" size={16} color="#FF8C00" />
+                                    </TouchableOpacity>
+                                </View>
+                            );
+                        })
+                        .filter(Boolean)}
+                </ScrollView>
+
+                {/* Sort */}
+                <View style={styles.sortRow}>
+                    <Text style={styles.sortLabel}>Sắp xếp:</Text>
+                    <TouchableOpacity
+                        style={[styles.sortOption, sortBy === "rating" && styles.sortActive]}
+                        onPress={() => setSortBy("rating")}
+                    >
+                        <Text style={[styles.sortText, sortBy === "rating" && styles.sortTextActive]}>Đánh giá cao</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.sortOption, sortBy === "price" && styles.sortActive]}
+                        onPress={() => setSortBy("price")}
+                    >
+                        <Text style={[styles.sortText, sortBy === "price" && styles.sortTextActive]}>Giá thấp nhất</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Tutor List */}
+                {loading ? (
+                    <Loading />
+                ) : error ? (
+                    <View style={styles.loadingContainer}>
+                        <Ionicons name="cloud-offline" size={60} color="#FF6B00" />
+                        <Text style={{ marginTop: 12, color: "red", textAlign: "center" }}>{error}</Text>
+                        <TouchableOpacity
+                            style={styles.retryBtn}
+                            onPress={fetchTutors}
+                        >
+                            <Text style={{ color: "white", fontWeight: "600" }}>Thử lại</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={filteredTutors}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={renderTutor}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                        ListEmptyComponent={
+                            <View style={styles.empty}>
+                                <Ionicons name="search-outline" size={70} color="#ccc" />
+                                <Text style={styles.emptyText}>Không tìm thấy gia sư phù hợp</Text>
+                            </View>
+                        }
+                    />
+                )}
+
+                {/* Filter Modal */}
+                <Modal visible={showFilter} transparent animationType="slide">
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Bộ lọc</Text>
+
+                            <ScrollView style={{ maxHeight: 300 }}>
+                                {skills.length > 0 ? (
+                                    skills.map((skill: any, index: number) => {
+                                        const skillId = skill.idSkill;
+                                        return (
+                                            <TouchableOpacity
+                                                key={`skill-${skillId}-${index}`}
+                                                style={styles.filterRow}
+                                                onPress={() => toggleSkill(skillId)}
+                                            >
+                                                <Text style={styles.filterLabel}>
+                                                    {skill.name || skill.skill_name}
+                                                </Text>
+                                                <Ionicons
+                                                    name={selectedSkills.includes(skillId) ? "checkbox" : "square-outline"}
+                                                    size={24}
+                                                    color="#FF8C00"
+                                                />
+                                            </TouchableOpacity>
+                                        );
+                                    })
+                                ) : (
+                                    <Text style={{ color: "#888", paddingVertical: 20, textAlign: "center" }}>
+                                        Đang tải danh sách kỹ năng...
+                                    </Text>
+                                )}
+                            </ScrollView>
+
+                            <View style={styles.modalButtons}>
+                                <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
+                                    <Text style={styles.resetText}>Đặt lại</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.applyBtn} onPress={applyFilters}>
+                                    <Text style={styles.applyText}>Áp dụng</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
-            </Modal>
-        </View>
+                </Modal>
+                <Modal visible={showCertificate} transparent animationType="fade">
+                    <View style={styles.certificateOverlay}>
+                        <View style={styles.certificateBox}>
+                            <TouchableOpacity
+                                style={styles.closeBtn}
+                                onPress={() => {
+                                    setShowCertificate(false);
+                                    scale.value = 1; // reset scale khi đóng
+                                }}
+                            >
+                                <Ionicons name="close" size={28} color="#333" />
+                            </TouchableOpacity>
+
+                            <Text style={styles.certificateTitle}>
+                                Chứng chỉ của {selectedTutor?.name}
+                            </Text>
+
+                            {selectedTutor?.certificate ? (
+                                <PinchGestureHandler
+                                    onGestureEvent={onPinchEvent}
+                                    onHandlerStateChange={onPinchEnd}
+                                >
+                                    <Animated.Image
+                                        source={{ uri: selectedTutor.certificate }}
+                                        style={[styles.certificateImage, animatedStyle]}
+                                        resizeMode="contain"
+                                    />
+                                </PinchGestureHandler>
+                            ) : (
+                                <Text style={{ color: "#777", marginTop: 20, textAlign: "center" }}>
+                                    Gia sư chưa cập nhật chứng chỉ
+                                </Text>
+                            )}
+                        </View>
+                    </View>
+                </Modal>
+            </View>
+        </GestureHandlerRootView>
     );
 };
 
@@ -512,8 +575,8 @@ const styles = StyleSheet.create({
         height: 30,
         borderRadius: 20,
         marginRight: 8,
-        marginBottom:20,
-        marginTop:20,
+        marginBottom: 20,
+        marginTop: 20,
     },
     chipText: { color: "#FF8C00", fontWeight: "600", marginRight: 6 },
 
@@ -634,5 +697,36 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         backgroundColor: "#FF8C00",
         borderRadius: 12,
+    },
+    certificateOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.6)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    certificateBox: {
+        width: "85%",
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 20,
+        alignItems: "center",
+    },
+
+    certificateTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 16,
+    },
+
+    certificateImage: {
+        width: "100%",
+        height: 300,
+    },
+
+    closeBtn: {
+        position: "absolute",
+        top: 10,
+        right: 10,
     },
 });

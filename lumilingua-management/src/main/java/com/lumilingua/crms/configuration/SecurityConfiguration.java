@@ -33,7 +33,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
                                 "/api/v1/user/refresh",
                                 "/api/v1/user/register",
                                 "/api/v1/user/info/**",
-                                "/avatars/**"
+                                "/avatars/**",
+                                "/uploads/**"
                         ).permitAll()
 //                        .requestMatchers("/api/v1/**").permitAll()
                         .anyRequest().authenticated()

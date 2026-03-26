@@ -1,9 +1,9 @@
 import Constants from 'expo-constants';
 
 const API_CONFIG = {
-  CRMS_BASE_URL: 'https://hayes-documentary-rangers-strike.trycloudflare.com/api',
-  CLIENT_BASE_URL: 'https://instantly-recognized-yorkshire-mas.trycloudflare.com/api',
-  CRMS_IMG_URL: 'https://hayes-documentary-rangers-strike.trycloudflare.com',
+  CRMS_BASE_URL: 'https://pct-ipaq-adaptive-mental.trycloudflare.com/api',
+  CLIENT_BASE_URL: 'https://corpus-significance-laugh-though.trycloudflare.com/api',
+  CRMS_IMG_URL: 'https://pct-ipaq-adaptive-mental.trycloudflare.com',
 };
 
 export const {
