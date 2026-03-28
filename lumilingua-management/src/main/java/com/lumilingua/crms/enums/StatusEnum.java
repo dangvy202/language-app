@@ -10,5 +10,7 @@ public enum StatusEnum {
     PENDING,
     HOLD,
     APPROVE,
+    UNPAID,
+    PAID,
     UNAPPROVE;
 }

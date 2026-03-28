@@ -7,12 +7,15 @@ import com.lumilingua.crms.dto.responses.MentorSubscriptionResponse;
 import com.lumilingua.crms.entity.InformationStaff;
 import com.lumilingua.crms.entity.MentorSubscription;
 import com.lumilingua.crms.entity.User;
+import com.lumilingua.crms.entity.Wallet;
 import com.lumilingua.crms.enums.StatusEnum;
 import com.lumilingua.crms.mapper.MentorSubscriptionMapper;
 import com.lumilingua.crms.repository.InformationStaffRepository;
 import com.lumilingua.crms.repository.MentorSubscriptionRepository;
 import com.lumilingua.crms.repository.UserRepository;
+import com.lumilingua.crms.repository.WalletRepository;
 import com.lumilingua.crms.service.MentorSubscriptionService;
+import com.lumilingua.crms.service.WalletService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -32,6 +37,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
     private final MentorSubscriptionRepository mentorSubscriptionRepository;
     private final UserRepository userRepository;
     private final InformationStaffRepository informationStaffRepository;
+    private final WalletRepository walletRepository;
 
     @Override
     public Result<MentorSubscriptionResponse> pickMentor(MentorSubscriptionRequest request) {
@@ -160,5 +166,52 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
         MentorSubscription mentorSubscription = mentorSubscriptionRepository.findMentorSubscriptionByIdUserAndIdInformationStaff(request.getIdUser(), request.getIdInformationStaff())
                 .orElseThrow(() -> new EntityNotFoundException("Unable to get contract of user and mentor"));
         return Result.get(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponse(mentorSubscription));
+    }
+
+    @Override
+    public Result<List<MentorSubscriptionResponse>> getContractByIdUser(long id) {
+        LOG.info("Get contract by user id '%s' in service...".formatted(id));
+        List<MentorSubscription> mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdUser(id);
+        return Result.get(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponses(mentorSubscriptions));
+    }
+
+    @Override
+    public Result<List<MentorSubscriptionResponse>> getContractByIdStaff(long id) {
+        LOG.info("Get contract by staff id '%s' in service...".formatted(id));
+        List<MentorSubscription> mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdInformationStaff(id);
+        return Result.get(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponses(mentorSubscriptions));
+    }
+
+    @Override
+    @Transactional
+    public Result<MentorSubscriptionResponse> paidContract(MentorSubscriptionRequest request) {
+        LOG.info("Paid contract in service...");
+        MentorSubscription mentorSubscription = mentorSubscriptionRepository.findMentorSubscriptionByIdUserAndIdInformationStaff(request.getIdUser(), request.getIdInformationStaff())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get contract of user and mentor"));
+        User user = userRepository.findById(request.getIdUser())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get address wallet from user id '%s'".formatted(request.getIdUser())));
+        Wallet wallet = walletRepository.findWalletByIdAndLockDB(user.getWalletId())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet from wallet id '%s'".formatted(user.getWalletId())));
+        if(mentorSubscription.getStatus() == StatusEnum.PAID){
+            return Result.badRequestError("Contract already paid!");
+        }
+        if(mentorSubscription.getStatusUser() == StatusEnum.APPROVE && mentorSubscription.getStatusStaff() == StatusEnum.APPROVE) {
+            BigDecimal agreeFee = mentorSubscription.getAgreeFee();
+            BigDecimal amtTopUp = wallet.getAmountTopUp();
+            if (agreeFee == null || agreeFee.compareTo(BigDecimal.ZERO) <= 0 || amtTopUp == null) {
+                return Result.badRequestError("Invalid agree fee or money in wallet!");
+            }
+            if(amtTopUp.compareTo(agreeFee) >= 0) {
+                mentorSubscription.setStatus(StatusEnum.PAID);
+                mentorSubscription.setUserPaidAt(LocalDateTime.now());
+                wallet.setAmountTopUp(amtTopUp.subtract(agreeFee));
+                walletRepository.save(wallet);
+                mentorSubscriptionRepository.save(mentorSubscription);
+                return Result.updateContentAndNotification(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponse(mentorSubscription), "The contract have been paid!");
+            } else {
+                return Result.serverError("The account balance is not enough to pay!");
+            }
+        }
+        return Result.serverError("The contract status has not been approved by the staff or the user!");
     }
 }

@@ -154,6 +154,11 @@ public class MentorSubscription {
     @Column(name = "status_user", nullable = false)
     private StatusEnum statusUser = StatusEnum.PENDING;
 
+    // trạng thái contract
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_user", nullable = false)
+    private StatusEnum status = StatusEnum.UNPAID;
+
     // thời gian user thanh toán
     @Column(name = "user_paid_at")
     private LocalDateTime userPaidAt;

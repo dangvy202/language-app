@@ -4,9 +4,12 @@ import com.lumilingua.crms.entity.MentorSubscription;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MentorSubscriptionRepository extends JpaRepository<MentorSubscription, Long> {
     Optional<MentorSubscription> findMentorSubscriptionByIdUserAndIdInformationStaff(long idUser, long idInformationStaff);
+    List<MentorSubscription> findMentorSubscriptionByIdUser(long idUser);
+    List<MentorSubscription> findMentorSubscriptionByIdInformationStaff(long idInformationStaff);
 }

@@ -7,6 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface MentorSubscriptionMapper {
@@ -18,4 +19,5 @@ public interface MentorSubscriptionMapper {
     MentorSubscription toMentorSubscription(long idUser, long idInformationStaff, BigDecimal expectedFeeUser, int percentFeePlatform,
                                             StatusEnum statusStaff, StatusEnum statusUser);
     MentorSubscriptionResponse toMentorSubscriptionResponse(MentorSubscription mentorSubscription);
+    List<MentorSubscriptionResponse> toMentorSubscriptionResponses(List<MentorSubscription> mentorSubscriptions);
 }
