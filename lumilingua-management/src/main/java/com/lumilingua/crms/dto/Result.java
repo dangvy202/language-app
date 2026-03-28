@@ -22,6 +22,10 @@ public class Result<T> {
         return new Result<>(ResultApiConstant.StatusCode.BAD_REQUEST, ResultApiConstant.MessageCode.BAD_REQUEST_MESSAGE,notification, null);
     }
 
+    public static <T> Result<T> create() {
+        return new Result<>(ResultApiConstant.StatusCode.CREATED, ResultApiConstant.MessageCode.CREATED_SUCCESS, null, null);
+    }
+
     public static <T> Result<T> create(T data) {
         return new Result<>(ResultApiConstant.StatusCode.CREATED, ResultApiConstant.MessageCode.CREATED_SUCCESS, null, data);
     }

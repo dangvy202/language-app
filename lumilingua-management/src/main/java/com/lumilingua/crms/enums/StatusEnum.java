@@ -7,6 +7,8 @@ public enum StatusEnum {
     ACTIVE,
     INACTIVE,
     REJECT,
-    DELETE,
-    KEEP;
+    PENDING,
+    HOLD,
+    APPROVE,
+    UNAPPROVE;
 }
