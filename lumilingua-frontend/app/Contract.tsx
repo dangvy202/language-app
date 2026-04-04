@@ -144,6 +144,43 @@ const Contracts = () => {
         }
     };
 
+    const handlePay = async (contract: Contract) => {
+        try {
+
+            const token = await AsyncStorage.getItem("token");
+
+            const url = getCrmsEndpoint("v1/mentor-subscription/paid");
+
+            const body = {
+                idUser: contract.idUser,
+                idInformationStaff: contract.informationStaffResponse.idInformationStaff
+            };
+
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(body)
+            });
+
+            const result = await res.json();
+
+            if (!res.ok || result.code !== 200) {
+                throw new Error(result.notification || "Thanh toán thất bại");
+            }
+
+            Alert.alert("Thành công", "Thanh toán thành công!");
+
+            fetchContracts();
+            const profile = await fetchUserProfile();
+            setUserProfile(profile);
+        } catch (err: any) {
+            Alert.alert("Lỗi", err.message);
+        }
+    };
+
     const formatVND = (amount: number | null) => {
         if (amount == null || amount === 0) return '0 ₫';
         return new Intl.NumberFormat('vi-VN', {
@@ -246,7 +283,11 @@ const Contracts = () => {
                     ) : (
                         contracts.map((contract) => {
                             const staff = contract.informationStaffResponse;
-                            const isPaid = contract.status === 'PAID';
+                            const canPay =
+                                contract.statusUser === "APPROVE" &&
+                                contract.statusStaff === "APPROVE" &&
+                                (userProfile?.wallet?.amountTopUp || 0) >= (contract.agreeFee || 0) &&
+                                contract.status !== "PAID";
 
                             const statusColor = getStatusColor(contract.status);
                             const statusUserColor = getStatusColor(contract.statusUser);
@@ -293,6 +334,38 @@ const Contracts = () => {
                                         <Text style={styles.agreeFeeLabel}>Phí thỏa thuận</Text>
                                         <Text style={styles.agreeFeeValue}>{formatVND(contract.agreeFee)}</Text>
                                     </View>
+
+
+
+                                    {contract.status === "PAID" ? (
+                                        <View style={styles.paidBadge}>
+                                            <Ionicons name="checkmark-circle" size={20} color="white" />
+                                            <Text style={styles.paidText}>Đã thanh toán</Text>
+                                        </View>
+                                    ) : canPay ? (
+                                        <TouchableOpacity
+                                            style={styles.payBtn}
+                                            onPress={() => {
+                                                Alert.alert(
+                                                    "Thanh toán",
+                                                    `Thanh toán ${formatVND(contract.agreeFee)} cho gia sư?`,
+                                                    [
+                                                        {
+                                                            text: "Yes",
+                                                            onPress: () => handlePay(contract),
+                                                        },
+                                                        { text: "Cancel" },
+                                                        
+                                                    ]
+                                                );
+                                            }}
+                                        >
+                                            <Ionicons name="card-outline" size={18} color="white" />
+                                            <Text style={styles.payBtnText}>Thanh toán ngay</Text>
+                                        </TouchableOpacity>
+                                    ) : null}
+
+
 
                                     {/* Trạng thái chi tiết */}
                                     <View style={styles.statusContainer}>
@@ -647,6 +720,47 @@ const styles = StyleSheet.create({
         height: 54,
         borderRadius: 27
     },
+    payBtn: {
+        marginTop: 16,
+        backgroundColor: "#FF9500",
+        paddingVertical: 14,
+        borderRadius: 16,
+
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 8,
+
+        shadowColor: "#FF9500",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 5
+    },
+
+    payBtnText: {
+        color: "white",
+        fontWeight: "700",
+        fontSize: 16
+    },
+
+    paidBadge: {
+        marginTop: 16,
+        backgroundColor: "#34C759",
+        paddingVertical: 10,
+        borderRadius: 14,
+
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 6
+    },
+
+    paidText: {
+        color: "white",
+        fontWeight: "700",
+        fontSize: 15
+    }
 });
 
 export default Contracts;
