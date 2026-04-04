@@ -12,7 +12,7 @@ import java.util.Date;
 @Entity
 @Table(name = "tbl_category_level")
 public class CategoryLevel {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_category_level")
@@ -20,10 +20,10 @@ public class CategoryLevel {
 
     @Column(name = "name_category_level", unique = true, nullable = false)
     private String nameCategoryLevel;
-    
+
     @Column(name = "description")
     private String description;
-    
+
     @Column(name = "price")
     private BigDecimal price;
 

@@ -15,5 +15,7 @@ public class MentorSubscriptionRequest {
     private Long idUser;
     private BigDecimal expectedFeeUser;
     private BigDecimal expectedFeeMentor;
+    private String emailTrainees;
+    private String phoneTrainees;
     private String status;
 }

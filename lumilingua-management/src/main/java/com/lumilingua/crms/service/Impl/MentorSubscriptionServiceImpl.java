@@ -52,6 +52,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
                     return Result.badRequestError("Mentor is NOT filled Expected Salary");
                 }
                 BigDecimal expectedFeeUser = BigDecimal.ZERO;
+                BigDecimal expectedFeeMentor = BigDecimal.ZERO;
                 int percentFeePlatform = 20;
                 BigDecimal summaryFeePlatform = agreeFee
                         .multiply(BigDecimal.valueOf(percentFeePlatform))
@@ -60,8 +61,8 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
                 StatusEnum statusStaff = StatusEnum.APPROVE;
                 StatusEnum statusUser = StatusEnum.APPROVE;
                 MentorSubscription mentorSubscription = MentorSubscriptionMapper.INSTANT.toMentorSubscription(user.getIdUser(),
-                        informationStaff.getIdInformationStaff(), expectedFeeUser, agreeFee, percentFeePlatform, summaryFeePlatform,
-                        salaryStaff, statusStaff, statusUser);
+                        informationStaff.getIdInformationStaff(), expectedFeeUser, expectedFeeMentor, agreeFee, percentFeePlatform, summaryFeePlatform,
+                        salaryStaff, statusStaff, statusUser, request.getEmailTrainees(), request.getPhoneTrainees());
                 mentorSubscriptionRepository.save(mentorSubscription);
             } else {
                 BigDecimal expectedFeeUser = request.getExpectedFeeUser();

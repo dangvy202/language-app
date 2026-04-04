@@ -22,7 +22,11 @@ export default function Index() {
   const [userName, setUserName] = useState<string | null>(null);
   const [streak, setStreak] = useState<number>(0);
   const [email, setEmail] = useState<string | null>(null);
-  const [isStreakLoading, setIsStreakLoading] = useState(true)
+  const [isStreakLoading, setIsStreakLoading] = useState(true);
+
+  const [learnedBalance, setLearnedBalance] = useState(1240);
+  const [topupBalance, setTopupBalance] = useState(45009);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -34,7 +38,6 @@ export default function Index() {
       const storedIdUser = await AsyncStorage.getItem("idUser");
       const storedPhone = await AsyncStorage.getItem("phone");
 
-      // Nếu đang load hoặc chưa có email → KHÔNG redirect ngay, chờ Login xử lý
       if (!storedEmail) {
         console.log('No email in storage → chờ Login xử lý');
         router.replace('/Login');
@@ -42,10 +45,9 @@ export default function Index() {
       }
 
       const idUserNumber = storedIdUser ? Number(storedIdUser) : null;
-
       if (idUserNumber === null || Number.isNaN(idUserNumber)) {
         console.warn("Invalid or missing idUser in storage");
-        return; // Không redirect
+        return;
       }
 
       await saveOrUpdateUserCache({
@@ -65,12 +67,7 @@ export default function Index() {
     !!email
   );
 
-
   useEffect(() => {
-    console.log('useFetch data:', data);
-    console.log('fetchLoading:', fetchLoading);
-    console.log('email:', email);
-
     if (fetchLoading) {
       setIsStreakLoading(true);
       return;
@@ -83,7 +80,6 @@ export default function Index() {
       AsyncStorage.setItem('streak', fetchedStreak.toString());
       setIsStreakLoading(false);
     } else if (data && data.length === 0) {
-      console.log('UserCache null for email:', email);
       setStreak(0);
       setIsStreakLoading(false);
     } else if (error) {
@@ -99,17 +95,19 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header với Gradient */}
       <View style={{ paddingBottom: 15 }}>
         <LinearGradient colors={['#FFB703', '#FB8500']}>
           <View style={styles.header}>
             <TouchableOpacity>
               <Ionicons name="menu" size={28} color="#fff" />
             </TouchableOpacity>
+
             <View style={styles.streakContainer}>
               <Ionicons name="flame" size={24} color="white" />
               <Text style={styles.streakText}>{streak} ngày</Text>
             </View>
+
             <TouchableOpacity>
               <Ionicons name="notifications-outline" size={28} color="#fff" />
             </TouchableOpacity>
@@ -123,16 +121,52 @@ export default function Index() {
                 style={styles.avatar}
               />
             </View>
+
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.hi}>Hi, </Text>
               <Text style={styles.username}>{userName || 'User'}</Text>
             </View>
-            <Text style={styles.subtitle}>”Learn to earn. Enjoy your day with LumiLingua!”</Text>
+
+            <Text style={styles.subtitle}>
+              ”Learn to earn. Enjoy your day with LumiLingua!”
+            </Text>
           </View>
         </LinearGradient>
       </View>
 
-      {/* ScrollView */}
+      {/* ==================== BALANCE SECTION ==================== */}
+      <View style={styles.balanceContainer}>
+        {/* Learned Balance */}
+        <View style={styles.balanceCard}>
+          <View style={styles.balanceIcon}>
+            <Ionicons name="book" size={28} color="#FFB703" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.balanceLabel}>Learned Balance</Text>
+            <Text style={styles.balanceValue}>{learnedBalance.toLocaleString()} XP</Text>
+          </View>
+        </View>
+
+        {/* Topup Balance */}
+        <TouchableOpacity 
+          style={styles.balanceCard} 
+          activeOpacity={0.85}
+          onPress={() => router.push('/topup')}   // Bạn có thể thay bằng modal nếu muốn
+        >
+          <View style={styles.balanceIcon}>
+            <Ionicons name="wallet" size={28} color="#FF5722" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.balanceLabel}>Topup Balance</Text>
+            <Text style={styles.balanceValue}>{topupBalance.toLocaleString()} đ</Text>
+          </View>
+          <View style={styles.topupButton}>
+            <Ionicons name="add-circle" size={16} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* ScrollView Body */}
       <ScrollView
         style={styles.body}
         showsVerticalScrollIndicator={false}
@@ -150,7 +184,6 @@ export default function Index() {
 
         {/* Categories */}
         <Text style={styles.title}>Categories</Text>
-
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -160,18 +193,25 @@ export default function Index() {
             <Ionicons name="book-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Grammar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]} onPress={() => { router.push('/course/vocabulary'); }}>
+
+          <TouchableOpacity 
+            style={[styles.categoryTab, styles.activeCategoryTab]} 
+            onPress={() => router.push('/course/vocabulary')}
+          >
             <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Vocabulary</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
             <Ionicons name="chatbubbles-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Phrases</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
             <Ionicons name="mic-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Pronunciation</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
             <Ionicons name="ear-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Listening</Text>
@@ -180,7 +220,6 @@ export default function Index() {
 
         {/* Your course */}
         <Text style={styles.title}>Your course</Text>
-
         <View style={styles.coursesContainer}>
           <TouchableOpacity style={styles.course}>
             <LinearGradient colors={['#FFECB3', '#FFE082']} style={{ padding: 20 }}>
@@ -190,9 +229,7 @@ export default function Index() {
               </View>
               <Text style={styles.analysisTitle}>Hoàn thành 45%</Text>
               <View style={styles.learnedAnalysis}>
-                <View
-                  style={{ width: '45%', height: '100%', backgroundColor: '#FFA500', borderRadius: 4 }}
-                />
+                <View style={{ width: '45%', height: '100%', backgroundColor: '#FFA500', borderRadius: 4 }} />
               </View>
               <TouchableOpacity style={styles.continueButton}>
                 <Text style={styles.continueText}>Tiếp tục</Text>
@@ -203,7 +240,6 @@ export default function Index() {
 
         {/* Teacher Suggestion */}
         <Text style={styles.title}>Teacher Suggest</Text>
-
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -214,19 +250,15 @@ export default function Index() {
             <LinearGradient colors={['#FFF8E1', '#FFE082']} style={styles.teacherGradient}>
               <View style={styles.teacherAvatarContainer}>
                 <Image
-                  source={{
-                    uri: 'https://thumbs.dreamstime.com/z/charming-vector-illustration-featuring-two-variations-cute-chibi-style-female-character-depicted-dark-hair-395145253.jpg',
-                  }}
+                  source={{ uri: 'https://thumbs.dreamstime.com/z/charming-vector-illustration-featuring-two-variations-cute-chibi-style-female-character-depicted-dark-hair-395145253.jpg' }}
                   style={styles.teacherAvatar}
                 />
                 <View style={styles.onlineBadge}>
                   <Text style={styles.onlineText}>Online</Text>
                 </View>
               </View>
-
               <Text style={styles.teacherName}>Maria S.</Text>
               <Text style={styles.teacherLang}>Tiếng Anh • Pháp</Text>
-
               <View style={styles.ratingRow}>
                 <Ionicons name="star" size={16} color="#FFA500" />
                 <Ionicons name="star" size={16} color="#FFA500" />
@@ -235,7 +267,6 @@ export default function Index() {
                 <Ionicons name="star-half" size={16} color="#FFA500" />
                 <Text style={styles.ratingText}>4.8 (120)</Text>
               </View>
-
               <TouchableOpacity style={styles.informationButton}>
                 <Ionicons name="information-circle" size={18} color="white" />
                 <Text style={styles.informationText}>Information</Text>
@@ -248,19 +279,15 @@ export default function Index() {
             <LinearGradient colors={['#FFF8E1', '#FFE082']} style={styles.teacherGradient}>
               <View style={styles.teacherAvatarContainer}>
                 <Image
-                  source={{
-                    uri: 'https://thumbs.dreamstime.com/b/smiling-female-character-d-render-digital-art-cartoon-style-ideal-websites-apps-presentations-cheerful-d-cartoon-woman-394946649.jpg',
-                  }}
+                  source={{ uri: 'https://thumbs.dreamstime.com/b/smiling-female-character-d-render-digital-art-cartoon-style-ideal-websites-apps-presentations-cheerful-d-cartoon-woman-394946649.jpg' }}
                   style={styles.teacherAvatar}
                 />
                 <View style={[styles.onlineBadge, { backgroundColor: '#4CAF50' }]}>
                   <Text style={styles.onlineText}>Online</Text>
                 </View>
               </View>
-
               <Text style={styles.teacherName}>Jean P.</Text>
               <Text style={styles.teacherLang}>Tiếng Tây Ban Nha</Text>
-
               <View style={styles.ratingRow}>
                 <Ionicons name="star" size={16} color="#FFA500" />
                 <Ionicons name="star" size={16} color="#FFA500" />
@@ -269,7 +296,6 @@ export default function Index() {
                 <Ionicons name="star" size={16} color="#FFA500" />
                 <Text style={styles.ratingText}>5.0 (85)</Text>
               </View>
-
               <TouchableOpacity style={styles.informationButton}>
                 <Ionicons name="information-circle" size={18} color="white" />
                 <Text style={styles.informationText}>Information</Text>
@@ -278,16 +304,19 @@ export default function Index() {
           </TouchableOpacity>
         </ScrollView>
 
-        <View style={{ height: 80 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff' 
+  },
 
-  // Header css
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -307,7 +336,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
   },
-  streakText: { color: 'white', fontWeight: 'bold', marginLeft: 6 },
+  streakText: { 
+    color: 'white', 
+    fontWeight: 'bold', 
+    marginLeft: 6 
+  },
   avatarWrapper: {
     width: 120,
     height: 120,
@@ -315,16 +348,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
-  },
-  subtitle: {
-    paddingBottom: 15,
-    color: '#fff',
-    opacity: 0.9,
   },
   avatar: {
     width: 110,
@@ -333,19 +359,81 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FB8500',
   },
-  hi: { fontSize: 20, color: '#fff', marginTop: 10 },
+  hi: { 
+    fontSize: 20, 
+    color: '#fff', 
+    marginTop: 10 
+  },
   username: {
     fontSize: 26,
     fontWeight: '800',
     color: '#fff',
     marginTop: 10,
   },
+  subtitle: {
+    paddingBottom: 15,
+    color: '#fff',
+    opacity: 0.9,
+    textAlign: 'center',
+    marginHorizontal: 20,
+    marginTop: 8,
+  },
 
-  // Body ScrollView
+  // === BALANCE STYLES ===
+  balanceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginTop: -25,
+    marginBottom: 20,
+    gap: 12,
+  },
+  balanceCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#ff7300',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  balanceIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFF8E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  balanceLabel: {
+    fontSize: 10,
+    color: '#666',
+    fontWeight: '600',
+  },
+  balanceValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#333',
+    marginTop: 2,
+  },
+  topupButton: {
+    backgroundColor: '#FF5722',
+    width: 20,
+    height: 20,
+    borderRadius:30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Body
   body: {
     flex: 1,
   },
-
   title: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -354,12 +442,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  // Search css
-  searchInput: {
-    marginLeft: 10,
-    fontSize: 16,
-    flex: 1,
-  },
+  // Search
   searchWrapper: {
     padding: 26,
     flexDirection: 'row',
@@ -371,23 +454,17 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 20,
   },
+  searchInput: {
+    marginLeft: 10,
+    fontSize: 16,
+    flex: 1,
+  },
 
-  // Categories css
+  // Categories
   categoriesScroll: {
     paddingLeft: 20,
     marginBottom: 10,
-    height: 100
-  },
-  categoryText: {
-    marginLeft: 8,
-    fontSize: 15,
-    color: '#666',
-    fontWeight: '600',
-  },
-  activeCategoryText: {
-    marginLeft: 8,
-    color: '#FFA500',
-    fontWeight: 'bold',
+    height: 100,
   },
   categoryTab: {
     flexDirection: 'row',
@@ -401,8 +478,13 @@ const styles = StyleSheet.create({
   activeCategoryTab: {
     backgroundColor: '#FFF3E0',
   },
+  activeCategoryText: {
+    marginLeft: 8,
+    color: '#FFA500',
+    fontWeight: 'bold',
+  },
 
-  // Course css
+  // Course
   coursesContainer: {
     paddingHorizontal: 16,
     marginBottom: 10,
@@ -417,8 +499,14 @@ const styles = StyleSheet.create({
     elevation: 4,
     overflow: 'hidden',
   },
-  courseHeader: { flexDirection: 'row', alignItems: 'center' },
-  courseFlag: { fontSize: 28, marginRight: 12 },
+  courseHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  courseFlag: { 
+    fontSize: 28, 
+    marginRight: 12 
+  },
   courseTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -448,7 +536,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // Teacher Suggestion css
+  // Teacher
   teachersScroll: {
     paddingLeft: 20,
     marginBottom: 30,

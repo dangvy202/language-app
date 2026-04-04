@@ -1,27 +1,26 @@
-import React, { useState, useMemo, useEffect } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    FlatList,
-    TouchableOpacity,
-    Image,
-    TextInput,
-    Modal,
-    ScrollView,
-    Alert,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import Loading from "@/component/loading";
 import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
 import { Tutor } from "@/interfaces/interfaces";
-import { fetchTutor } from "@/services/api";
-import Loading from "@/component/loading";
-import { GestureHandlerRootView, PinchGestureHandler } from "react-native-gesture-handler";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
-import { State } from "react-native-gesture-handler";
+import { bookTutorApi, fetchTutor } from "@/services/api";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+    Alert,
+    FlatList,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { GestureHandlerRootView, PinchGestureHandler, State } from "react-native-gesture-handler";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
 const FindTutor = () => {
     const router = useRouter();
@@ -33,12 +32,20 @@ const FindTutor = () => {
 
     const [skills, setSkills] = useState<any[]>([]);
     const [selectedSkills, setSelectedSkills] = useState<number[]>([]);
+    const [bookingType, setBookingType] = useState<"accept" | "nego" | null>(null);
 
     const [tutors, setTutors] = useState<Tutor[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
     const [showCertificate, setShowCertificate] = useState(false);
+    const [showBookingForm, setShowBookingForm] = useState(false);
+
+    const [bookingForm, setBookingForm] = useState({
+        email: "",
+        phone: "",
+        offerPrice: ""
+    });
 
     const [filters, setFilters] = useState({
         onlineOnly: false,
@@ -103,7 +110,7 @@ const FindTutor = () => {
                         : [];
 
                     return {
-                        id: staff.id || index + 1,
+                        id: staff.idInformationStaff || index + 1,
                         name: staff.user.username,
                         avatar: getCrmsImgEndpoint("avatars/") + staff.user.avatar,
                         certificate: getCrmsImgEndpoint("uploads/") + staff.certificatePath,
@@ -253,6 +260,52 @@ const FindTutor = () => {
         setShowFilter(false);
     };
 
+    const bookTutor = async () => {
+        try {
+
+            if (!selectedTutor) return;
+
+            let expectedFeeUser: number | null = null;
+
+            if (bookingType === "nego") {
+                if (!bookingForm.offerPrice) {
+                    Alert.alert("Lỗi", "Bạn chưa nhập giá đề xuất");
+                    return;
+                }
+
+                expectedFeeUser = Number(bookingForm.offerPrice);
+            }
+
+            const result = await bookTutorApi(
+                selectedTutor.id,
+                selectedTutor.pricePerHour,
+                expectedFeeUser,
+                bookingForm.email,
+                bookingForm.phone
+            );
+
+            if (result.code === 201) {
+
+                Alert.alert("Thành công", "Gửi yêu cầu thành công!");
+
+                setShowBookingForm(false);
+                setBookingType(null);
+
+                setBookingForm({
+                    email: "",
+                    phone: "",
+                    offerPrice: ""
+                });
+
+            } else {
+                throw new Error(result.notification);
+            }
+
+        } catch (err: any) {
+            Alert.alert("Lỗi", err.message);
+        }
+    };
+
     // ==================== RENDER TUTOR ====================
     const renderTutor = ({ item }: { item: Tutor }) => (
         <TouchableOpacity
@@ -297,12 +350,18 @@ const FindTutor = () => {
                 </View>
 
                 <LinearGradient
-                    colors={["#FF8C00", "#FF6B00"]}
+                    colors={["#FFB703", "#FB8500"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.btn}
                 >
-                    <TouchableOpacity onPress={() => router.push(`/tutor-detail/${item.id}`)}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            setBookingType(null);
+                            setSelectedTutor(item);
+                            setShowBookingForm(true);
+                        }}
+                    >
                         <Text style={styles.btnText}>Chọn học</Text>
                     </TouchableOpacity>
                 </LinearGradient>
@@ -314,7 +373,7 @@ const FindTutor = () => {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <View style={styles.container}>
                 {/* Header */}
-                <LinearGradient colors={["#FF8C00", "#FF6B00"]} style={styles.header}>
+                <LinearGradient colors={['#FFB703', '#FB8500']} style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()}>
                         <Ionicons name="arrow-back" size={28} color="white" />
                     </TouchableOpacity>
@@ -335,7 +394,7 @@ const FindTutor = () => {
                     </View>
 
                     <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
-                        <Ionicons name="funnel" size={24} color="#FF8C00" />
+                        <Ionicons name="funnel" size={24} color="#FB8500" />
                     </TouchableOpacity>
                 </View>
 
@@ -346,14 +405,6 @@ const FindTutor = () => {
                     style={styles.activeFilters}
                     contentContainerStyle={styles.activeFiltersContent}
                 >
-                    {filters.onlineOnly && (
-                        <View key="filter-online" style={styles.chip}>
-                            <Text style={styles.chipText}>Online</Text>
-                            <TouchableOpacity onPress={() => toggleFilter("onlineOnly")}>
-                                <Ionicons name="close" size={16} color="#FF8C00" />
-                            </TouchableOpacity>
-                        </View>
-                    )}
                     {filters.ieltsOnly && (
                         <View key="filter-ielts" style={styles.chip}>
                             <Text style={styles.chipText}>IELTS</Text>
@@ -512,6 +563,155 @@ const FindTutor = () => {
                                 </Text>
                             )}
                         </View>
+                    </View>
+                </Modal>
+                <Modal visible={showBookingForm} transparent animationType="slide">
+                    <View style={styles.modalOverlay}>
+
+                        <View style={styles.bookingBox}>
+
+                            <Text style={styles.bookingTitle}>
+                                Đăng ký học với {selectedTutor?.name}
+                            </Text>
+
+                            <Text style={styles.bookingPrice}>
+                                Giá gia sư: {formatPrice(selectedTutor?.pricePerHour || 0)}
+                            </Text>
+
+                            {/* STEP 1: CHỌN LOẠI BOOKING */}
+
+                            {bookingType === null && (
+
+                                <View style={{ marginBottom: 20 }}>
+
+                                    <TouchableOpacity
+                                        style={styles.acceptBtn}
+                                        onPress={() => setBookingType("accept")}
+                                    >
+                                        <Text style={styles.acceptText}>
+                                            Đồng ý giá gia sư
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.negoBtn}
+                                        onPress={() => setBookingType("nego")}
+                                    >
+                                        <Text style={styles.negoText}>
+                                            Thương lượng giá
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                </View>
+
+                            )}
+
+                            {/* STEP 2: ĐỒNG Ý GIÁ */}
+
+                            {bookingType === "accept" && (
+
+                                <>
+
+                                    <TextInput
+                                        style={styles.bookingInput}
+                                        placeholder="Email của bạn"
+                                        placeholderTextColor="#999"
+                                        keyboardType="email-address"
+                                        value={bookingForm.email}
+                                        onChangeText={(text) =>
+                                            setBookingForm({ ...bookingForm, email: text })
+                                        }
+                                    />
+
+                                    <TextInput
+                                        style={styles.bookingInput}
+                                        placeholder="Số điện thoại"
+                                        placeholderTextColor="#999"
+                                        keyboardType="phone-pad"
+                                        value={bookingForm.phone}
+                                        onChangeText={(text) =>
+                                            setBookingForm({ ...bookingForm, phone: text })
+                                        }
+                                    />
+
+                                </>
+
+                            )}
+
+                            {/* STEP 3: THƯƠNG LƯỢNG */}
+
+                            {bookingType === "nego" && (
+
+                                <>
+
+                                    <TextInput
+                                        style={styles.bookingInput}
+                                        placeholder="Giá bạn muốn đề xuất"
+                                        placeholderTextColor="#999"
+                                        keyboardType="numeric"
+                                        value={bookingForm.offerPrice}
+                                        onChangeText={(text) =>
+                                            setBookingForm({ ...bookingForm, offerPrice: text })
+                                        }
+                                    />
+
+                                    <TextInput
+                                        style={styles.bookingInput}
+                                        placeholder="Email của bạn"
+                                        placeholderTextColor="#999"
+                                        keyboardType="email-address"
+                                        value={bookingForm.email}
+                                        onChangeText={(text) =>
+                                            setBookingForm({ ...bookingForm, email: text })
+                                        }
+                                    />
+
+                                    <TextInput
+                                        style={styles.bookingInput}
+                                        placeholderTextColor="#999"
+                                        placeholder="Số điện thoại"
+                                        keyboardType="phone-pad"
+                                        value={bookingForm.phone}
+                                        onChangeText={(text) =>
+                                            setBookingForm({ ...bookingForm, phone: text })
+                                        }
+                                    />
+
+                                </>
+
+                            )}
+
+                            {/* BUTTON CONFIRM */}
+
+                            {bookingType && (
+
+                                <View style={styles.bookingButtons}>
+
+                                    <TouchableOpacity
+                                        style={styles.cancelBtn}
+                                        onPress={() => {
+                                            setShowBookingForm(false)
+                                            setBookingType(null)
+                                        }}
+                                    >
+                                        <Text style={{ color: "#666" }}>Huỷ</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.confirmBtn}
+                                        onPress={bookTutor}
+                                    >
+                                        <Text style={{ color: "white", fontWeight: "700" }}>
+                                            Gửi yêu cầu
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                </View>
+
+                            )}
+
+                        </View>
+
                     </View>
                 </Modal>
             </View>
@@ -728,5 +928,88 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 10,
         right: 10,
+    },
+    bookingBox: {
+        width: "90%",
+        height:700,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 24,
+        alignSelf: "center"
+    },
+
+    bookingTitle: {
+        fontSize: 20,
+        fontWeight: "700",
+        textAlign: "center",
+        marginBottom: 10
+    },
+
+    bookingPrice: {
+        textAlign: "center",
+        color: "#FF6B00",
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 20
+    },
+
+    bookingInput: {
+        borderWidth: 1,
+        borderColor: "#eee",
+        borderRadius: 12,
+        padding: 14,
+        marginBottom: 14,
+        fontSize: 16
+    },
+
+    bookingButtons: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 10
+    },
+
+    cancelBtn: {
+        flex: 1,
+        backgroundColor: "#eee",
+        padding: 14,
+        borderRadius: 12,
+        alignItems: "center",
+        marginRight: 8
+    },
+
+    confirmBtn: {
+        flex: 1,
+        backgroundColor: "#FF8C00",
+        padding: 14,
+        borderRadius: 12,
+        alignItems: "center",
+        marginLeft: 8
+    },
+    acceptBtn: {
+        backgroundColor: "#FF8C00",
+        padding: 14,
+        borderRadius: 12,
+        alignItems: "center",
+        marginBottom: 12
+    },
+
+    acceptText: {
+        color: "white",
+        fontWeight: "700",
+        fontSize: 16
+    },
+
+    negoBtn: {
+        borderWidth: 2,
+        borderColor: "#FF8C00",
+        padding: 14,
+        borderRadius: 12,
+        alignItems: "center"
+    },
+
+    negoText: {
+        color: "#FF8C00",
+        fontWeight: "700",
+        fontSize: 16
     },
 });

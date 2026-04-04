@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class InformationStaffResponse {
+    private int idInformationStaff;
     private int scoreSpeaking;
     private int scoreReading;
     private int scoreListening;

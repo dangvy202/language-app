@@ -737,3 +737,31 @@ export const fetchTutor = async (): Promise<any> => {
     throw new Error(err.message || "Unable to get support faq");
   }
 };
+
+export const bookTutorApi = async (
+    tutorId: number,
+    expectedFeeMentor: number,
+    expectedFeeUser: number | null,
+    email: string,
+    phone: string
+) => {
+
+    const token = await AsyncStorage.getItem("token");
+            
+
+    return fetch(getCrmsEndpoint("v1/mentor-subscription"), {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            idInformationStaff: tutorId,
+            idUser: await AsyncStorage.getItem('idUser'),
+            expectedFeeMentor: expectedFeeMentor,
+            expectedFeeUser: expectedFeeUser,
+            emailTrainees: email,
+            phoneTrainees: phone
+        })
+    }).then(res => res.json());
+};

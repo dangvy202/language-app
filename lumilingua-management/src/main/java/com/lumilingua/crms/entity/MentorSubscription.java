@@ -120,6 +120,12 @@ public class MentorSubscription {
     @Column(name = "id_user")
     private long idUser;
 
+    @Column(name = "email_trainees")
+    private String emailTrainees;
+
+    @Column(name = "phone_trainees")
+    private String phoneTrainees;
+
     // user đề xuất ban đầu
     @Column(name = "expected_fee_user")
     private BigDecimal expectedFeeUser;
@@ -156,7 +162,7 @@ public class MentorSubscription {
 
     // trạng thái contract
     @Enumerated(EnumType.STRING)
-    @Column(name = "status_user", nullable = false)
+    @Column(name = "status", nullable = false)
     private StatusEnum status = StatusEnum.UNPAID;
 
     // thời gian user thanh toán
