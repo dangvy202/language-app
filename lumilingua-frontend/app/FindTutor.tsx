@@ -265,15 +265,49 @@ const FindTutor = () => {
 
             if (!selectedTutor) return;
 
+            // validate email
+            if (!bookingForm.email) {
+                Alert.alert("Missing email", "Vui lòng nhập email");
+                return;
+            }
+
+            // validate phone
+            if (!bookingForm.phone) {
+                Alert.alert("Missing phone", "Vui lòng nhập số điện thoại");
+                return;
+            }
+
+            // validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(bookingForm.email)) {
+                Alert.alert("Email không hợp lệ");
+                return;
+            }
+
+            // validate phone
+            if (bookingForm.phone.length < 9) {
+                Alert.alert("Số điện thoại không hợp lệ");
+                return;
+            }
+
             let expectedFeeUser: number | null = null;
 
+            // nếu thương lượng giá
             if (bookingType === "nego") {
+
                 if (!bookingForm.offerPrice) {
                     Alert.alert("Lỗi", "Bạn chưa nhập giá đề xuất");
                     return;
                 }
 
-                expectedFeeUser = Number(bookingForm.offerPrice);
+                const price = Number(bookingForm.offerPrice);
+
+                if (isNaN(price) || price <= 0) {
+                    Alert.alert("Giá đề xuất không hợp lệ");
+                    return;
+                }
+
+                expectedFeeUser = price;
             }
 
             const result = await bookTutorApi(
@@ -394,7 +428,7 @@ const FindTutor = () => {
                     </View>
 
                     <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
-                        <Ionicons name="funnel" size={24} color="#FB8500" />
+                        <Ionicons name="funnel-outline" size={24} color="#FB8500" />
                     </TouchableOpacity>
                 </View>
 
@@ -565,11 +599,26 @@ const FindTutor = () => {
                         </View>
                     </View>
                 </Modal>
-                <Modal visible={showBookingForm} transparent animationType="slide">
+                <Modal
+                    visible={showBookingForm}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={() => {
+                        setShowBookingForm(false)
+                        setBookingType(null)
+                    }}
+                >
                     <View style={styles.modalOverlay}>
 
                         <View style={styles.bookingBox}>
 
+                            <TouchableOpacity style={styles.closeBooking}
+                                onPress={() => {
+                                    setShowBookingForm(false)
+                                    setBookingType(null)
+                                }}>
+                                <Ionicons name="close-circle" size={32} color="#FF6347" />
+                            </TouchableOpacity>
                             <Text style={styles.bookingTitle}>
                                 Đăng ký học với {selectedTutor?.name}
                             </Text>
@@ -931,7 +980,7 @@ const styles = StyleSheet.create({
     },
     bookingBox: {
         width: "90%",
-        height:700,
+        height: 700,
         backgroundColor: "white",
         borderRadius: 20,
         padding: 24,
@@ -1012,4 +1061,10 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         fontSize: 16
     },
+    closeBooking: {
+        position: "absolute",
+        right: 15,
+        top: 15,
+        zIndex: 10
+    }
 });

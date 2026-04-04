@@ -3,13 +3,16 @@ package com.lumilingua.crms.service.Impl;
 import com.lumilingua.crms.constant.CrmsConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.MentorSubscriptionRequest;
+import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.dto.responses.MentorSubscriptionResponse;
 import com.lumilingua.crms.entity.InformationStaff;
 import com.lumilingua.crms.entity.MentorSubscription;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.entity.Wallet;
 import com.lumilingua.crms.enums.StatusEnum;
+import com.lumilingua.crms.mapper.InformationStaffMapper;
 import com.lumilingua.crms.mapper.MentorSubscriptionMapper;
+import com.lumilingua.crms.mapper.UserMapper;
 import com.lumilingua.crms.repository.InformationStaffRepository;
 import com.lumilingua.crms.repository.MentorSubscriptionRepository;
 import com.lumilingua.crms.repository.UserRepository;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -172,8 +176,15 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
     @Override
     public Result<List<MentorSubscriptionResponse>> getContractByIdUser(long id) {
         LOG.info("Get contract by user id '%s' in service...".formatted(id));
-        List<MentorSubscription> mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdUser(id);
-        return Result.get(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponses(mentorSubscriptions));
+        List<Object[]> mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdUser(id);
+        List<MentorSubscriptionResponse> response = mentorSubscriptions.stream().map(object -> {
+            MentorSubscriptionResponse mentorSubscriptionResponse = new MentorSubscriptionResponse();
+            mentorSubscriptionResponse = MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponse((MentorSubscription) object[0]);
+            mentorSubscriptionResponse.setInformationStaffResponse(InformationStaffMapper.INSTANT.toInformationStaff((InformationStaff) object[1]));
+            mentorSubscriptionResponse.getInformationStaffResponse().setUser(UserMapper.INSTANT.toUserResponse((User) object[2]));
+            return mentorSubscriptionResponse;
+        }).toList();
+        return Result.get(response);
     }
 
     @Override

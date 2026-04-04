@@ -7,6 +7,7 @@ import com.lumilingua.crms.dto.requests.RefreshTokenRequest;
 import com.lumilingua.crms.dto.requests.UserRequest;
 import com.lumilingua.crms.dto.responses.AuthenticationResponse;
 import com.lumilingua.crms.dto.responses.InformationAccountResponse;
+import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
 import com.lumilingua.crms.service.UserService;
  import lombok.RequiredArgsConstructor;
@@ -85,6 +86,13 @@ public class UserController {
         if(result.getCode() == ResultApiConstant.StatusCode.BAD_REQUEST) {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping("/wallet/{email}")
+    public ResponseEntity<Result<InformationAccountResponse>> getInformationAndWalletByEmail(@PathVariable("email") String email) {
+        LOG.info("Call api get information account by id '%s'".formatted("/api/v1/user/wallet/'" + email));
+        var result = userService.getInformationAndWalletByEmail(email);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

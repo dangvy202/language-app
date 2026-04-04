@@ -27,4 +27,6 @@ public interface InformationStaffMapper {
 
     InformationStaffResponse toInformationStaffResponseMapper(InformationStaff informationStaff, List<ExperiencedStaff> experienced);
 
+    InformationStaffResponse toInformationStaff(InformationStaff informationStaff);
+
 }

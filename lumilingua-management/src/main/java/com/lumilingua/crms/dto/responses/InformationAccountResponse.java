@@ -8,8 +8,10 @@ import lombok.Data;
 @AllArgsConstructor
 public class InformationAccountResponse {
     private int idUser;
+    private String username;
     private String phone;
     private String email;
     private String avatar;
     private StatusEnum status;
+    private WalletResponse wallet;
 }

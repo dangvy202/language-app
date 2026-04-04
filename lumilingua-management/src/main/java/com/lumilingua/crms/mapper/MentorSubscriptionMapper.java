@@ -1,6 +1,7 @@
 package com.lumilingua.crms.mapper;
 
 import com.lumilingua.crms.dto.responses.MentorSubscriptionResponse;
+import com.lumilingua.crms.entity.InformationStaff;
 import com.lumilingua.crms.entity.MentorSubscription;
 import com.lumilingua.crms.enums.StatusEnum;
 import org.mapstruct.Mapper;

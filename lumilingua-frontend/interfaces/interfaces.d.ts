@@ -115,3 +115,34 @@ interface Tutor {
     certificate: string;
     skills: number[];
 }
+
+interface User {
+    username: string;
+    avatar: string;
+    gender: string;
+}
+
+interface InformationStaff {
+  idInformationStaff: number;
+  scoreSpeaking: number;
+  scoreReading: number;
+  scoreListening: number;
+  scoreWriting: number;
+  certificatePath: string;
+  expectedSalary: number;
+  user: User;
+}
+
+interface Contract {
+  idUser: number;
+  emailTrainees: string | null;
+  phoneTrainees: string | null;
+  expectedFeeUser: number;
+  expectedFeeMentor: number | null;
+  agreeFee: number | null;
+  statusStaff: string;
+  statusUser: string;
+  status: string;
+  createdAt: string;
+  informationStaffResponse: InformationStaff;
+}

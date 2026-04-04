@@ -765,3 +765,63 @@ export const bookTutorApi = async (
         })
     }).then(res => res.json());
 };
+
+export const getContracts = async (): Promise<any> => {
+  // Lấy idUser và token từ localStorage
+  const idUser = await AsyncStorage.getItem('idUser');
+  const token = await AsyncStorage.getItem("token");
+
+  if (!idUser) {
+    throw new Error('idUser not found in localStorage');
+  }
+
+  if (!token) {
+    throw new Error('Token not found in localStorage');
+  }
+
+  const url = getCrmsEndpoint(`v1/mentor-subscription/id-user?id=${idUser}`);
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch contracts: ${res.status} ${res.statusText}`);
+  }
+
+  return res.json();
+};
+
+export const fetchUserProfile = async () => {
+    try {
+        const token = await AsyncStorage.getItem("token");
+        const email = await AsyncStorage.getItem("email");
+
+        if (!token || !email) return null;
+
+        const url = getCrmsEndpoint(`v1/user/wallet/${email}`);
+
+        const res = await fetch(url, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch user profile");
+        }
+
+        const result = await res.json();
+        return result.data;
+
+    } catch (err) {
+        console.log("Fetch user profile error:", err);
+        return null;
+    }
+};

@@ -10,12 +10,15 @@ import com.lumilingua.crms.dto.responses.InformationAccountResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
 import com.lumilingua.crms.dto.responses.WalletResponse;
 import com.lumilingua.crms.entity.User;
+import com.lumilingua.crms.entity.Wallet;
 import com.lumilingua.crms.enums.StatusEnum;
 import com.lumilingua.crms.helper.Helper;
 import com.lumilingua.crms.mapper.AuthenticationMapper;
 import com.lumilingua.crms.mapper.InformationAccountMapper;
 import com.lumilingua.crms.mapper.UserMapper;
+import com.lumilingua.crms.mapper.WalletMapper;
 import com.lumilingua.crms.repository.UserRepository;
+import com.lumilingua.crms.repository.WalletRepository;
 import com.lumilingua.crms.security.UserDetail;
 import com.lumilingua.crms.service.JwtService;
 import com.lumilingua.crms.service.UserService;
@@ -49,6 +52,7 @@ public class UserServiceImpl implements UserService {
     private static final Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
     // Repository
     private final UserRepository userRepository;
+    private final WalletRepository walletRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthenticationManager authenticationManager;
     // Service
@@ -104,6 +108,17 @@ public class UserServiceImpl implements UserService {
                 Integer.parseInt(String.valueOf(userEntity.getIdUser())),
                 userEntity.getPhone(), userEntity.getEmail(),
                 userEntity.getAvatar(), userEntity.getStatus()));
+    }
+
+    @Override
+    public Result<InformationAccountResponse> getInformationAndWalletByEmail(String email) {
+        LOG.info("Get information user and wallet in service...");
+        User userEntity = userRepository.findUserByEmail(email).orElseThrow(() -> new EntityNotFoundException("The user does NOT exists"));
+        Wallet wallet = walletRepository.findById(userEntity.getWalletId()).orElseThrow(() -> new EntityNotFoundException("The wallet does NOT exists"));
+        InformationAccountResponse response = InformationAccountMapper.INSTANT.toInformationAccountResponse(
+                Integer.parseInt(String.valueOf(userEntity.getIdUser())), userEntity.getPhone(), userEntity.getUsername(), userEntity.getEmail(), userEntity.getAvatar(), userEntity.getStatus());
+        response.setWallet(WalletMapper.INSTANT.toWalletResponse(wallet));
+        return Result.get(response);
     }
 
     @Override

@@ -53,6 +53,7 @@ export default function RootLayout() {
   const router = useRouter();
   const [isLearnSheetOpen, setIsLearnSheetOpen] = useState(false);
   const [isOptionSheetOpen, setIsOptionSheetOpen] = useState(false);
+  const [isMentorSheetOpen, setIsMentorSheetOpen] = useState(false);
 
   const snapPoints = ['40%'];
 
@@ -77,6 +78,14 @@ export default function RootLayout() {
   const handleNavigate = (route: string) => {
     pendingRoute.current = route;
     closeSheet();
+  };
+
+  const handleMentorPress = () => {
+    setIsMentorSheetOpen(true);
+  };
+
+  const closeMentorSheet = () => {
+    setIsMentorSheetOpen(false);
   };
 
   return (
@@ -244,13 +253,69 @@ export default function RootLayout() {
             onPress={() => {
               closeSheet();
               setTimeout(() => {
+                handleMentorPress();
+              }, 200);
+            }}
+          >
+            <Ionicons name="people-outline" size={28} color="#FFA500" />
+            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">Tutor</Text>
+          </TouchableOpacity>
+        </BottomSheetView>
+      </BottomSheet>
+      <BottomSheet
+        index={isMentorSheetOpen ? 0 : -1}
+        snapPoints={snapPoints}
+        onClose={closeMentorSheet}
+        enablePanDownToClose
+        backgroundStyle={{
+          backgroundColor: '#ffffff',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: '#FFA500',
+          width: 40,
+          height: 5
+        }}
+      >
+        <BottomSheetView className="flex-1 px-6 pt-4 pb-10">
+
+          <Text className="text-2xl font-bold text-center text-[#2E2A47] mb-8">
+            Mentor
+          </Text>
+
+          {/* Contract */}
+          <TouchableOpacity
+            className="bg-orange-50 p-5 rounded-2xl mb-5 flex-row items-center shadow-sm"
+            onPress={() => {
+              closeMentorSheet();
+              setTimeout(() => {
+                router.push('/Contract');
+              }, 200);
+            }}
+          >
+            <Ionicons name="document-text-outline" size={28} color="#FFA500" />
+            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
+              Contract
+            </Text>
+          </TouchableOpacity>
+
+          {/* Find Tutor */}
+          <TouchableOpacity
+            className="bg-orange-50 p-5 rounded-2xl flex-row items-center shadow-sm"
+            onPress={() => {
+              closeMentorSheet();
+              setTimeout(() => {
                 router.push('/FindTutor');
               }, 200);
             }}
           >
             <Ionicons name="people-outline" size={28} color="#FFA500" />
-            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">Find Tutor</Text>
+            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
+              Find Tutor
+            </Text>
           </TouchableOpacity>
+
         </BottomSheetView>
       </BottomSheet>
     </GestureHandlerRootView>

@@ -17,4 +17,5 @@ public interface UserService {
     Result<InformationAccountResponse> getInformationAccountByEmail(String email);
     Result<UserResponse> editImageAccount(MultipartFile imgFile, long idUser);
     Result<InformationAccountResponse> getInformationAccountById(long id);
+    Result<InformationAccountResponse> getInformationAndWalletByEmail(String email);
 }
