@@ -135,6 +135,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
             } else if(Objects.equals(request.getStatus(), StatusEnum.REJECT.name())) {
                 mentorSubscriptionRepository.save(rejectLogicContract(mentorSubscription));
             }
+            LOG.info("The negotiation of staff is SUCCESS!");
             return Result.create();
         } else if(mentorSubscription.getStatusStaff() == StatusEnum.HOLD && mentorSubscription.getStatusUser() == StatusEnum.PENDING) {
             if(Objects.equals(request.getStatus(), StatusEnum.APPROVE.name())) {
@@ -156,6 +157,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
             } else if(Objects.equals(request.getStatus(), StatusEnum.REJECT.name())) {
                 mentorSubscriptionRepository.save(rejectLogicContract(mentorSubscription));
             }
+            LOG.info("The negotiation of user is SUCCESS!");
             return Result.create();
         } else {
             return Result.badRequestError("Unable to negotiate the contract");

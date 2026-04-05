@@ -17,6 +17,8 @@ import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
 import { fetchUserProfile, negotiateContractStaff } from "@/services/api";
 import { Contract } from "@/interfaces/interfaces";
 import Loading from "@/component/loading";
+import { Modal, TextInput } from "react-native";
+
 
 const getStatusColor = (status: string) => {
     const s = status?.toUpperCase() || '';
@@ -44,6 +46,9 @@ const ContractTutor = () => {
     const [error, setError] = useState<string | null>(null);
     const [userProfile, setUserProfile] = useState<any>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const [negoVisible, setNegoVisible] = useState(false);
+    const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+    const [newFee, setNewFee] = useState("");
 
     const refreshTokenApi = async (refreshToken: string) => {
         const endpoint = getCrmsEndpoint("v1/user/refresh");
@@ -162,6 +167,41 @@ const ContractTutor = () => {
         });
     };
 
+    const hideEmail = (email: string): string => {
+        if (!email || !email.includes('@')) return email;
+
+        const [localPart, domain] = email.split('@');
+        if (localPart.length <= 3) return email;
+
+        const visible = localPart.slice(0, 2);
+        const hidden = '*'.repeat(Math.max(0, localPart.length - 2));
+
+        return `${visible}${hidden}@${domain}`;
+    };
+
+    const hidePhone = (phone: string): string => {
+        if (!phone || phone.length < 7) return phone;
+
+        const visibleStart = phone.slice(0, 2);
+        const visibleEnd = phone.slice(-2);
+        const hidden = '*'.repeat(phone.length - 6);
+
+        return `${visibleStart}${hidden}${visibleEnd}`;
+    };
+
+    const formatCurrencyInput = (value: string) => {
+        const numeric = value.replace(/\D/g, "");
+
+        if (!numeric) return "";
+
+        return Number(numeric).toLocaleString("vi-VN");
+    };
+
+    const handleFeeChange = (text: string) => {
+        const formatted = formatCurrencyInput(text);
+        setNewFee(formatted);
+    };
+
     const monthlyPaid = Array(12).fill(0);
 
     contracts.forEach((contract) => {
@@ -173,10 +213,6 @@ const ContractTutor = () => {
     });
 
     const maxPaidValue = Math.max(...monthlyPaid, 1);
-    const selectedValue =
-        activeIndex !== null
-            ? monthlyPaid[activeIndex]
-            : monthlyPaid[new Date().getMonth()];
 
     if (loading) return <Loading />;
 
@@ -241,7 +277,6 @@ const ContractTutor = () => {
 
                     {/* Chart Section */}
                     {/* ================== CHART SECTION ================== */}
-                    {/* ================== CHART SECTION - THU NHẬP TỪ HỢP ĐỒNG ĐÃ PAID ================== */}
                     <View style={styles.chartSection}>
                         <View style={styles.chartHeader}>
                             <Text style={styles.chartTitle}>Thu nhập theo tháng</Text>
@@ -351,14 +386,25 @@ const ContractTutor = () => {
                                         </View>
 
                                         {/* Thông tin học viên */}
-                                        {/* <View style={styles.infoRow}>
+                                        {/* Email - Chỉ hiển thị một phần */}
+                                        <View style={styles.infoRow}>
                                             <Ionicons name="mail-outline" size={20} color="#555" />
-                                            <Text style={styles.infoText}>{contract.emailTrainees || 'Chưa có'}</Text>
+                                            <Text style={styles.infoText}>
+                                                {contract.emailTrainees
+                                                    ? hideEmail(contract.emailTrainees)
+                                                    : 'Chưa có'}
+                                            </Text>
                                         </View>
+
+                                        {/* Số điện thoại - Chỉ hiển thị một phần */}
                                         <View style={styles.infoRow}>
                                             <Ionicons name="call-outline" size={20} color="#555" />
-                                            <Text style={styles.infoText}>{contract.phoneTrainees || 'Chưa có'}</Text>
-                                        </View> */}
+                                            <Text style={styles.infoText}>
+                                                {contract.phoneTrainees
+                                                    ? hidePhone(contract.phoneTrainees)
+                                                    : 'Chưa có'}
+                                            </Text>
+                                        </View>
 
                                         {/* Expected Fee */}
                                         <View style={styles.feeRow}>
@@ -466,7 +512,14 @@ const ContractTutor = () => {
                                                     <Text style={styles.btnText}>Reject</Text>
                                                 </TouchableOpacity>
 
-                                                <TouchableOpacity style={styles.negoBtn}>
+                                                <TouchableOpacity
+                                                    style={styles.negoBtn}
+                                                    onPress={() => {
+                                                        setSelectedContract(contract);
+                                                        setNewFee(String(contract.expectedFeeMentor || ""));
+                                                        setNegoVisible(true);
+                                                    }}
+                                                >
                                                     <Ionicons name="cash-outline" size={18} color="white" />
                                                     <Text style={styles.btnText}>Negotiate</Text>
                                                 </TouchableOpacity>
@@ -504,8 +557,60 @@ const ContractTutor = () => {
                             })
                         )}
                     </ScrollView>
-
                 </ScrollView>
+                <Modal
+                    visible={negoVisible}
+                    transparent
+                    animationType="fade"
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalBox}>
+                            <Text style={styles.modalTitle}>Negotiate Fee</Text>
+
+                            <TextInput
+                                value={newFee}
+                                onChangeText={handleFeeChange}
+                                keyboardType="numeric"
+                                placeholder="Nhập số tiền"
+                                style={styles.input}
+                            />
+
+                            <View style={{ flexDirection: "row", gap: 10 }}>
+                                <TouchableOpacity
+                                    style={styles.cancelBtn}
+                                    onPress={() => setNegoVisible(false)}
+                                >
+                                    <Text style={{ color: "white" }}>Cancel</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.confirmBtn}
+                                    onPress={async () => {
+                                        if (!selectedContract) return;
+                                        const fee = Number(newFee.replace(/\./g, ""))
+
+                                        if (fee <= 0) {
+                                            Alert.alert("Invalid fee", "Fee must be greater than 0")
+                                            return
+                                        }
+
+                                        await negotiateContractStaff(
+                                            selectedContract.idUser,
+                                            selectedContract.informationStaffResponse.idInformationStaff,
+                                            "UNAPPROVE",
+                                            fee
+                                        )
+
+                                        setNegoVisible(false)
+                                        fetchContracts()
+                                    }}
+                                >
+                                    <Text style={{ color: "white" }}>Send</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             </LinearGradient>
         </View>
     );
@@ -932,6 +1037,49 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingHorizontal: 3,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.4)",
+        justifyContent: "center",
+        alignItems: "center"
+    },
+
+    modalBox: {
+        width: "80%",
+        backgroundColor: "white",
+        borderRadius: 16,
+        padding: 20
+    },
+
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 12
+    },
+
+    input: {
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 14
+    },
+
+    cancelBtn: {
+        flex: 1,
+        backgroundColor: "#6B7280",
+        padding: 10,
+        borderRadius: 10,
+        alignItems: "center"
+    },
+
+    confirmBtn: {
+        flex: 1,
+        backgroundColor: "#FF8A00",
+        padding: 10,
+        borderRadius: 10,
+        alignItems: "center"
     },
 });
 
