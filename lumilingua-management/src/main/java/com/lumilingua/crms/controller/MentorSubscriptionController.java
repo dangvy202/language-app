@@ -3,6 +3,7 @@ package com.lumilingua.crms.controller;
 import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.MentorSubscriptionRequest;
+import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.dto.responses.MentorSubscriptionResponse;
 import com.lumilingua.crms.service.MentorSubscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -73,6 +74,13 @@ public class MentorSubscriptionController {
         if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping("/my-contracts/{userId}")
+    public ResponseEntity<Result<List<Long>>> getMyContracts(@PathVariable Long userId) {
+        LOG.info("Call api get contract by api '%s'".formatted("/api/v1/mentor-subscription/my-contracts"));
+        Result<List<Long>> result = service.getStaffContracts(userId);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

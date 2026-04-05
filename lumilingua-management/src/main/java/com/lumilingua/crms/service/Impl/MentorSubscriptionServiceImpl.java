@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -258,5 +259,13 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
             }
         }
         return Result.serverError("The contract status has not been approved by the staff or the user!");
+    }
+
+    @Override
+    public Result<List<Long>> getStaffContracts(Long userId) {
+        LOG.info("Get staff by contracts in service...");
+        List<MentorSubscription> contracts = mentorSubscriptionRepository.findByIdUser(userId);
+        List<Long> staffIds = contracts.stream().map(MentorSubscription::getIdInformationStaff).toList();
+        return Result.get(staffIds);
     }
 }

@@ -40,6 +40,7 @@ const FindTutor = () => {
     const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
     const [showCertificate, setShowCertificate] = useState(false);
     const [showBookingForm, setShowBookingForm] = useState(false);
+    const [contractedTutors, setContractedTutors] = useState<number[]>([]);
 
     const [bookingForm, setBookingForm] = useState({
         email: "",
@@ -146,6 +147,35 @@ const FindTutor = () => {
         }
     };
 
+    // ==================== FETCH MY CONTRACT ====================
+
+
+    const fetchMyContracts = async () => {
+        try {
+
+            const token = await AsyncStorage.getItem("token");
+            const idUser = await AsyncStorage.getItem('idUser');
+
+            const response = await fetch( getCrmsEndpoint(`v1/mentor-subscription/my-contracts/${idUser}`), {
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const result = await response.json();
+
+            if (result.code === 200 && Array.isArray(result.data)) {
+                const tutorIds = result.data.map((id: any) => Number(id));
+                setContractedTutors(tutorIds);
+            }
+
+        } catch (err) {
+            console.log("Fetch contracts error:", err);
+        }
+    };
+
     // ==================== FETCH SKILLS ====================
     const fetchSkills = async () => {
         try {
@@ -205,7 +235,7 @@ const FindTutor = () => {
                     return;
                 }
             }
-            await Promise.all([fetchSkills(), fetchTutors()]);
+            await Promise.all([fetchSkills(), fetchTutors(), fetchMyContracts()]);
         };
 
         initApp();
@@ -346,7 +376,11 @@ const FindTutor = () => {
     };
 
     // ==================== RENDER TUTOR ====================
-    const renderTutor = ({ item }: { item: Tutor }) => (
+    const renderTutor = ({ item }: { item: Tutor }) => {
+
+    const isContracted = contractedTutors.includes(item.id);
+
+    return (
         <TouchableOpacity
             style={styles.card}
             activeOpacity={0.92}
@@ -356,6 +390,7 @@ const FindTutor = () => {
             }}
         >
             <View style={styles.cardTop}>
+
                 <View style={styles.avatarWrap}>
                     <Image source={{ uri: item.avatar }} style={styles.avatar} />
                     {item.isOnline && <View style={styles.onlineDot} />}
@@ -363,11 +398,12 @@ const FindTutor = () => {
 
                 <View style={styles.info}>
                     <Text style={styles.name}>{item.name}</Text>
+
                     <View style={styles.ratingRow}>
                         <Ionicons name="star" size={17} color="#FFC107" />
-                        {/* <Text style={styles.rating}>{item.rating.toFixed(1)}</Text> */}
                         <Text style={styles.review}>({item.reviews})</Text>
                     </View>
+
                     <Text style={styles.specialty}>{item.specialty}</Text>
                 </View>
 
@@ -376,6 +412,7 @@ const FindTutor = () => {
                         {formatPrice(item.pricePerHour)}
                     </Text>
                 </View>
+
             </View>
 
             <Text style={styles.bio} numberOfLines={2}>
@@ -383,30 +420,59 @@ const FindTutor = () => {
             </Text>
 
             <View style={styles.bottomRow}>
+
                 <View style={styles.studentBox}>
                     <Ionicons name="people-outline" size={16} color="#666" />
                     <Text style={styles.students}>265+ học viên</Text>
                 </View>
 
-                <LinearGradient
-                    colors={["#FFB703", "#FB8500"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.btn}
-                >
-                    <TouchableOpacity
-                        onPress={() => {
-                            setBookingType(null);
-                            setSelectedTutor(item);
-                            setShowBookingForm(true);
-                        }}
+                {/* BUTTON */}
+
+                {isContracted ? (
+
+                    <View
+                        style={[
+                            styles.btn,
+                            {
+                                backgroundColor: "#ccc",
+                                flexDirection: "row",
+                                alignItems: "center"
+                            }
+                        ]}
                     >
-                        <Text style={styles.btnText}>Chọn học</Text>
-                    </TouchableOpacity>
-                </LinearGradient>
+                        <Ionicons name="checkmark-circle" size={16} color="white" />
+                        <Text style={[styles.btnText, { marginLeft: 5 }]}>
+                            Đã đăng ký
+                        </Text>
+                    </View>
+
+                ) : (
+
+                    <LinearGradient
+                        colors={["#FFB703", "#FB8500"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.btn}
+                    >
+                        <TouchableOpacity
+                            onPress={() => {
+                                setBookingType(null);
+                                setSelectedTutor(item);
+                                setShowBookingForm(true);
+                            }}
+                        >
+                            <Text style={styles.btnText}>
+                                Chọn học
+                            </Text>
+                        </TouchableOpacity>
+                    </LinearGradient>
+
+                )}
+
             </View>
         </TouchableOpacity>
     );
+};
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
@@ -1073,7 +1139,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 10,
         right: 10,
-        zIndex:111
+        zIndex: 111
     },
     bookingBox: {
         width: "90%",

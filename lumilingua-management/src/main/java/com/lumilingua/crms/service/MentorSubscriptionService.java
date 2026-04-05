@@ -13,4 +13,5 @@ public interface MentorSubscriptionService {
     Result<List<MentorSubscriptionResponse>> getContractByIdUser(long id);
     Result<List<MentorSubscriptionResponse>> getContractByIdStaff(long id);
     Result<MentorSubscriptionResponse> paidContract(MentorSubscriptionRequest request);
+    Result<List<Long>> getStaffContracts(Long userId);
 }

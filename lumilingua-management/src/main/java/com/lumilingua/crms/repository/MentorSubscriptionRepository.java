@@ -31,4 +31,6 @@ public interface MentorSubscriptionRepository extends JpaRepository<MentorSubscr
             WHERE i.idUser = :idUser
     """)
     List<Object[]> findMentorSubscriptionByIdInformationStaff(long idUser);
+
+    List<MentorSubscription> findByIdUser(long idUser);
 }
