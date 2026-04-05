@@ -41,6 +41,7 @@ const RegisterTutor = () => {
     const [experiences, setExperiences] = useState<
         { companyName: string; fromDate: string; toDate: string }[]
     >([]);
+    const [describeInformationStaff, setDescribeInformationStaff] = useState('');
 
     // States cho thêm kinh nghiệm
     const [showAddForm, setShowAddForm] = useState(false);
@@ -245,18 +246,23 @@ const RegisterTutor = () => {
     };
 
     const handleScoreChange = (text: string, setter: (val: string) => void) => {
-        const number = text.replace(/[^0-9]/g, '');
-        if (!number) {
-            setter('');
-            return;
-        }
-        const value = parseInt(number, 10);
-        if (value >= 1 && value <= 10) {
-            setter(value.toString());
-        } else if (value > 10) {
-            setter('10');
-        }
-    };
+    let number = text.replace(/[^0-9.,]/g, '');
+
+    number = number.replace(',', '.');
+
+    const value = parseFloat(number);
+
+    if (isNaN(value)) {
+        setter('');
+        return;
+    }
+
+    if (value >= 0 && value <= 10) {
+        setter(number);
+    } else if (value > 10) {
+        setter('10');
+    }
+};
 
     // ==================== SUBMIT ====================
     const handleSubmit = async () => {
@@ -290,6 +296,7 @@ const RegisterTutor = () => {
                 expectedSalary,
                 experiences,
                 selectedSkills,
+                describeInformationStaff,
             });
             if (result?.conflict === true) {
                 Alert.alert(
@@ -459,9 +466,9 @@ const RegisterTutor = () => {
                                     <Text>Speaking</Text>
                                     <TextInput
                                         style={styles.skillNumber}
-                                        keyboardType="numeric"
+                                        keyboardType="decimal-pad"
                                         value={scoreSpeaking}
-                                        maxLength={2}
+                                        maxLength={3}
                                         onFocus={() => scoreSpeaking === '0' && setScoreSpeaking('')}
                                         onChangeText={(text) => handleScoreChange(text, setScoreSpeaking)}
                                     />
@@ -470,9 +477,9 @@ const RegisterTutor = () => {
                                     <Text>Reading</Text>
                                     <TextInput
                                         style={styles.skillNumber}
-                                        keyboardType="numeric"
+                                        keyboardType="decimal-pad"
                                         value={scoreReading}
-                                        maxLength={2}
+                                        maxLength={3}
                                         onFocus={() => scoreReading === '0' && setScoreReading('')}
                                         onChangeText={(text) => handleScoreChange(text, setScoreReading)}
                                     />
@@ -483,9 +490,9 @@ const RegisterTutor = () => {
                                     <Text>Listening</Text>
                                     <TextInput
                                         style={styles.skillNumber}
-                                        keyboardType="numeric"
+                                        keyboardType="decimal-pad"
                                         value={scoreListening}
-                                        maxLength={2}
+                                        maxLength={3}
                                         onFocus={() => scoreListening === '0' && setScoreListening('')}
                                         onChangeText={(text) => handleScoreChange(text, setScoreListening)}
                                     />
@@ -494,9 +501,9 @@ const RegisterTutor = () => {
                                     <Text>Writing</Text>
                                     <TextInput
                                         style={styles.skillNumber}
-                                        keyboardType="numeric"
+                                        keyboardType="decimal-pad"
                                         value={scoreWriting}
-                                        maxLength={2}
+                                        maxLength={3}
                                         onFocus={() => scoreWriting === '0' && setScoreWriting('')}
                                         onChangeText={(text) => handleScoreChange(text, setScoreWriting)}
                                     />
@@ -539,6 +546,31 @@ const RegisterTutor = () => {
                             </View>
                         </View>
 
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>
+                                Mô tả bản thân <Text style={styles.required}>*</Text>
+                            </Text>
+
+                            <View style={styles.inputWrapper}>
+                                <Ionicons
+                                    name="document-text-outline"
+                                    size={22}
+                                    color="#FFA500"
+                                    style={styles.inputIcon}
+                                />
+
+                                <TextInput
+                                    style={[styles.input, { height: 120, textAlignVertical: "top" }]}
+                                    placeholder="Giới thiệu về kinh nghiệm dạy học, phương pháp giảng dạy..."
+                                    placeholderTextColor="#999"
+                                    multiline
+                                    numberOfLines={5}
+                                    value={describeInformationStaff}
+                                    onChangeText={setDescribeInformationStaff}
+                                />
+                            </View>
+                        </View>
+
                         {/* Kinh nghiệm */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Kinh nghiệm làm việc</Text>
@@ -568,6 +600,7 @@ const RegisterTutor = () => {
                                     <TextInput
                                         style={styles.input}
                                         placeholder="Tên công ty"
+                                        placeholderTextColor="#999"
                                         value={newCompany}
                                         onChangeText={setNewCompany}
                                     />

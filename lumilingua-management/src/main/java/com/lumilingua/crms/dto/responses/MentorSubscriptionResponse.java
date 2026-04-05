@@ -23,6 +23,9 @@ public class MentorSubscriptionResponse {
     private StatusEnum statusUser = StatusEnum.PENDING;
     private StatusEnum status = StatusEnum.UNPAID;
     private LocalDateTime userPaidAt;
+    private BigDecimal summaryFeePlatform;
+    private Integer percentFeePlatform;
+    private BigDecimal salaryStaff;
     private Date createdAt;
     private Date updatedAt;
     private InformationStaffResponse informationStaffResponse;

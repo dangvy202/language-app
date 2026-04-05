@@ -14,7 +14,12 @@ export default function RootLayout() {
               headerShown: false,
              }}
           />
-          <Stack.Screen name="login" />
+          <Stack.Screen 
+            name="Login" 
+            options={{
+              headerShown: false,
+            }}
+          />
           <Stack.Screen
             name="course/topic/[topic]"
             options={{
@@ -47,6 +52,12 @@ export default function RootLayout() {
           />
           <Stack.Screen
             name="FindTutor"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ContractTutor"
             options={{
               headerShown: false,
             }}

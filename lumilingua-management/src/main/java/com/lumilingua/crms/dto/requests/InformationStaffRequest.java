@@ -16,12 +16,13 @@ public class InformationStaffRequest {
     private String email;
     private int hourOfDay;
     private String[] dayOfWeek;
-    private int scoreSpeaking;
-    private int scoreReading;
-    private int scoreListening;
-    private int scoreWriting;
+    private double scoreSpeaking;
+    private double scoreReading;
+    private double scoreListening;
+    private double scoreWriting;
     private MultipartFile certificatePath;
     private BigDecimal expectedSalary;
     private List<ExperiencedStaffRequest> experienced;
     private List<StaffSkillRequest> staffSkills;
+    private String describeInformationStaff;
 }

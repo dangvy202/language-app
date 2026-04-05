@@ -3,7 +3,6 @@ package com.lumilingua.crms.service.Impl;
 import com.lumilingua.crms.constant.CrmsConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.MentorSubscriptionRequest;
-import com.lumilingua.crms.dto.responses.InformationStaffResponse;
 import com.lumilingua.crms.dto.responses.MentorSubscriptionResponse;
 import com.lumilingua.crms.entity.InformationStaff;
 import com.lumilingua.crms.entity.MentorSubscription;
@@ -13,12 +12,9 @@ import com.lumilingua.crms.enums.StatusEnum;
 import com.lumilingua.crms.mapper.InformationStaffMapper;
 import com.lumilingua.crms.mapper.MentorSubscriptionMapper;
 import com.lumilingua.crms.mapper.UserMapper;
-import com.lumilingua.crms.repository.InformationStaffRepository;
-import com.lumilingua.crms.repository.MentorSubscriptionRepository;
-import com.lumilingua.crms.repository.UserRepository;
-import com.lumilingua.crms.repository.WalletRepository;
+import com.lumilingua.crms.mapper.WalletPurchaseHistoryMapper;
+import com.lumilingua.crms.repository.*;
 import com.lumilingua.crms.service.MentorSubscriptionService;
-import com.lumilingua.crms.service.WalletService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -42,6 +38,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
     private final UserRepository userRepository;
     private final InformationStaffRepository informationStaffRepository;
     private final WalletRepository walletRepository;
+    private final WalletPurchaseHistoryRepository walletPurchaseHistoryRepository;
 
     @Override
     public Result<MentorSubscriptionResponse> pickMentor(MentorSubscriptionRequest request) {
@@ -74,7 +71,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
                 StatusEnum statusStaff = StatusEnum.PENDING;
                 StatusEnum statusUser = StatusEnum.HOLD;
                 MentorSubscription mentorSubscription = MentorSubscriptionMapper.INSTANT.toMentorSubscription(user.getIdUser(),
-                        informationStaff.getIdInformationStaff(), expectedFeeUser, percentFeePlatform, statusStaff, statusUser);
+                        informationStaff.getIdInformationStaff(), expectedFeeUser, percentFeePlatform, statusStaff, statusUser, request.getEmailTrainees(), request.getPhoneTrainees());
                 mentorSubscriptionRepository.save(mentorSubscription);
             }
             LOG.info("Pick Mentor is SUCCESS!");
@@ -173,10 +170,14 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
         return Result.get(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponse(mentorSubscription));
     }
 
-    @Override
-    public Result<List<MentorSubscriptionResponse>> getContractByIdUser(long id) {
-        LOG.info("Get contract by user id '%s' in service...".formatted(id));
-        List<Object[]> mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdUser(id);
+    // logic get id user or id staff
+    private Result<List<MentorSubscriptionResponse>> getMentorSubscriptionByIdUserOrIdStaff(long id, boolean isUser) {
+        List<Object[]> mentorSubscriptions = new ArrayList<>();
+        if(isUser) {
+            mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdUser(id);
+        } else {
+            mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdInformationStaff(id);
+        }
         List<MentorSubscriptionResponse> response = mentorSubscriptions.stream().map(object -> {
             MentorSubscriptionResponse mentorSubscriptionResponse = new MentorSubscriptionResponse();
             mentorSubscriptionResponse = MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponse((MentorSubscription) object[0]);
@@ -188,10 +189,15 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
     }
 
     @Override
+    public Result<List<MentorSubscriptionResponse>> getContractByIdUser(long id) {
+        LOG.info("Get contract by user id '%s' in service...".formatted(id));
+        return getMentorSubscriptionByIdUserOrIdStaff(id, true);
+    }
+
+    @Override
     public Result<List<MentorSubscriptionResponse>> getContractByIdStaff(long id) {
         LOG.info("Get contract by staff id '%s' in service...".formatted(id));
-        List<MentorSubscription> mentorSubscriptions = mentorSubscriptionRepository.findMentorSubscriptionByIdInformationStaff(id);
-        return Result.get(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponses(mentorSubscriptions));
+        return getMentorSubscriptionByIdUserOrIdStaff(id, false);
     }
 
     @Override
@@ -200,24 +206,49 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
         LOG.info("Paid contract in service...");
         MentorSubscription mentorSubscription = mentorSubscriptionRepository.findMentorSubscriptionByIdUserAndIdInformationStaff(request.getIdUser(), request.getIdInformationStaff())
                 .orElseThrow(() -> new EntityNotFoundException("Unable to get contract of user and mentor"));
-        User user = userRepository.findById(request.getIdUser())
-                .orElseThrow(() -> new EntityNotFoundException("Unable to get address wallet from user id '%s'".formatted(request.getIdUser())));
-        Wallet wallet = walletRepository.findWalletByIdAndLockDB(user.getWalletId())
-                .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet from wallet id '%s'".formatted(user.getWalletId())));
+
+        // User
+        User userTrainees = userRepository.findById(request.getIdUser())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get address wallet from user trainees id '%s'".formatted(request.getIdUser())));
+        Wallet walletTrainees = walletRepository.findWalletByIdAndLockDB(userTrainees.getWalletId())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet from wallet id '%s'".formatted(userTrainees.getWalletId())));
+
+        // Staff
+        InformationStaff informationStaff = informationStaffRepository.findById(mentorSubscription.getIdInformationStaff())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get information staff"));
+        User userStaff = userRepository.findById(informationStaff.getIdUser())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get address wallet from user staff id '%s'".formatted(request.getIdUser())));
+        Wallet walletStaff = walletRepository.findWalletByIdAndLockDB(userStaff.getWalletId())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet from wallet id '%s'".formatted(userStaff.getWalletId())));
+
         if(mentorSubscription.getStatus() == StatusEnum.PAID){
             return Result.badRequestError("Contract already paid!");
         }
         if(mentorSubscription.getStatusUser() == StatusEnum.APPROVE && mentorSubscription.getStatusStaff() == StatusEnum.APPROVE) {
             BigDecimal agreeFee = mentorSubscription.getAgreeFee();
-            BigDecimal amtTopUp = wallet.getAmountTopUp();
+            BigDecimal amtTopUp = walletTrainees.getAmountTopUp();
             if (agreeFee == null || agreeFee.compareTo(BigDecimal.ZERO) <= 0 || amtTopUp == null) {
                 return Result.badRequestError("Invalid agree fee or money in wallet!");
             }
             if(amtTopUp.compareTo(agreeFee) >= 0) {
                 mentorSubscription.setStatus(StatusEnum.PAID);
                 mentorSubscription.setUserPaidAt(LocalDateTime.now());
-                wallet.setAmountTopUp(amtTopUp.subtract(agreeFee));
-                walletRepository.save(wallet);
+                // subtract user trainees
+                BigDecimal userPaid = amtTopUp.subtract(agreeFee);
+                walletTrainees.setAmountTopUp(userPaid);
+                // abs user staff
+                BigDecimal platformFee = mentorSubscription.getSummaryFeePlatform() == null ? BigDecimal.ZERO : mentorSubscription.getSummaryFeePlatform();
+                BigDecimal staffReceive = agreeFee.subtract(platformFee);
+                walletStaff.setAmountTopUp(
+                        walletStaff.getAmountTopUp().add(staffReceive)
+                );
+                walletPurchaseHistoryRepository.save(WalletPurchaseHistoryMapper.INSTANT.toWalletPurchaseHistory(
+                        walletTrainees.getWalletId(),
+                        "The payment had been paid for contract number '%s'".formatted(mentorSubscription.getIdMentorSubscription()),
+                        "AMOUNT_TOPUP", agreeFee, "ACTIVE"
+                ));
+                walletRepository.save(walletTrainees);
+                walletRepository.save(walletStaff);
                 mentorSubscriptionRepository.save(mentorSubscription);
                 return Result.updateContentAndNotification(MentorSubscriptionMapper.INSTANT.toMentorSubscriptionResponse(mentorSubscription), "The contract have been paid!");
             } else {

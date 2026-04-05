@@ -284,19 +284,35 @@ export default function RootLayout() {
             Mentor
           </Text>
 
-          {/* Contract */}
+          {/* Contract Trainees*/}
           <TouchableOpacity
             className="bg-orange-50 p-5 rounded-2xl mb-5 flex-row items-center shadow-sm"
             onPress={() => {
               closeMentorSheet();
               setTimeout(() => {
-                router.push('/Contract');
+                router.push('/ContractStudent');
+              }, 200);
+            }}
+          >
+            <Ionicons name="school-outline" size={28} color="#FFA500" />
+            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
+              Contract Trainees
+            </Text>
+          </TouchableOpacity>
+
+          {/* Contract Tutor*/}
+          <TouchableOpacity
+            className="bg-orange-50 p-5 rounded-2xl mb-5 flex-row items-center shadow-sm"
+            onPress={() => {
+              closeMentorSheet();
+              setTimeout(() => {
+                router.push('/ContractTutor');
               }, 200);
             }}
           >
             <Ionicons name="document-text-outline" size={28} color="#FFA500" />
             <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
-              Contract
+              Contract Tutor
             </Text>
           </TouchableOpacity>
 
@@ -310,7 +326,7 @@ export default function RootLayout() {
               }, 200);
             }}
           >
-            <Ionicons name="people-outline" size={28} color="#FFA500" />
+            <Ionicons name="bulb-outline" size={28} color="#FFA500" />
             <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
               Find Tutor
             </Text>

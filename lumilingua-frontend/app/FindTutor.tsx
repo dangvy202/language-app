@@ -104,26 +104,31 @@ const FindTutor = () => {
             const result = await fetchTutor();
 
             if (result.code === 200 && Array.isArray(result.data)) {
-                const mappedTutors: Tutor[] = result.data.map((staff: any, index: number) => {
-                    const skillIds = staff.skills
-                        ? staff.skills.map((s: any) => s.idSkill).filter((id: number) => id !== 0)
-                        : [];
+                const mappedTutors: Tutor[] = result.data.map((staff: any) => {
 
+                    const skillIds = staff.skills?.map((s: any) => s.idSkill) || [];
                     return {
-                        id: staff.idInformationStaff || index + 1,
+                        id: staff.idInformationStaff,
                         name: staff.user.username,
                         avatar: getCrmsImgEndpoint("avatars/") + staff.user.avatar,
                         certificate: getCrmsImgEndpoint("uploads/") + staff.certificatePath,
-                        specialty: staff.skills && staff.skills.length > 0
-                            ? staff.skills.map((s: any) => s.name).join(" & ")
-                            : "Chưa cập nhật chuyên môn",
-                        rating: 4.7 + Math.random() * 0.3,        // tạm thời
-                        reviews: 60 + Math.floor(Math.random() * 120),
-                        students: 150 + Math.floor(Math.random() * 250),
-                        pricePerHour: Math.floor(staff.expectedSalary || 200000),
-                        bio: `Lương mong đợi: ${staff.expectedSalary?.toLocaleString() || 0}đ`,
-                        isOnline: staff.status !== "INACTIVE",
+
+                        pricePerHour: staff.expectedSalary,
+
+                        specialty: staff.skills?.map((s: any) => s.name).join(", ") || "Chưa cập nhật",
+
                         skills: skillIds,
+
+                        description: staff.describeInformationStaff === null ? "Không có mô tả" : staff.describeInformationStaff,
+
+                        scores: {
+                            speaking: staff.scoreSpeaking,
+                            reading: staff.scoreReading,
+                            listening: staff.scoreListening,
+                            writing: staff.scoreWriting
+                        },
+
+                        experiences: staff.experienced || []
                     };
                 });
 
@@ -228,11 +233,11 @@ const FindTutor = () => {
             return matchSearch;
         });
 
-        if (sortBy === "rating") {
-            result.sort((a, b) => b.rating - a.rating);
-        } else {
-            result.sort((a, b) => a.pricePerHour - b.pricePerHour);
-        }
+        // if (sortBy === "rating") {
+        //     result.sort((a, b) => b.rating - a.rating);
+        // } else {
+        //     result.sort((a, b) => a.pricePerHour - b.pricePerHour);
+        // }
 
         return result;
     }, [tutors, searchQuery, filters, sortBy, selectedSkills]);
@@ -360,7 +365,7 @@ const FindTutor = () => {
                     <Text style={styles.name}>{item.name}</Text>
                     <View style={styles.ratingRow}>
                         <Ionicons name="star" size={17} color="#FFC107" />
-                        <Text style={styles.rating}>{item.rating.toFixed(1)}</Text>
+                        {/* <Text style={styles.rating}>{item.rating.toFixed(1)}</Text> */}
                         <Text style={styles.review}>({item.reviews})</Text>
                     </View>
                     <Text style={styles.specialty}>{item.specialty}</Text>
@@ -374,13 +379,13 @@ const FindTutor = () => {
             </View>
 
             <Text style={styles.bio} numberOfLines={2}>
-                {item.bio}
+                {item.description}
             </Text>
 
             <View style={styles.bottomRow}>
                 <View style={styles.studentBox}>
                     <Ionicons name="people-outline" size={16} color="#666" />
-                    <Text style={styles.students}>{item.students}+ học viên</Text>
+                    <Text style={styles.students}>265+ học viên</Text>
                 </View>
 
                 <LinearGradient
@@ -564,40 +569,130 @@ const FindTutor = () => {
                     </View>
                 </Modal>
                 <Modal visible={showCertificate} transparent animationType="fade">
+
                     <View style={styles.certificateOverlay}>
-                        <View style={styles.certificateBox}>
+
+                        <View style={styles.certificateBoxLarge}>
+
                             <TouchableOpacity
                                 style={styles.closeBtn}
                                 onPress={() => {
                                     setShowCertificate(false);
-                                    scale.value = 1; // reset scale khi đóng
+                                    scale.value = 1;
                                 }}
                             >
-                                <Ionicons name="close" size={28} color="#333" />
+                                <Ionicons name="close-circle" size={32} color="#FF6347" />
                             </TouchableOpacity>
 
-                            <Text style={styles.certificateTitle}>
-                                Chứng chỉ của {selectedTutor?.name}
-                            </Text>
+                            <ScrollView showsVerticalScrollIndicator={false}>
 
-                            {selectedTutor?.certificate ? (
-                                <PinchGestureHandler
-                                    onGestureEvent={onPinchEvent}
-                                    onHandlerStateChange={onPinchEnd}
-                                >
-                                    <Animated.Image
-                                        source={{ uri: selectedTutor.certificate }}
-                                        style={[styles.certificateImage, animatedStyle]}
-                                        resizeMode="contain"
+                                {/* Avatar + Name */}
+
+                                <View style={styles.tutorHeader}>
+                                    <Image
+                                        source={{ uri: selectedTutor?.avatar }}
+                                        style={styles.tutorAvatar}
                                     />
-                                </PinchGestureHandler>
-                            ) : (
-                                <Text style={{ color: "#777", marginTop: 20, textAlign: "center" }}>
-                                    Gia sư chưa cập nhật chứng chỉ
+
+                                    <Text style={styles.tutorName}>
+                                        {selectedTutor?.name}
+                                    </Text>
+
+                                    <Text style={styles.tutorSalary}>
+                                        {formatPrice(selectedTutor?.pricePerHour || 0)}
+                                    </Text>
+
+                                </View>
+
+
+                                {/* IELTS Score */}
+
+                                <View style={styles.scoreBox}>
+
+                                    <Text style={styles.sectionTitle}>IELTS Score</Text>
+
+                                    <View style={styles.scoreRow}>
+                                        <Text>Speaking: {selectedTutor?.scores?.speaking}</Text>
+                                        <Text>Reading: {selectedTutor?.scores?.reading}</Text>
+                                        <Text>Listening: {selectedTutor?.scores?.listening}</Text>
+                                        <Text>Writing: {selectedTutor?.scores?.writing}</Text>
+                                    </View>
+
+                                </View>
+
+
+                                {/* Skills */}
+
+                                <View style={styles.skillBox}>
+                                    <Text style={styles.sectionTitle}>Skills</Text>
+
+                                    <View style={styles.skillWrap}>
+                                        {selectedTutor?.specialty?.split(",").map((skill: string, i: number) => (
+                                            <View key={i} style={styles.skillChip}>
+                                                <Text style={styles.skillText}>{skill}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+
+                                </View>
+
+
+                                {/* Experience */}
+
+                                <View style={styles.expBox}>
+                                    <Text style={styles.sectionTitle}>Experience</Text>
+
+                                    {selectedTutor?.experiences?.map((exp: any, index: number) => (
+                                        <Text key={index} style={styles.expText}>
+                                            {exp.companyName} ({exp.fromDate} - {exp.toDate})
+                                        </Text>
+                                    ))}
+
+                                </View>
+
+
+                                {/* Description */}
+                                {selectedTutor?.description && (
+
+                                    <View style={styles.descBox}>
+                                        <Text style={styles.sectionTitle}>Giới thiệu</Text>
+                                        <Text style={styles.descText}>
+                                            {selectedTutor.description}
+                                        </Text>
+                                    </View>
+
+                                )}
+
+
+                                {/* Certificate */}
+
+                                <Text style={styles.sectionTitle}>
+                                    Chứng chỉ
                                 </Text>
-                            )}
+
+                                {selectedTutor?.certificate && (
+
+                                    <PinchGestureHandler
+                                        onGestureEvent={onPinchEvent}
+                                        onHandlerStateChange={onPinchEnd}
+                                    >
+
+                                        <Animated.Image
+                                            source={{ uri: selectedTutor.certificate }}
+                                            style={[styles.certificateImage, animatedStyle]}
+                                            resizeMode="contain"
+                                        />
+
+                                    </PinchGestureHandler>
+
+                                )}
+
+                            </ScrollView>
+
                         </View>
+
                     </View>
+
                 </Modal>
                 <Modal
                     visible={showBookingForm}
@@ -612,7 +707,8 @@ const FindTutor = () => {
 
                         <View style={styles.bookingBox}>
 
-                            <TouchableOpacity style={styles.closeBooking}
+
+                            <TouchableOpacity style={styles.closeBtn}
                                 onPress={() => {
                                     setShowBookingForm(false)
                                     setBookingType(null)
@@ -977,6 +1073,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 10,
         right: 10,
+        zIndex:111
     },
     bookingBox: {
         width: "90%",
@@ -1066,5 +1163,102 @@ const styles = StyleSheet.create({
         right: 15,
         top: 15,
         zIndex: 10
-    }
+    },
+    certificateBoxLarge: {
+        width: "90%",
+        height: "80%",
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 20
+    },
+
+    tutorHeader: {
+        alignItems: "center",
+        marginBottom: 15
+    },
+
+    tutorAvatar: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        marginBottom: 10
+    },
+
+    tutorName: {
+        fontSize: 20,
+        fontWeight: "700"
+    },
+
+    tutorSalary: {
+        color: "#FF6B00",
+        fontWeight: "700",
+        marginTop: 5
+    },
+
+    sectionTitle: {
+        fontWeight: "700",
+        fontSize: 16,
+        marginTop: 15,
+        marginBottom: 8
+    },
+
+    scoreRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 10
+    },
+
+    skillWrap: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8
+    },
+
+    skillChip: {
+        backgroundColor: "#FFE9CC",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12
+    },
+
+    skillText: {
+        color: "#FF8C00",
+        fontWeight: "600"
+    },
+
+    expText: {
+        color: "#444",
+        marginBottom: 4
+    },
+
+    descText: {
+        color: "#555",
+        lineHeight: 20
+    },
+    skillBox: {
+        marginTop: 15,
+        padding: 12,
+        backgroundColor: "#FFF7ED",
+        borderRadius: 12,
+    },
+
+    expBox: {
+        marginTop: 15,
+        padding: 12,
+        backgroundColor: "#F0F9FF",
+        borderRadius: 12,
+    },
+
+    descBox: {
+        marginTop: 15,
+        padding: 12,
+        backgroundColor: "#F8FAFC",
+        borderRadius: 12,
+    },
+    scoreBox: {
+        marginTop: 15,
+        padding: 12,
+        backgroundColor: "#ECFDF5",
+        borderRadius: 12,
+    },
 });

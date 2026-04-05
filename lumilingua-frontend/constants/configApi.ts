@@ -1,9 +1,9 @@
 import Constants from 'expo-constants';
 
 const API_CONFIG = {
-  CRMS_BASE_URL: 'https://sticks-sublime-brian-dvds.trycloudflare.com/api',
-  CLIENT_BASE_URL: 'https://fold-timely-buffer-arbitrary.trycloudflare.com/api',
-  CRMS_IMG_URL: 'https://sticks-sublime-brian-dvds.trycloudflare.com',
+  CRMS_BASE_URL: 'https://licenses-professionals-accuracy-rock.trycloudflare.com/api',
+  CLIENT_BASE_URL: 'https://occupied-uri-milan-seems.trycloudflare.com/api',
+  CRMS_IMG_URL: 'https://licenses-professionals-accuracy-rock.trycloudflare.com',
 };
 
 export const {

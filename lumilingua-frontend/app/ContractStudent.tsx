@@ -42,7 +42,7 @@ const getStatusColor = (status: string) => {
     }
 };;
 
-const Contracts = () => {
+const ContractStudent = () => {
     const router = useRouter();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [loading, setLoading] = useState(true);
@@ -222,7 +222,7 @@ const Contracts = () => {
         <>
             <Stack.Screen
                 options={{
-                    title: 'Hợp đồng gia sư',
+                    title: 'Hợp đồng học viên',
                     headerTintColor: 'black',
                     headerTitleStyle: { fontWeight: 'bold', fontSize: 20 },
                     headerLeft: () => (
@@ -262,13 +262,25 @@ const Contracts = () => {
                         </View>
 
                         <View style={styles.walletBox}>
-                            <Ionicons name="wallet-outline" size={18} color="#FF9500" />
-                            <Text style={styles.walletText}>
-                                {formatShortVND(
-                                    (userProfile?.wallet?.amountTopUp || 0)
-                                )}
-                            </Text>
+                            <TouchableOpacity
+                                style={styles.balanceCard}
+                                activeOpacity={0.85}
+                                onPress={() => router.push('/(tabs)/wallet')}
+                            >
+                                <View style={styles.balanceIcon}>
+                                    <Ionicons name="wallet" size={28} color="#FF5722" />
+                                </View>
+                                <View >
+                                    <Text style={styles.balanceLabel}>Topup Balance</Text>
+                                    <Text style={styles.balanceValue}>{formatShortVND((userProfile?.wallet?.amountTopUp || 0))}</Text>
+                                </View>
+                                <View style={styles.topupButton}>
+                                    <Ionicons name="add-circle" size={16} color="#fff" />
+                                </View>
+                            </TouchableOpacity>
                         </View>
+
+
 
                     </View>
 
@@ -355,7 +367,7 @@ const Contracts = () => {
                                                             onPress: () => handlePay(contract),
                                                         },
                                                         { text: "Cancel" },
-                                                        
+
                                                     ]
                                                 );
                                             }}
@@ -553,16 +565,51 @@ const styles = StyleSheet.create({
     walletBox: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "white",
-        paddingHorizontal: 12,
-        paddingVertical: 6,
         borderRadius: 20
     },
 
-    walletText: {
-        marginLeft: 6,
-        fontWeight: "600",
-        color: "#FF9500"
+    balanceCard: {
+        flex: 1,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 16,
+        maxWidth: 180,
+        flexDirection: 'row',
+        alignItems: 'center',
+        shadowColor: '#ff7300',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    balanceIcon: {
+        width: 28,
+        height: 28,
+        borderRadius: 24,
+        backgroundColor: '#FFF8E1',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+    },
+    balanceLabel: {
+        fontSize: 10,
+        color: '#666',
+        fontWeight: '600',
+    },
+    balanceValue: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#333',
+        marginTop: 2,
+    },
+    topupButton: {
+        backgroundColor: '#FF5722',
+        width: 20,
+        height: 20,
+        borderRadius: 30,
+        marginLeft: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
     body: { flex: 1, padding: 16 },
@@ -763,4 +810,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default Contracts;
+export default ContractStudent;

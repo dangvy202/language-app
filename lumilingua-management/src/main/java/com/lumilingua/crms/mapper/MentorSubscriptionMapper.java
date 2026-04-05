@@ -18,7 +18,7 @@ public interface MentorSubscriptionMapper {
                                             int percentFeePlatform, BigDecimal summaryFeePlatform, BigDecimal salaryStaff, StatusEnum statusStaff,
                                             StatusEnum statusUser, String emailTrainees, String phoneTrainees);
     MentorSubscription toMentorSubscription(long idUser, long idInformationStaff, BigDecimal expectedFeeUser, int percentFeePlatform,
-                                            StatusEnum statusStaff, StatusEnum statusUser);
+                                            StatusEnum statusStaff, StatusEnum statusUser, String emailTrainees, String phoneTrainees);
     MentorSubscriptionResponse toMentorSubscriptionResponse(MentorSubscription mentorSubscription);
     List<MentorSubscriptionResponse> toMentorSubscriptionResponses(List<MentorSubscription> mentorSubscriptions);
 }

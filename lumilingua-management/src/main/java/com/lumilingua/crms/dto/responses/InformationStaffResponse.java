@@ -13,11 +13,12 @@ import java.util.List;
 @NoArgsConstructor
 public class InformationStaffResponse {
     private int idInformationStaff;
-    private int scoreSpeaking;
-    private int scoreReading;
-    private int scoreListening;
-    private int scoreWriting;
+    private double scoreSpeaking;
+    private double scoreReading;
+    private double scoreListening;
+    private double scoreWriting;
     private String certificatePath;
+    private String describeInformationStaff;
     private BigDecimal expectedSalary;
     private StatusEnum status;
     private List<ExperiencedStaffResponse> experienced;

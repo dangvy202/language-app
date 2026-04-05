@@ -102,18 +102,39 @@ interface FileData {
 }
 
 interface Tutor {
-    id: number;
-    name: string;
-    avatar: string;
-    specialty: string;
-    rating: number;
-    reviews: number;
-    students: number;
-    pricePerHour: number;
-    bio: string;
-    isOnline: boolean;
-    certificate: string;
-    skills: number[];
+  id: number;
+
+  name: string;
+  avatar: string;
+
+  certificate: string;
+
+  expectedSalary: number; // giá mentor đề xuất
+  pricePerHour: number;
+  specialty: string; // skill text
+
+  description?: string;
+
+  scores: {
+    speaking: number;
+    reading: number;
+    listening: number;
+    writing: number;
+  };
+
+  skills: number[];
+
+  experiences: {
+    companyName: string;
+    fromDate: string;
+    toDate: string;
+  }[];
+
+  rating?: number;
+  reviews?: number;
+  students?: number;
+
+  isOnline?: boolean;
 }
 
 interface User {
@@ -144,5 +165,42 @@ interface Contract {
   statusUser: string;
   status: string;
   createdAt: string;
+  userPaidAt: string;
+  summaryFeePlatform: number | null;
+  percentFeePlatform: number | null;
+  salaryStaff: number | null;
   informationStaffResponse: InformationStaff;
+}
+
+export interface InformationStaffTest {
+  idInformationStaff: number;
+  user: {
+    username: string;
+    gender: string;
+  };
+  scoreSpeaking: number;
+  scoreReading: number;
+  scoreListening: number;
+  scoreWriting: number;
+  expectedSalary: number | null;
+  certificatePath: string | null;
+}
+
+export interface ContractTest {
+  id: number;                            // Bắt buộc có id
+  idUser: number;
+  emailTrainees: string | null;
+  phoneTrainees: string | null;
+
+  expectedFeeUser: number | null;        // ← Sửa thành | null (rất quan trọng)
+  expectedFeeMentor: number | null;
+  agreeFee: number | null;
+
+  statusStaff: string;
+  statusUser: string;
+  status: string;
+
+  createdAt: string;
+
+  informationStaffResponse: InformationStaffTest;
 }

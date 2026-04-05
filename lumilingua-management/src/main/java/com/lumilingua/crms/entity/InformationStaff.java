@@ -25,16 +25,16 @@ public class InformationStaff {
     private long idInformationStaff;
 
     @Column(name = "score_speaking")
-    private int scoreSpeaking;
+    private double scoreSpeaking;
 
     @Column(name = "score_reading")
-    private int scoreReading;
+    private double scoreReading;
 
     @Column(name = "score_listening")
-    private int scoreListening;
+    private double scoreListening;
 
     @Column(name = "score_writing")
-    private int scoreWriting;
+    private double scoreWriting;
 
     @Column(name = "certificate_path")
     private String certificatePath;
@@ -45,6 +45,9 @@ public class InformationStaff {
 
     @Column(name = "expected_salary")
     private BigDecimal expectedSalary;
+
+    @Column(name = "describe_information_staff")
+    private String describeInformationStaff;
 
     @Column(name = "hour_of_day")
     private int hourOfDay;

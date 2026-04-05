@@ -140,18 +140,6 @@ export default function Login() {
 
     return (
         <>
-            <Stack.Screen
-                options={{
-                    title: '',
-                    headerTintColor: 'black',
-                    headerTitleStyle: { fontWeight: 'bold', fontSize: 20 },
-                    headerLeft: () => (
-                        <TouchableOpacity onPress={() => router.back()}>
-                            <Ionicons name="arrow-back" size={28} color="black" style={{ marginLeft: 10 }} />
-                        </TouchableOpacity>
-                    ),
-                }}
-            />
             <SafeAreaView className="flex-1 bg-white">
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

@@ -21,5 +21,14 @@ public interface MentorSubscriptionRepository extends JpaRepository<MentorSubscr
         WHERE m.idUser = :idUser
     """)
     List<Object[]> findMentorSubscriptionByIdUser(long idUser);
-    List<MentorSubscription> findMentorSubscriptionByIdInformationStaff(long idInformationStaff);
+
+    @Query("""
+        SELECT m , i , u FROM MentorSubscription m
+            LEFT JOIN InformationStaff i
+                ON i.idInformationStaff = m.idInformationStaff
+            LEFT JOIN User u
+                ON u.idUser = i.idUser
+            WHERE i.idUser = :idUser
+    """)
+    List<Object[]> findMentorSubscriptionByIdInformationStaff(long idUser);
 }

@@ -451,6 +451,7 @@ export const registerTutor = async (data: {
   scoreWriting: string;
   certificateFile: any;
   expectedSalary: string;
+  describeInformationStaff: string;
   experiences: { companyName: string; fromDate: string; toDate: string }[];
   selectedSkills: number[];
 }): Promise<any> => {
@@ -469,6 +470,7 @@ export const registerTutor = async (data: {
     formData.append("hourOfDay", data.hourOfDay);
     formData.append("expectedSalary", data.expectedSalary);
 
+    formData.append("describeInformationStaff", data.describeInformationStaff);
     formData.append("scoreSpeaking", data.scoreSpeaking);
     formData.append("scoreReading", data.scoreReading);
     formData.append("scoreListening", data.scoreListening);
@@ -485,7 +487,7 @@ export const registerTutor = async (data: {
     });
 
     data.selectedSkills.forEach((skillId, index) => {
-        formData.append(`staffSkills[${index}].idSkill`, skillId.toString());
+      formData.append(`staffSkills[${index}].idSkill`, skillId.toString());
     });
 
     formData.append("certificatePath", {
@@ -739,31 +741,31 @@ export const fetchTutor = async (): Promise<any> => {
 };
 
 export const bookTutorApi = async (
-    tutorId: number,
-    expectedFeeMentor: number,
-    expectedFeeUser: number | null,
-    email: string,
-    phone: string
+  tutorId: number,
+  expectedFeeMentor: number,
+  expectedFeeUser: number | null,
+  email: string,
+  phone: string
 ) => {
 
-    const token = await AsyncStorage.getItem("token");
-            
+  const token = await AsyncStorage.getItem("token");
 
-    return fetch(getCrmsEndpoint("v1/mentor-subscription"), {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-            idInformationStaff: tutorId,
-            idUser: await AsyncStorage.getItem('idUser'),
-            expectedFeeMentor: expectedFeeMentor,
-            expectedFeeUser: expectedFeeUser,
-            emailTrainees: email,
-            phoneTrainees: phone
-        })
-    }).then(res => res.json());
+
+  return fetch(getCrmsEndpoint("v1/mentor-subscription"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      idInformationStaff: tutorId,
+      idUser: await AsyncStorage.getItem('idUser'),
+      expectedFeeMentor: expectedFeeMentor,
+      expectedFeeUser: expectedFeeUser,
+      emailTrainees: email,
+      phoneTrainees: phone
+    })
+  }).then(res => res.json());
 };
 
 export const getContracts = async (): Promise<any> => {
@@ -797,31 +799,68 @@ export const getContracts = async (): Promise<any> => {
 };
 
 export const fetchUserProfile = async () => {
-    try {
-        const token = await AsyncStorage.getItem("token");
-        const email = await AsyncStorage.getItem("email");
+  try {
+    const token = await AsyncStorage.getItem("token");
+    const email = await AsyncStorage.getItem("email");
 
-        if (!token || !email) return null;
+    if (!token || !email) return null;
 
-        const url = getCrmsEndpoint(`v1/user/wallet/${email}`);
+    const url = getCrmsEndpoint(`v1/user/wallet/${email}`);
 
-        const res = await fetch(url, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-        });
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-        if (!res.ok) {
-            throw new Error("Failed to fetch user profile");
-        }
-
-        const result = await res.json();
-        return result.data;
-
-    } catch (err) {
-        console.log("Fetch user profile error:", err);
-        return null;
+    if (!res.ok) {
+      throw new Error("Failed to fetch user profile");
     }
+
+    const result = await res.json();
+    return result.data;
+
+  } catch (err) {
+    console.log("Fetch user profile error:", err);
+    return null;
+  }
+};
+
+export const negotiateContractStaff = async (
+  idUser: number,
+  idInformationStaff: number,
+  status: string,
+  expectedFeeMentor?: number
+) => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+
+    const url = getCrmsEndpoint("v1/mentor-subscription/negotiate");
+
+    const body: any = {
+      idUser,
+      idInformationStaff,
+      status
+    };
+
+    if (expectedFeeMentor) {
+      body.expectedFeeMentor = expectedFeeMentor;
+    }
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    return await res.json();
+
+  } catch (err) {
+    console.log("Negotiate error:", err);
+  }
 };
