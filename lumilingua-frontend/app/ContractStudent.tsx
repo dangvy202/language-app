@@ -19,8 +19,8 @@ import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
 import { Contract } from '@/interfaces/interfaces';
 import { PinchGestureHandler, State } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { fetchUserProfile } from '@/services/api';
-
+import { fetchUserProfile, negotiateContractUser } from '@/services/api';
+import { TextInput } from 'react-native';
 
 const getStatusColor = (status: string) => {
     const s = status?.toUpperCase() || '';
@@ -52,6 +52,10 @@ const ContractStudent = () => {
     const [showCertificate, setShowCertificate] = useState(false);
     const scale = useSharedValue(1);
     const [userProfile, setUserProfile] = useState<any>(null);
+    const [showNegotiateModal, setShowNegotiateModal] = useState(false);
+    const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+    const [newFee, setNewFee] = useState("");
+    const [rawFee, setRawFee] = useState("");
 
     const animatedStyle = useAnimatedStyle(() => {
         return {
@@ -194,6 +198,11 @@ const ContractStudent = () => {
         return new Intl.NumberFormat('vi-VN').format(amount) + " ₫";
     };
 
+    const formatMoney = (value: string) => {
+        const number = value.replace(/\D/g, "");
+        return number.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    };
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('vi-VN', {
             day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -301,6 +310,10 @@ const ContractStudent = () => {
                                 (userProfile?.wallet?.amountTopUp || 0) >= (contract.agreeFee || 0) &&
                                 contract.status !== "PAID";
 
+                            const showDecisionButtons =
+                                contract.statusUser === "PENDING" &&
+                                contract.statusStaff === "HOLD";
+
                             const statusColor = getStatusColor(contract.status);
                             const statusUserColor = getStatusColor(contract.statusUser);
                             const statusStaffColor = getStatusColor(contract.statusStaff);
@@ -347,7 +360,73 @@ const ContractStudent = () => {
                                         <Text style={styles.agreeFeeValue}>{formatVND(contract.agreeFee)}</Text>
                                     </View>
 
+                                    {showDecisionButtons && (
+                                        <View style={styles.actionRow}>
 
+                                            <TouchableOpacity style={styles.approveBtn} onPress={() =>
+                                                Alert.alert(
+                                                    "Confirm",
+                                                    "Bạn có chắc muốn ĐỒNG Ý hợp đồng này?",
+                                                    [
+                                                        {
+                                                            text: "Yes",
+                                                            onPress: async () => {
+                                                                await negotiateContractUser(
+                                                                    contract.idUser,
+                                                                    contract.informationStaffResponse.idInformationStaff,
+                                                                    "APPROVE"
+                                                                );
+
+                                                                fetchContracts();
+                                                            }
+                                                        },
+                                                        { text: "Cancel", style: "cancel" }
+                                                    ]
+                                                )
+                                            }>
+                                                <Ionicons name="checkmark-circle-outline" size={18} color="white" />
+                                                <Text style={styles.actionText}>Approve</Text>
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity style={styles.rejectBtn} onPress={() =>
+                                                Alert.alert(
+                                                    "Confirm",
+                                                    "Bạn có chắc muốn HỦY BỎ hợp đồng này?",
+                                                    [
+                                                        {
+                                                            text: "Yes",
+                                                            onPress: async () => {
+                                                                await negotiateContractUser(
+                                                                    contract.idUser,
+                                                                    contract.informationStaffResponse.idInformationStaff,
+                                                                    "REJECT"
+                                                                );
+
+                                                                fetchContracts();
+                                                            }
+                                                        },
+                                                        { text: "Cancel", style: "cancel" }
+                                                    ]
+                                                )
+                                            }>
+                                                <Ionicons name="close-circle-outline" size={18} color="white" />
+                                                <Text style={styles.actionText}>Reject</Text>
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity
+                                                style={styles.negotiateBtn}
+                                                onPress={() => {
+                                                    setSelectedContract(contract);
+                                                    setNewFee(String(contract.agreeFee || ""));
+                                                    setShowNegotiateModal(true);
+                                                }}
+                                            >
+                                                <Ionicons name="swap-horizontal-outline" size={18} color="white" />
+                                                <Text style={styles.actionText}>Negotiate</Text>
+                                            </TouchableOpacity>
+
+                                        </View>
+                                    )}
 
                                     {contract.status === "PAID" ? (
                                         <View style={styles.paidBadge}>
@@ -508,7 +587,81 @@ const ContractStudent = () => {
                         </View>
                     </View>
                 </Modal>
+                <Modal
+                    visible={showNegotiateModal}
+                    transparent
+                    animationType="slide"
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
 
+                            <Text style={styles.modalTitle}>Thương lượng giá</Text>
+
+                            <Text style={styles.modalLabel}>Nhập giá mới (VND)</Text>
+
+                            <TextInput
+                                style={styles.input}
+                                keyboardType="numeric"
+                                value={newFee}
+                                placeholder="Enter new price"
+                                placeholderTextColor="#999"
+                                onChangeText={(text) => {
+
+                                    const numeric = text.replace(/\D/g, "");
+
+                                    setRawFee(numeric);
+
+                                    setNewFee(formatMoney(numeric));
+                                }}
+                            />
+
+                            <View style={{ flexDirection: "row", marginTop: 20 }}>
+
+                                <TouchableOpacity
+                                    style={styles.rejectBtn}
+                                    onPress={() => setShowNegotiateModal(false)}
+                                >
+                                    <Text style={styles.actionText}>Cancel</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.negotiateBtn}
+                                    onPress={async () => {
+                                        if (!selectedContract) return;
+                                        const fee = Number(rawFee);
+
+                                        if (!fee || fee <= 0) {
+                                            Alert.alert("Lỗi", "Giá phải lớn hơn 0");
+                                            return;
+                                        }
+
+                                        try {
+
+                                            await negotiateContractUser(
+                                                selectedContract?.idUser,
+                                                selectedContract?.informationStaffResponse.idInformationStaff,
+                                                "UNAPPROVE",
+                                                fee
+                                            );
+
+                                            setShowNegotiateModal(false);
+
+                                            fetchContracts();
+
+                                        } catch (err) {
+                                            Alert.alert("Lỗi", "Không thể thương lượng");
+                                        }
+
+                                    }}
+                                >
+                                    <Text style={styles.actionText}>Send Offer</Text>
+                                </TouchableOpacity>
+
+                            </View>
+
+                        </View>
+                    </View>
+                </Modal>
             </View>
         </>
     );
@@ -807,6 +960,60 @@ const styles = StyleSheet.create({
         color: "white",
         fontWeight: "700",
         fontSize: 15
+    },
+
+    actionRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 16
+    },
+
+    approveBtn: {
+        flex: 1,
+        backgroundColor: "#34C759",
+        paddingVertical: 12,
+        borderRadius: 12,
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        marginHorizontal: 4
+    },
+
+    rejectBtn: {
+        flex: 1,
+        backgroundColor: "#FF3B30",
+        paddingVertical: 12,
+        borderRadius: 12,
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        marginHorizontal: 4
+    },
+
+    negotiateBtn: {
+        flex: 1,
+        backgroundColor: "#FF9500",
+        paddingVertical: 12,
+        borderRadius: 12,
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        marginHorizontal: 4
+    },
+
+    actionText: {
+        color: "white",
+        fontWeight: "600",
+        marginLeft: 6
+    },
+
+    input: {
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 10,
+        padding: 12,
+        marginTop: 10,
+        fontSize: 16
     }
 });
 

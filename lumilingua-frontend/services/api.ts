@@ -864,3 +864,40 @@ export const negotiateContractStaff = async (
     console.log("Negotiate error:", err);
   }
 };
+
+export const negotiateContractUser = async (
+  idUser: number,
+  idInformationStaff: number,
+  status: string,
+  expectedFeeUser?: number
+) => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+
+    const url = getCrmsEndpoint("v1/mentor-subscription/negotiate");
+
+    const body: any = {
+      idUser,
+      idInformationStaff,
+      status
+    };
+
+    if (expectedFeeUser) {
+      body.expectedFeeUser = expectedFeeUser;
+    }
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    return await res.json();
+
+  } catch (err) {
+    console.log("Negotiate error:", err);
+  }
+};
