@@ -13,16 +13,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import Loading from '@/component/loading';
 import { fetchUserCache, saveOrUpdateUserCache } from '@/services/api';
 import useFetch from '@/services/useFetch';
+import { connectSocket, disconnectSocket } from '@/services/webSocket';
 
 export default function Index() {
   const [userName, setUserName] = useState<string | null>(null);
   const [streak, setStreak] = useState<number>(0);
   const [email, setEmail] = useState<string | null>(null);
   const [isStreakLoading, setIsStreakLoading] = useState(true);
+  const [notifications, setNotifications] = useState(0);
+  const [notificationList, setNotificationList] = useState<
+    { text: string; route: string; isUser?: boolean; price?: string }[]
+  >([]);
+  const [showDialog, setShowDialog] = useState(false);
 
   const [learnedBalance, setLearnedBalance] = useState(1240);
   const [topupBalance, setTopupBalance] = useState(45009);
@@ -39,14 +44,12 @@ export default function Index() {
       const storedPhone = await AsyncStorage.getItem("phone");
 
       if (!storedEmail) {
-        console.log('No email in storage → chờ Login xử lý');
         router.replace('/Login');
         return;
       }
 
       const idUserNumber = storedIdUser ? Number(storedIdUser) : null;
       if (idUserNumber === null || Number.isNaN(idUserNumber)) {
-        console.warn("Invalid or missing idUser in storage");
         return;
       }
 
@@ -61,6 +64,52 @@ export default function Index() {
 
     loadUser();
   }, [router]);
+
+  useEffect(() => {
+    const setupSocket = async () => {
+      const idUser = await AsyncStorage.getItem("idUser");
+      if (!idUser) return;
+
+      connectSocket(idUser, (rawMessage) => {
+        let messageText = "Có thông báo mới về hợp đồng";
+        let route = "/ContractStudent";
+        let isUser = true;
+        let price = null;
+
+        try {
+          const parsed = typeof rawMessage === 'string'
+            ? JSON.parse(rawMessage)
+            : rawMessage;
+
+          messageText = parsed.message || messageText;
+          isUser = parsed.isUser !== undefined ? parsed.isUser : true;
+          price = parsed.price;
+
+          route = isUser ? "/ContractStudent" : "/ContractTutor";
+        } catch (e) {
+          messageText = String(rawMessage);
+        }
+
+        setNotifications((prev) => prev + 1);
+
+        setNotificationList((prev) => [
+          {
+            text: messageText,
+            route: route,
+            isUser: isUser,
+            price: price
+          },
+          ...prev
+        ]);
+      });
+    };
+
+    setupSocket();
+
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
 
   const { data, loading: fetchLoading, error } = useFetch(
     () => fetchUserCache({ email: email! }),
@@ -78,16 +127,22 @@ export default function Index() {
       const fetchedStreak = userCache?.streak ?? 0;
       setStreak(fetchedStreak);
       AsyncStorage.setItem('streak', fetchedStreak.toString());
-      setIsStreakLoading(false);
-    } else if (data && data.length === 0) {
-      setStreak(0);
-      setIsStreakLoading(false);
     } else if (error) {
-      console.error("Error fetch UserCache:", error);
       setStreak(0);
-      setIsStreakLoading(false);
     }
-  }, [data, fetchLoading, error, email]);
+    setIsStreakLoading(false);
+  }, [data, fetchLoading, error]);
+
+  const formatVND = (price?: string | number) => {
+    if (!price) return '';
+    const num = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(num) || num === 0) return '';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
 
   if (fetchLoading || !email || isStreakLoading) {
     return <Loading />;
@@ -95,7 +150,6 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      {/* Header với Gradient */}
       <View style={{ paddingBottom: 15 }}>
         <LinearGradient colors={['#FFB703', '#FB8500']}>
           <View style={styles.header}>
@@ -108,12 +162,17 @@ export default function Index() {
               <Text style={styles.streakText}>{streak} ngày</Text>
             </View>
 
-            <TouchableOpacity>
+            <TouchableOpacity style={{ position: "relative" }} onPress={() => setShowDialog(true)}>
               <Ionicons name="notifications-outline" size={28} color="#fff" />
+
+              {notifications > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationText}>{notifications}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
-          {/* Avatar + Title */}
           <View style={styles.headerContent}>
             <View style={styles.avatarWrapper}>
               <Image
@@ -134,9 +193,7 @@ export default function Index() {
         </LinearGradient>
       </View>
 
-      {/* ==================== BALANCE SECTION ==================== */}
       <View style={styles.balanceContainer}>
-        {/* Learned Balance */}
         <View style={styles.balanceCard}>
           <View style={styles.balanceIcon}>
             <Ionicons name="book" size={28} color="#FFB703" />
@@ -147,11 +204,10 @@ export default function Index() {
           </View>
         </View>
 
-        {/* Topup Balance */}
-        <TouchableOpacity 
-          style={styles.balanceCard} 
+        <TouchableOpacity
+          style={styles.balanceCard}
           activeOpacity={0.85}
-          onPress={() => router.push('/topup')}   // Bạn có thể thay bằng modal nếu muốn
+          onPress={() => router.push('/topup')}
         >
           <View style={styles.balanceIcon}>
             <Ionicons name="wallet" size={28} color="#FF5722" />
@@ -166,13 +222,11 @@ export default function Index() {
         </TouchableOpacity>
       </View>
 
-      {/* ScrollView Body */}
       <ScrollView
         style={styles.body}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Search bar */}
         <View style={styles.searchWrapper}>
           <Ionicons name="search-outline" size={20} color="#999" />
           <TextInput
@@ -182,43 +236,30 @@ export default function Index() {
           />
         </View>
 
-        {/* Categories */}
         <Text style={styles.title}>Categories</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesScroll}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
           <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
             <Ionicons name="book-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Grammar</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.categoryTab, styles.activeCategoryTab]} 
-            onPress={() => router.push('/course/vocabulary')}
-          >
+          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]} onPress={() => router.push('/course/vocabulary')}>
             <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Vocabulary</Text>
           </TouchableOpacity>
-
           <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
             <Ionicons name="chatbubbles-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Phrases</Text>
           </TouchableOpacity>
-
           <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
             <Ionicons name="mic-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Pronunciation</Text>
           </TouchableOpacity>
-
           <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
             <Ionicons name="ear-outline" size={24} color="#FFA500" />
             <Text style={styles.activeCategoryText}>Listening</Text>
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Your course */}
         <Text style={styles.title}>Your course</Text>
         <View style={styles.coursesContainer}>
           <TouchableOpacity style={styles.course}>
@@ -238,21 +279,12 @@ export default function Index() {
           </TouchableOpacity>
         </View>
 
-        {/* Teacher Suggestion */}
         <Text style={styles.title}>Teacher Suggest</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.teachersScroll}
-        >
-          {/* Teacher Card 1 */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.teachersScroll}>
           <TouchableOpacity style={styles.teacherCard}>
             <LinearGradient colors={['#FFF8E1', '#FFE082']} style={styles.teacherGradient}>
               <View style={styles.teacherAvatarContainer}>
-                <Image
-                  source={{ uri: 'https://thumbs.dreamstime.com/z/charming-vector-illustration-featuring-two-variations-cute-chibi-style-female-character-depicted-dark-hair-395145253.jpg' }}
-                  style={styles.teacherAvatar}
-                />
+                <Image source={{ uri: 'https://thumbs.dreamstime.com/z/charming-vector-illustration-featuring-two-variations-cute-chibi-style-female-character-depicted-dark-hair-395145253.jpg' }} style={styles.teacherAvatar} />
                 <View style={styles.onlineBadge}>
                   <Text style={styles.onlineText}>Online</Text>
                 </View>
@@ -274,14 +306,10 @@ export default function Index() {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Teacher Card 2 */}
           <TouchableOpacity style={styles.teacherCard}>
             <LinearGradient colors={['#FFF8E1', '#FFE082']} style={styles.teacherGradient}>
               <View style={styles.teacherAvatarContainer}>
-                <Image
-                  source={{ uri: 'https://thumbs.dreamstime.com/b/smiling-female-character-d-render-digital-art-cartoon-style-ideal-websites-apps-presentations-cheerful-d-cartoon-woman-394946649.jpg' }}
-                  style={styles.teacherAvatar}
-                />
+                <Image source={{ uri: 'https://thumbs.dreamstime.com/b/smiling-female-character-d-render-digital-art-cartoon-style-ideal-websites-apps-presentations-cheerful-d-cartoon-woman-394946649.jpg' }} style={styles.teacherAvatar} />
                 <View style={[styles.onlineBadge, { backgroundColor: '#4CAF50' }]}>
                   <Text style={styles.onlineText}>Online</Text>
                 </View>
@@ -306,315 +334,140 @@ export default function Index() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {showDialog && (
+        <View style={styles.notificationDialogOverlay}>
+          <View style={styles.notificationDialog}>
+            <View style={styles.dialogHeader}>
+              <Text style={styles.dialogTitle}>Notifications</Text>
+              <TouchableOpacity onPress={() => { setShowDialog(false); setNotifications(0); }} hitSlop={10}>
+                <Ionicons name="close" size={28} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.notificationList} showsVerticalScrollIndicator={false}>
+              {notificationList.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="notifications-off-outline" size={60} color="#ccc" />
+                  <Text style={styles.emptyText}>Không có thông báo nào</Text>
+                  <Text style={styles.emptySubText}>Bạn sẽ nhận được thông báo khi có cập nhật hợp đồng</Text>
+                </View>
+              ) : (
+                notificationList.map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.notificationItem}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setShowDialog(false);
+                      setNotifications(0);
+                      if (item.route) router.push(item.route as any);
+                    }}
+                  >
+                    <View style={styles.notificationIcon}>
+                      <Ionicons name="document-text-outline" size={24} color="#FB8500" />
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <Text style={styles.notificationTextDialog}>
+                        {item.text}
+                        {formatVND(item.price)}
+                      </Text>
+                      <Text style={styles.notificationTime}>Vừa xong</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#999" />
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+
+            {notificationList.length > 0 && (
+              <TouchableOpacity
+                style={styles.markAllReadButton}
+                onPress={() => {
+                  setNotificationList([]);
+                  setNotifications(0);
+                  setShowDialog(false);
+                }}
+              >
+                <Text style={styles.markAllReadText}>Đánh dấu tất cả đã đọc</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#fff' 
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 25, paddingTop: Platform.OS === 'android' ? 40 : 50, paddingBottom: 10 },
+  headerContent: { alignItems: 'center', marginTop: 10 },
+  streakContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.3)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  streakText: { color: 'white', fontWeight: 'bold', marginLeft: 6 },
+  avatarWrapper: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
+  avatar: { width: 110, height: 110, borderRadius: 55, borderWidth: 3, borderColor: '#FB8500' },
+  hi: { fontSize: 20, color: '#fff', marginTop: 10 },
+  username: { fontSize: 26, fontWeight: '800', color: '#fff', marginTop: 10 },
+  subtitle: { paddingBottom: 15, color: '#fff', opacity: 0.9, textAlign: 'center', marginHorizontal: 20, marginTop: 8 },
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 25,
-    paddingTop: Platform.OS === 'android' ? 40 : 50,
-    paddingBottom: 10,
-  },
-  headerContent: {
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  streakContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  streakText: { 
-    color: 'white', 
-    fontWeight: 'bold', 
-    marginLeft: 6 
-  },
-  avatarWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  avatar: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 3,
-    borderColor: '#FB8500',
-  },
-  hi: { 
-    fontSize: 20, 
-    color: '#fff', 
-    marginTop: 10 
-  },
-  username: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#fff',
-    marginTop: 10,
-  },
-  subtitle: {
-    paddingBottom: 15,
-    color: '#fff',
-    opacity: 0.9,
-    textAlign: 'center',
-    marginHorizontal: 20,
-    marginTop: 8,
-  },
+  balanceContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, marginTop: -25, marginBottom: 20, gap: 12 },
+  balanceCard: { flex: 1, backgroundColor: '#fff', borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', shadowColor: '#ff7300', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 6 },
+  balanceIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFF8E1', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  balanceLabel: { fontSize: 10, color: '#666', fontWeight: '600' },
+  balanceValue: { fontSize: 13, fontWeight: '800', color: '#333', marginTop: 2 },
+  topupButton: { backgroundColor: '#FF5722', width: 20, height: 20, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
 
-  // === BALANCE STYLES ===
-  balanceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginTop: -25,
-    marginBottom: 20,
-    gap: 12,
-  },
-  balanceCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#ff7300',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  balanceIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFF8E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  balanceLabel: {
-    fontSize: 10,
-    color: '#666',
-    fontWeight: '600',
-  },
-  balanceValue: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#333',
-    marginTop: 2,
-  },
-  topupButton: {
-    backgroundColor: '#FF5722',
-    width: 20,
-    height: 20,
-    borderRadius:30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  body: { flex: 1 },
+  title: { fontSize: 20, fontWeight: 'bold', marginLeft: 20, marginTop: 10, marginBottom: 15 },
+  searchWrapper: { padding: 26, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F1F1', marginHorizontal: 15, borderRadius: 30, paddingVertical: 12, elevation: 3, marginBottom: 20 },
+  searchInput: { marginLeft: 10, fontSize: 16, flex: 1 },
 
-  // Body
-  body: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 20,
-    marginTop: 10,
-    marginBottom: 15,
-  },
+  categoriesScroll: { paddingLeft: 20, marginBottom: 10, height: 100 },
+  categoryTab: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f0f0', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, marginRight: 12 },
+  activeCategoryTab: { backgroundColor: '#FFF3E0' },
+  activeCategoryText: { marginLeft: 8, color: '#FFA500', fontWeight: 'bold' },
 
-  // Search
-  searchWrapper: {
-    padding: 26,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F1F1',
-    marginHorizontal: 15,
-    borderRadius: 30,
-    paddingVertical: 12,
-    elevation: 3,
-    marginBottom: 20,
-  },
-  searchInput: {
-    marginLeft: 10,
-    fontSize: 16,
-    flex: 1,
-  },
+  coursesContainer: { paddingHorizontal: 16, marginBottom: 10 },
+  course: { backgroundColor: '#fff', borderRadius: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 4, overflow: 'hidden' },
+  courseHeader: { flexDirection: 'row', alignItems: 'center' },
+  courseFlag: { fontSize: 28, marginRight: 12 },
+  courseTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  analysisTitle: { color: '#555', marginTop: 4 },
+  learnedAnalysis: { height: 8, backgroundColor: '#ddd', borderRadius: 4, marginTop: 8 },
+  continueButton: { backgroundColor: '#FFA500', alignSelf: 'flex-start', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 30, marginTop: 16 },
+  continueText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
 
-  // Categories
-  categoriesScroll: {
-    paddingLeft: 20,
-    marginBottom: 10,
-    height: 100,
-  },
-  categoryTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 30,
-    marginRight: 12,
-  },
-  activeCategoryTab: {
-    backgroundColor: '#FFF3E0',
-  },
-  activeCategoryText: {
-    marginLeft: 8,
-    color: '#FFA500',
-    fontWeight: 'bold',
-  },
+  teachersScroll: { paddingLeft: 20, marginBottom: 30, height: 265 },
+  teacherCard: { width: 220, marginRight: 16, borderRadius: 20, overflow: 'hidden', elevation: 6 },
+  teacherGradient: { padding: 16, alignItems: 'center', flex: 1 },
+  teacherAvatarContainer: { position: 'relative' },
+  teacherAvatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: '#FFA500', marginBottom: 12 },
+  onlineBadge: { position: 'absolute', bottom: 8, right: -4, backgroundColor: '#4CAF50', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 2, borderColor: 'white' },
+  onlineText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  teacherName: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 4 },
+  teacherLang: { fontSize: 14, color: '#666', marginBottom: 8 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  ratingText: { marginLeft: 6, fontSize: 14, color: '#FFA500', fontWeight: '600' },
+  informationButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFA500', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 30 },
+  informationText: { color: 'white', fontWeight: 'bold', marginLeft: 8, fontSize: 14 },
 
-  // Course
-  coursesContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  course: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    overflow: 'hidden',
-  },
-  courseHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center' 
-  },
-  courseFlag: { 
-    fontSize: 28, 
-    marginRight: 12 
-  },
-  courseTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  analysisTitle: {
-    color: '#555',
-    marginTop: 4,
-  },
-  learnedAnalysis: {
-    height: 8,
-    backgroundColor: '#ddd',
-    borderRadius: 4,
-    marginTop: 8,
-  },
-  continueButton: {
-    backgroundColor: '#FFA500',
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 30,
-    marginTop: 16,
-  },
-  continueText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  notificationBadge: { position: "absolute", top: -5, right: -5, backgroundColor: "red", borderRadius: 10, minWidth: 18, height: 18, justifyContent: "center", alignItems: "center", paddingHorizontal: 4 },
+  notificationText: { color: "white", fontSize: 11, fontWeight: "bold" },
 
-  // Teacher
-  teachersScroll: {
-    paddingLeft: 20,
-    marginBottom: 30,
-    height: 265,
-  },
-  teacherCard: {
-    width: 220,
-    marginRight: 16,
-    borderRadius: 20,
-    overflow: 'hidden',
-    elevation: 6,
-  },
-  teacherGradient: {
-    padding: 16,
-    alignItems: 'center',
-    flex: 1,
-  },
-  teacherAvatarContainer: {
-    position: 'relative',
-  },
-  teacherAvatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#FFA500',
-    marginBottom: 12,
-  },
-  onlineBadge: {
-    position: 'absolute',
-    bottom: 8,
-    right: -4,
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  onlineText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  teacherName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  teacherLang: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  ratingText: {
-    marginLeft: 6,
-    fontSize: 14,
-    color: '#FFA500',
-    fontWeight: '600',
-  },
-  informationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFA500',
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 30,
-  },
-  informationText: {
-    color: 'white',
-    fontWeight: 'bold',
-    marginLeft: 8,
-    fontSize: 14,
-  },
+  notificationDialogOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", zIndex: 1000 },
+  notificationDialog: { width: "88%", maxHeight: "70%", backgroundColor: "white", borderRadius: 20, overflow: "hidden", shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 15 },
+  dialogHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  dialogTitle: { fontSize: 20, fontWeight: '700', color: '#333' },
+  notificationList: { maxHeight: 420 },
+  notificationItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
+  notificationIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFF8E1', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  notificationContent: { flex: 1 },
+  notificationTextDialog: { fontSize: 15, color: '#000000', lineHeight: 22, fontWeight: '600' },
+  notificationTime: { fontSize: 12, color: '#999', marginTop: 4 },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  emptyText: { fontSize: 18, fontWeight: '600', color: '#888', marginTop: 16 },
+  emptySubText: { fontSize: 14, color: '#aaa', textAlign: 'center', marginTop: 6, paddingHorizontal: 40 },
+  markAllReadButton: { paddingVertical: 14, backgroundColor: '#f8f8f8', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#eee' },
+  markAllReadText: { color: '#FB8500', fontWeight: '600', fontSize: 15 },
 });

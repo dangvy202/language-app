@@ -79,8 +79,8 @@ public class UserServiceImpl implements UserService {
         try {
             LOG.info("Edit image user in service...");
             User user = userRepository.findById(idUser).orElseThrow(() -> new RuntimeException("User not found"));
-            String fileName = Helper.uploadFile(imgFile, CrmsConstant.AVATAR_DIR);
-            boolean isDeleteOldPicturte = user.getAvatar() != null ? Helper.deleteFile(CrmsConstant.AVATAR_DIR, user.getAvatar()) : true;
+            String fileName = Helper.uploadFile(imgFile, CrmsConstant.Directory.AVATAR_DIR);
+            boolean isDeleteOldPicturte = user.getAvatar() != null ? Helper.deleteFile(CrmsConstant.Directory.AVATAR_DIR, user.getAvatar()) : true;
             if (fileName == null || !isDeleteOldPicturte) {
                 return Result.serverError("Upload/Delete image failed");
             }

@@ -30,7 +30,7 @@ public class Wallet {
     private String bankBranch;
 
     @Column(name = "bank_identification")
-    private String branchIdentification;
+    private String bankIdentification;
 
     @Column(name = "bank_holder")
     private String bankHolder;

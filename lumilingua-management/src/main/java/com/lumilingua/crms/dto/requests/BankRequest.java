@@ -8,6 +8,6 @@ import lombok.Data;
 public class BankRequest {
     private String bankName;
     private String bankBranch;
-    private String branchIdentification;
+    private String bankIdentification;
     private String bankHolder;
 }

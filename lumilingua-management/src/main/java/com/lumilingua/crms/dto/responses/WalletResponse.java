@@ -16,5 +16,5 @@ public class WalletResponse {
     private boolean active;
     private String bankName;
     private String bankBranch;
-    private String branchIdentification;
+    private String bankIdentification;
 }

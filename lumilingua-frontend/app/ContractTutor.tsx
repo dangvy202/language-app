@@ -666,8 +666,6 @@ const styles = StyleSheet.create({
         elevation: 10,
     },
 
-
-    // Pills
     pillsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',

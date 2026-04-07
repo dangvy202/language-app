@@ -15,6 +15,7 @@ import com.lumilingua.crms.mapper.UserMapper;
 import com.lumilingua.crms.mapper.WalletPurchaseHistoryMapper;
 import com.lumilingua.crms.repository.*;
 import com.lumilingua.crms.service.MentorSubscriptionService;
+import com.lumilingua.crms.service.WebSocketNotificationService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -40,6 +41,9 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
     private final InformationStaffRepository informationStaffRepository;
     private final WalletRepository walletRepository;
     private final WalletPurchaseHistoryRepository walletPurchaseHistoryRepository;
+
+    // service
+    private final WebSocketNotificationService webSocketNotificationService;
 
     @Override
     public Result<MentorSubscriptionResponse> pickMentor(MentorSubscriptionRequest request) {
@@ -123,6 +127,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
                     return Result.badRequestError("Invalid expected fee");
                 }
                 mentorSubscriptionRepository.save(approveLogicContract(mentorSubscription, agreeFee));
+                webSocketNotificationService.notifyContractUpdate(mentorSubscription.getIdUser(), "Mentor approved your price: ", mentorSubscription.getExpectedFeeUser(), true);
             } else if(Objects.equals(request.getStatus(), StatusEnum.UNAPPROVE.name())) {
                 if(request.getExpectedFeeMentor() == null || request.getExpectedFeeMentor().compareTo(BigDecimal.ZERO) <= 0) {
                     return Result.badRequestError("The expected fee does NOT exists!");
@@ -133,8 +138,10 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
                 mentorSubscription.setStatusStaff(statusStaff);
                 mentorSubscription.setStatusUser(statusUser);
                 mentorSubscriptionRepository.save(mentorSubscription);
+                webSocketNotificationService.notifyContractUpdate(mentorSubscription.getIdUser(), "Mentor proposed a new price: ", request.getExpectedFeeMentor(), true);
             } else if(Objects.equals(request.getStatus(), StatusEnum.REJECT.name())) {
                 mentorSubscriptionRepository.save(rejectLogicContract(mentorSubscription));
+                webSocketNotificationService.notifyContractUpdate(mentorSubscription.getIdUser(), "Mentor rejected the contract: ", null, true);
             }
             LOG.info("The negotiation of staff is SUCCESS!");
             return Result.create();
@@ -145,6 +152,7 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
                     return Result.badRequestError("Invalid mentor expected fee");
                 }
                 mentorSubscriptionRepository.save(approveLogicContract(mentorSubscription, agreeFee));
+                webSocketNotificationService.notifyContractUpdate(informationStaff.getIdUser(),"User accepted your price: ", agreeFee, false);
             } else if(Objects.equals(request.getStatus(), StatusEnum.UNAPPROVE.name())) {
                 if(request.getExpectedFeeUser() == null || request.getExpectedFeeUser().compareTo(BigDecimal.ZERO) <= 0) {
                     return Result.badRequestError("The expected fee does NOT exists!");
@@ -155,8 +163,10 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
                 mentorSubscription.setStatusStaff(statusStaff);
                 mentorSubscription.setStatusUser(statusUser);
                 mentorSubscriptionRepository.save(mentorSubscription);
+                webSocketNotificationService.notifyContractUpdate(informationStaff.getIdUser(), "User proposed a new price: ", request.getExpectedFeeUser(), false);
             } else if(Objects.equals(request.getStatus(), StatusEnum.REJECT.name())) {
                 mentorSubscriptionRepository.save(rejectLogicContract(mentorSubscription));
+                webSocketNotificationService.notifyContractUpdate(informationStaff.getIdUser(), "User rejected the contract: ", null ,false);
             }
             LOG.info("The negotiation of user is SUCCESS!");
             return Result.create();
@@ -216,6 +226,10 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
         Wallet walletTrainees = walletRepository.findWalletByIdAndLockDB(userTrainees.getWalletId())
                 .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet from wallet id '%s'".formatted(userTrainees.getWalletId())));
 
+        if (!walletTrainees.isActive()) {
+            throw new IllegalArgumentException("The wallet of Trainees '%s' is INACTIVE".formatted(walletTrainees.getWalletId()));
+        }
+
         // Staff
         InformationStaff informationStaff = informationStaffRepository.findById(mentorSubscription.getIdInformationStaff())
                 .orElseThrow(() -> new EntityNotFoundException("Unable to get information staff"));
@@ -224,6 +238,9 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
         Wallet walletStaff = walletRepository.findWalletByIdAndLockDB(userStaff.getWalletId())
                 .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet from wallet id '%s'".formatted(userStaff.getWalletId())));
 
+        if (!walletStaff.isActive()) {
+            throw new IllegalArgumentException("The wallet of Staff '%s' is INACTIVE".formatted(walletStaff.getWalletId()));
+        }
         if(mentorSubscription.getStatus() == StatusEnum.PAID){
             return Result.badRequestError("Contract already paid!");
         }

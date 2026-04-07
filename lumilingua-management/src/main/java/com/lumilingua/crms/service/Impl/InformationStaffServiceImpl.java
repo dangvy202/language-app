@@ -88,7 +88,7 @@ public class InformationStaffServiceImpl implements InformationStaffService {
             return Result.getIsExist(response, "The information staff is exists, please redirect to update information");
         }
 
-        String fileName = Helper.uploadFile(request.getCertificatePath(), CrmsConstant.UPLOAD_DIR);
+        String fileName = Helper.uploadFile(request.getCertificatePath(), CrmsConstant.Directory.UPLOAD_DIR);
 
         if(fileName == null) {
             return Result.serverError("Unable upload file, try again");
