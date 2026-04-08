@@ -4,6 +4,7 @@ import com.lumilingua.crms.constant.ResultApiConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.WithdrawRequest;
 import com.lumilingua.crms.dto.responses.WithdrawResponse;
+import com.lumilingua.crms.enums.WithdrawStatusEnum;
 import com.lumilingua.crms.service.WithdrawService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -45,9 +46,10 @@ public class WithdrawController {
     }
 
     @GetMapping("/total")
-    public ResponseEntity<Result<BigDecimal>> getSummaryWithdrawByEmailAndStatus(@RequestBody WithdrawRequest request) {
+    public ResponseEntity<Result<BigDecimal>> getSummaryWithdrawByEmailAndStatus(@RequestParam String email,
+                                                                                 @RequestParam WithdrawStatusEnum status) {
         LOG.info("Update status withdraw in controller by api '%s'".formatted("/api/v1/withdraw/total"));
-        Result<BigDecimal> result = withdrawService.getSummaryWithdrawByEmailAndStatus(request);
+        Result<BigDecimal> result = withdrawService.getSummaryWithdrawByEmailAndStatus(email, status);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

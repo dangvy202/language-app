@@ -769,7 +769,6 @@ export const bookTutorApi = async (
 };
 
 export const getContracts = async (): Promise<any> => {
-  // Lấy idUser và token từ localStorage
   const idUser = await AsyncStorage.getItem('idUser');
   const token = await AsyncStorage.getItem("token");
 
@@ -900,4 +899,32 @@ export const negotiateContractUser = async (
   } catch (err) {
     console.log("Negotiate error:", err);
   }
+};
+
+export const fetchTotalWithdraw = async (status: string) => {
+    try {
+        const token = await AsyncStorage.getItem("token");
+        const email = await AsyncStorage.getItem("email");
+        
+        const url = getCrmsEndpoint(
+            `v1/withdraw/total?status=${status}&email=${email}`
+        );
+
+        const res = await fetch(url, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!res.ok) throw new Error("Load withdraw failed");
+
+        const result = await res.json();
+        return result.data;
+
+    } catch (err) {
+        console.log("Withdraw API error:", err);
+        return 0;
+    }
 };

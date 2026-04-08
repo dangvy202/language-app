@@ -55,12 +55,22 @@ public class WalletController {
     }
 
     @PutMapping("/purchase")
-    public ResponseEntity<Result<WalletPurchaseHistoryResponse>> purchasePackage(@RequestBody PurchaseRequest request) throws Exception {
+    public ResponseEntity<Result<WalletPurchaseHistoryResponse>> purchasePackage(@RequestBody PurchaseRequest request) {
         LOG.info("Purchase package id '%s' vip in wallet id '%s' by api".formatted(request.getPackageCategoryId(), request.getWalletId(), "/api/v1/wallet/purchase"));
         Result<WalletPurchaseHistoryResponse> result = walletService.purchasePackageCategory(request);
         if(result.code == ResultApiConstant.StatusCode.BAD_REQUEST) {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/paid/exercise")
+    public ResponseEntity<Result<WalletPurchaseHistoryResponse>> paidExercise(@RequestBody PurchaseRequest request) {
+        LOG.info("Purchase exercise in wallet id '%s' by api '%s'".formatted(request.getWalletId(), "/api/v1/wallet/paid/exercise"));
+        Result<WalletPurchaseHistoryResponse> result = walletService.paidExercise(request);
+        if(result.code == ResultApiConstant.StatusCode.NO_CONTENT) {
+            return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }
 }

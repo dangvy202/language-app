@@ -39,6 +39,12 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="course/vocabulary"
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
             name="SupportFaq"
             options={{
               headerShown: false,

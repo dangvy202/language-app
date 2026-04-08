@@ -14,7 +14,7 @@ import { Alert, Image } from "react-native";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
-import { fetchUserProfile, negotiateContractStaff } from "@/services/api";
+import { fetchTotalWithdraw, fetchUserProfile, negotiateContractStaff } from "@/services/api";
 import { Contract } from "@/interfaces/interfaces";
 import Loading from "@/component/loading";
 import { Modal, TextInput } from "react-native";
@@ -49,6 +49,7 @@ const ContractTutor = () => {
     const [negoVisible, setNegoVisible] = useState(false);
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
     const [newFee, setNewFee] = useState("");
+    const [totalWithdraw, setTotalWithdraw] = useState<number>(0);
 
     const refreshTokenApi = async (refreshToken: string) => {
         const endpoint = getCrmsEndpoint("v1/user/refresh");
@@ -114,6 +115,8 @@ const ContractTutor = () => {
             setUserProfile(profile);
 
             await fetchContracts();
+            const balanceWithdraw = await fetchTotalWithdraw("APPROVED")
+            setTotalWithdraw(balanceWithdraw)
         };
 
         init();
@@ -207,7 +210,7 @@ const ContractTutor = () => {
     contracts.forEach((contract) => {
         if (contract.status === "PAID" && contract.userPaidAt) {
             const paidDate = new Date(contract.userPaidAt);
-            const month = paidDate.getMonth();           // 0 = January, 11 = December
+            const month = paidDate.getMonth();
             monthlyPaid[month] += contract.agreeFee || 0;
         }
     });
@@ -256,22 +259,22 @@ const ContractTutor = () => {
                         {/* Investment & Return Pills */}
                         <View style={styles.pillsContainer}>
                             {/* Investment */}
-                            <View style={styles.pill}>
+                            <Pressable style={styles.pill} onPress={() => router.push("/(tabs)/wallet")}>
                                 <View style={styles.pillHeader}>
                                     <View style={[styles.dot, { backgroundColor: '#FF8A00' }]} />
                                     <Text style={styles.pillLabel}>Balance Topup</Text>
                                 </View>
                                 <Text style={styles.pillValue}>{formatVND(userProfile?.wallet?.amountTopUp || 0)}</Text>
-                            </View>
+                            </Pressable>
 
                             {/* Withdraw */}
-                            <View style={styles.pill}>
+                            <Pressable style={styles.pill} onPress={() => router.push("/(tabs)/wallet")}>
                                 <View style={styles.pillHeader}>
                                     <View style={[styles.dot, { backgroundColor: '#1F2937' }]} />
                                     <Text style={styles.pillLabel}>Withdraw</Text>
                                 </View>
-                                <Text style={styles.pillValue}>$75,292.40</Text>
-                            </View>
+                                <Text style={styles.pillValue}>{formatVND(totalWithdraw)}</Text>
+                            </Pressable>
                         </View>
                     </View>
 

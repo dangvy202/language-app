@@ -14,7 +14,8 @@ public interface WalletService {
     Result<WalletResponse> fundTransferWallet(TransferRequest request) throws Exception;
     Result<WalletResponse> createWalletByUser(User user);
     Result<WalletResponse> updateBankInformation(String walletId, BankRequest request);
-    Result<WalletPurchaseHistoryResponse> purchasePackageCategory(PurchaseRequest request) throws Exception;
+    Result<WalletPurchaseHistoryResponse> purchasePackageCategory(PurchaseRequest request);
+    Result<WalletPurchaseHistoryResponse> paidExercise(PurchaseRequest request);
 //  Admin
     Result<WalletResponse> addVoucherByAddressWallet(int idVoucher, String walletId);
 }

@@ -11,9 +11,9 @@ import java.util.Optional;
 
 @Repository
 public interface WithdrawRepository extends JpaRepository<Withdraw, Long> {
-//    @Query("SELECT COALESCE(SUM(w.amountWithdraw), 0) " +
-//            "FROM Withdraw w " +
-//            "WHERE w.idUser = :idUser " +
-//            "AND w.status = :status")
-//    BigDecimal findTotalWithdrawSuccess(long idUser, WithdrawStatusEnum status);
+    @Query("SELECT COALESCE(SUM(w.amtWithdraw), 0.0) " +
+            "FROM Withdraw w " +
+            "WHERE w.idUser = :idUser " +
+            "AND w.status = :status")
+    BigDecimal findTotalWithdrawByStatusAndIdUser(long idUser, WithdrawStatusEnum status);
 }

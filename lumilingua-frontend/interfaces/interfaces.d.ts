@@ -41,6 +41,7 @@ interface Exercise {
   time_limit: number,
   points: number,
   question_count: number,
+  balance_learn: number
 }
 
 interface ExerciseProgress {
@@ -49,7 +50,7 @@ interface ExerciseProgress {
   exercises: number,
   id_exercise_progress: number,
   is_completed: boolean,
-  score: number,
+  score: number
 }
 
 export interface HistoryProgressCreatePayload {

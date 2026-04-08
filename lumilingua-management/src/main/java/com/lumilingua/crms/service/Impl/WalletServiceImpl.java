@@ -131,7 +131,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public Result<WalletPurchaseHistoryResponse> purchasePackageCategory(PurchaseRequest request) throws Exception {
+    public Result<WalletPurchaseHistoryResponse> purchasePackageCategory(PurchaseRequest request) {
         LOG.info("Purchase package id '%s' by wallet id '%s' in service".formatted(request.getPackageCategoryId(), request.getWalletId()));
         Wallet wallet = walletRepository.findById(request.getWalletId())
                 .orElseThrow(() -> new EntityNotFoundException("The wallet id '%s' is incorrect".formatted(request.getWalletId())));
@@ -176,6 +176,26 @@ public class WalletServiceImpl implements WalletService {
                 return Result.badRequestError("Insufficient balance in wallet id '%s' to process the purchase".formatted(request.getWalletId()));
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public Result<WalletPurchaseHistoryResponse> paidExercise(PurchaseRequest request) {
+        LOG.info("Paid exercise in service...");
+        Wallet wallet = walletRepository.findById(request.getWalletId())
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get wallet id '%s'".formatted(request.getWalletId())));
+        if(request.getAmtType() != AmountEnum.AMT_LEARN) {
+            return Result.badRequestError("The type of wallet is INCORRECT");
+        }
+        if(request.getAmtFee() == null || request.getAmtFee().compareTo(BigDecimal.ZERO) <= 0) {
+            return Result.badRequestError("The fee must be greater than 0");
+        }
+        if(wallet.getAmountLearn().compareTo(request.getAmtFee()) < 0){
+            return Result.badRequestError("Insufficient balance");
+        }
+        wallet.setAmountLearn(wallet.getAmountLearn().subtract(request.getAmtFee()));
+        walletRepository.save(wallet);
+        return Result.update();
     }
 
     @Override

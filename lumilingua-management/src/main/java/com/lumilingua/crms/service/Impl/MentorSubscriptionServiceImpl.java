@@ -282,7 +282,10 @@ public class MentorSubscriptionServiceImpl implements MentorSubscriptionService 
     public Result<List<Long>> getStaffContracts(Long userId) {
         LOG.info("Get staff by contracts in service...");
         List<MentorSubscription> contracts = mentorSubscriptionRepository.findByIdUser(userId);
-        List<Long> staffIds = contracts.stream().map(MentorSubscription::getIdInformationStaff).toList();
+        InformationStaff informationStaff = informationStaffRepository.findByIdUser(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Unable to get information staff"));
+        List<Long> staffIds = new ArrayList<>(contracts.stream().map(MentorSubscription::getIdInformationStaff).toList());
+        staffIds.add(informationStaff.getIdInformationStaff());
         return Result.get(staffIds);
     }
 }

@@ -1,11 +1,12 @@
 import Loading from '@/component/loading';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
     Alert,
     FlatList,
+    Image,
     RefreshControl,
     Text,
     TouchableOpacity,
@@ -13,13 +14,13 @@ import {
 } from 'react-native';
 
 import Notfound from '@/component/404';
+import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
 import { useUserCache } from '@/hook/useUserCache';
 import { Exercise, ExerciseProgress, Level, Topic } from '@/interfaces/interfaces';
-import { fetchExercise, fetchLevel, fetchTopic, getExerciseProgress, getHistoryProgress } from '@/services/api';
+import { fetchExercise, fetchLevel, fetchTopic, fetchUserProfile, getExerciseProgress, getHistoryProgress, getLevelByCategoryId, getRankByUserId } from '@/services/api';
 import useFetch from '@/services/useFetch';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { getCrmsEndpoint, getClientEndpoint } from "@/constants/configApi";
 
 
 type VocabularyItem = Level | Topic | Exercise;
@@ -30,6 +31,9 @@ export default function LearnVocabulary() {
     const [progressMap, setProgressMap] = useState<Record<number, number>>({});
     const [exerciseProgressMap, setExerciseProgressMap] = useState<Record<number, ExerciseProgress>>([]);
     const { cache: userCache, loadingCache, cacheError } = useUserCache();
+    const [userProfile, setUserProfile] = useState<any>(null);
+    const [categoryLevel, setCategoryLevel] = useState<any>(null);
+    const [rank, setRank] = useState<any>(null);
 
     const refreshTokenApi = async (refreshToken: string) => {
         const endpoint = getCrmsEndpoint("v1/user/refresh");
@@ -52,47 +56,69 @@ export default function LearnVocabulary() {
     };
 
     useEffect(() => {
-        let isMounted = true;
-
-        const checkAuth = async () => {
-            if (!isMounted) return;
-
+        const init = async () => {
             const token = await AsyncStorage.getItem('token');
             const expiredStr = await AsyncStorage.getItem('expired');
             const expired = expiredStr ? parseInt(expiredStr, 10) : null;
 
-            if (token && expired && Date.now() < expired) {
-                setLoadingLogin(false);
-                return;
-            }
-
-            const refreshToken = await AsyncStorage.getItem('refreshToken');
-
-            if (refreshToken) {
-                setLoadingLogin(true);
-                try {
-                    const response = await refreshTokenApi(refreshToken);
-                    await AsyncStorage.setItem('token', response.data.token || '');
-                    await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
-                } catch (err) {
-                    console.log('Refresh error:', err);
-                    await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired', 'username', 'email']);
+            if (!(token && expired && Date.now() < expired)) {
+                const refreshToken = await AsyncStorage.getItem('refreshToken');
+                if (refreshToken) {
+                    try {
+                        const res = await refreshTokenApi(refreshToken);
+                        await AsyncStorage.setItem('token', res.data.token || '');
+                        await AsyncStorage.setItem('expired', String(res.data.expired || Date.now() + 900000));
+                    } catch (err) {
+                        await AsyncStorage.multiRemove(['token', 'refreshToken', 'expired']);
+                        router.replace('/Login');
+                        return;
+                    }
+                } else {
                     router.replace('/Login');
-                } finally {
-                    if (isMounted) setLoadingLogin(false);
+                    return;
                 }
-            } else {
-                router.replace('/Login');
+            }
+            await loadUserProfile();
+        };
+        init();
+    }, [router]);
+
+    
+
+    const loadUserProfile = async () => {
+        try {
+            const profile = await fetchUserProfile();
+            setUserProfile(profile);
+        } catch (err) {
+            console.error("Error loading user profile:", err);
+        }
+    };
+
+    useEffect(() => {
+        const fetchRankAndLevel = async () => {
+            if (!userCache || userCache.length === 0) return;
+
+            try {
+                const categoryId = userCache[0].category_level;
+                const userId = userCache[0].id_user_cache;
+
+                if (!categoryId || !userId) return;
+
+                const [dataLevel, dataRank] = await Promise.all([
+                    getLevelByCategoryId(categoryId),
+                    getRankByUserId(userId),
+                ]);
+
+                setCategoryLevel(dataLevel);
+                setRank(dataRank);
+            } catch (err) {
+                console.error('Error loading rank and level data:', err);
             }
         };
 
-        checkAuth();
+        fetchRankAndLevel();
+    }, [userCache]);
 
-        return () => {
-            isMounted = false;
-        };
-    }, [router]);
-    
     useFocusEffect(
         useCallback(() => {
             if (!userCache || userCache.length === 0) return;
@@ -101,33 +127,33 @@ export default function LearnVocabulary() {
             if (!userCacheId) return;
 
             const fetchAllProgress = async () => {
-            try {
-                const progressList = await getHistoryProgress(userCacheId);
-                const progressMap: Record<number, number> = {};
-                progressList.forEach((item: any) => {
-                progressMap[item.topic] = item.progress_percent ?? 0;
-                });
-                setProgressMap(progressMap);
+                try {
+                    const progressList = await getHistoryProgress(userCacheId);
+                    const progressMap: Record<number, number> = {};
+                    progressList.forEach((item: any) => {
+                        progressMap[item.topic] = item.progress_percent ?? 0;
+                    });
+                    setProgressMap(progressMap);
 
-                const exerciseProgressList = await getExerciseProgress(userCacheId);
-                const exerciseMap: Record<number, ExerciseProgress> = {};
-                exerciseProgressList.forEach((item: any) => {
-                    exerciseMap[item.exercises] = {
-                        attempts: item.attempts ?? 0,
-                        completed_at: item.completed_at ?? "",
-                        exercises: item.exercises,
-                        id_exercise_progress: item.id_exercise_progress ?? 0,
-                        is_completed: item.is_completed ?? false,
-                        score: item.score ?? 0,
-                    };
-                });
-                setExerciseProgressMap(exerciseMap);
-            } catch (err) {
-                console.log("Fetch progress error:", err);
-            } 
+                    const exerciseProgressList = await getExerciseProgress(userCacheId);
+                    const exerciseMap: Record<number, ExerciseProgress> = {};
+                    exerciseProgressList.forEach((item: any) => {
+                        exerciseMap[item.exercises] = {
+                            attempts: item.attempts ?? 0,
+                            completed_at: item.completed_at ?? "",
+                            exercises: item.exercises,
+                            id_exercise_progress: item.id_exercise_progress ?? 0,
+                            is_completed: item.is_completed ?? false,
+                            score: item.score ?? 0
+                        };
+                    });
+                    setExerciseProgressMap(exerciseMap);
+                } catch (err) {
+                    console.log("Fetch progress error:", err);
+                }
             };
-
             fetchAllProgress();
+            loadUserProfile();
         }, [userCache])
     );
 
@@ -164,15 +190,117 @@ export default function LearnVocabulary() {
         router.push(`/course/topic/${topic.name_topic}`);
     };
 
-    const handleExercisePress = (exercise: Exercise) => {
-        router.push({
-            pathname: '/course/exercise/[id]',
-            params: { 
-                id: exercise.id_exercise,
-                time_limit: exercise.time_limit
-            },
-        })
+    const formatShortVND = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN').format(amount) + " ₫";
     };
+
+    const handleExercisePress = async (exercise: Exercise) => {
+        const learnFee = exercise.balance_learn || 0;
+
+        if (learnFee <= 0) {
+            router.push({
+                pathname: '/course/exercise/[id]',
+                params: {
+                    id: exercise.id_exercise,
+                    time_limit: exercise.time_limit
+                },
+            });
+            return;
+        }
+
+        Alert.alert(
+            "Xác nhận thanh toán",
+            `Bài tập này có phí học là ${learnFee}.\n\nBạn muốn sử dụng Balance Learn để thanh toán không?`,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Yes",
+                    style: "default",
+                    onPress: () => handlePaidExercise(exercise)
+                }
+            ]
+        );
+    };
+
+    const handlePaidExercise = async (exercise: Exercise) => {
+    if (!userProfile?.wallet?.walletId) {
+        Alert.alert("Lỗi", "Không tìm thấy thông tin ví của bạn.");
+        return;
+    }
+
+    try {
+        const requestBody = {
+            walletId: userProfile.wallet.walletId,
+            amtType: "AMT_LEARN",
+            amtFee: exercise.balance_learn || 0
+        };
+
+        const token = await AsyncStorage.getItem('token');
+
+        const response = await fetch(getCrmsEndpoint("v1/wallet/paid/exercise"), {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (response.status === 204) {
+            router.push({
+                pathname: '/course/exercise/[id]',
+                params: {
+                    id: exercise.id_exercise,
+                    time_limit: exercise.time_limit,
+                },
+            });
+            return;
+        }
+
+        let result;
+        try {
+            result = await response.json();
+        } catch (jsonErr) {
+            if (response.ok) {
+                Alert.alert("Thành công", "Thanh toán bài tập thành công!");
+                router.push({
+                    pathname: '/course/exercise/[id]',
+                    params: { id: exercise.id_exercise, time_limit: exercise.time_limit },
+                });
+                return;
+            }
+            throw jsonErr;
+        }
+
+        if (response.ok || result?.code === 200 || result?.code === "SUCCESS") {
+            Alert.alert("Thành công", "Thanh toán bài tập thành công!", [
+                {
+                    text: "OK",
+                    onPress: () => {
+                        router.push({
+                            pathname: '/course/exercise/[id]',
+                            params: {
+                                id: exercise.id_exercise,
+                                time_limit: exercise.time_limit,
+                            },
+                        });
+                    }
+                }
+            ]);
+        } else {
+            Alert.alert(
+                "Thất bại", 
+                result?.message || result?.notification || "Không đủ số dư hoặc xảy ra lỗi."
+            );
+        }
+    } catch (err) {
+        console.error("Paid exercise error:", err);
+        Alert.alert("Lỗi", "Không thể kết nối đến server. Vui lòng thử lại sau.");
+    }
+};
 
     const getProgressColor = (progress: number) => {
         if (progress === 100) return "#22C55E";
@@ -351,6 +479,13 @@ export default function LearnVocabulary() {
                                         </Text>
                                     </View>
 
+                                    {/* Balance Learn */}
+                                    <View className="bg-cyan-100 px-3 py-1 rounded-full">
+                                        <Text className="text-xs font-medium text-cyan-600">
+                                            Learn fee: {item.balance_learn || 0} amount
+                                        </Text>
+                                    </View>
+
                                     {/* Type */}
                                     <View className="bg-gray-100 px-3 py-1 rounded-full">
                                         <Text className="text-xs font-medium text-gray-600">
@@ -460,28 +595,91 @@ export default function LearnVocabulary() {
     };
     return (
         <>
-            <Stack.Screen
-                options={{
-                    title: '',
-                    headerTintColor: 'black',
-                    headerTitleStyle: { fontWeight: 'bold', fontSize: 20 },
-                    headerLeft: () => (
-                        <TouchableOpacity onPress={() => router.back()}>
-                            <Ionicons name="arrow-back" size={28} color="black" style={{ marginLeft: 10 }} />
-                        </TouchableOpacity>
-                    ),
-                }}
-            />
             <View className="flex-1 bg-gray-50">
-                {/* Header */}
-                <View className="bg-[#FFA500] from-orange-600 to-orange-600 pt-12 pb-8 px-6 shadow-lg rounded-b-3xl">
-                    <View className="flex-row items-center">
-                        <Ionicons name="book-outline" size={44} color="white" className="mr-4" />
-                        <View>
-                            <Text className="text-white text-4xl font-black">Vocabularies</Text>
-                            <Text className="text-orange-100 text-base mt-1 opacity-90">
-                                Học từ vựng theo cách của bạn
+                <View className="pt-14 pb-6 px-6 bg-white">
+
+                    <View className="flex-row items-center justify-between">
+
+                        {/* Nút Back */}
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            className="w-11 h-11 bg-gray-100 rounded-full items-center justify-center"
+                        >
+                            <Ionicons name="arrow-back" size={26} color="#2E2A47" />
+                        </TouchableOpacity>
+
+                        {/* Avatar + User Info */}
+                        <View className="flex-row items-center flex-1 justify-center">
+                            {userProfile?.avatar ? (
+                                <Image
+                                    source={{
+                                        uri: getCrmsImgEndpoint(`avatars/${userProfile.avatar}`)
+                                    }}
+                                    className="w-14 h-14 rounded-full border-4 border-white shadow-md"
+                                />
+                            ) : (
+                                <View className="w-14 h-14 bg-orange-100 rounded-full items-center justify-center">
+                                    <Ionicons name="person" size={36} color="#FF9500" />
+                                </View>
+                            )}
+
+                            <View className="ml-4">
+                                <Text className="text-black text-2xl font-bold tracking-tight">
+                                    {userProfile?.username || "User"}
+                                </Text>
+
+                                <Text className="text-gray-500 text-base">
+                                    {rank ? (
+                                        `Level: ${categoryLevel[0].level || 0} • XP: ${rank.gain_xp || 0} • Rank: ${rank.rank || '—'}`
+                                    ) : (
+                                        'Đang tải thông tin cấp bậc...'
+                                    )}
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Placeholder bên phải */}
+                        <View className="w-11" />
+                    </View>
+
+                    {/* Wallet Card */}
+                    <View className="mt-6 bg-[#FF9F1C] rounded-3xl p-6">
+                        <View className="flex-row justify-between items-center mb-6">
+                            <Text className="text-white text-2xl font-bold">
+                                My Wallet
                             </Text>
+                        </View>
+
+                        {/* Balance Topup */}
+                        <View className="bg-white/20 rounded-2xl p-5 mb-4">
+                            <View className="flex-row items-center justify-between">
+                                <View className="flex-row items-center">
+                                    <View className="w-10 h-10 bg-white/30 rounded-xl items-center justify-center mr-3">
+                                        <Ionicons name="wallet-outline" size={24} color="white" />
+                                    </View>
+                                    <Text className="text-white text-lg font-medium">Balance Topup</Text>
+                                </View>
+                                <Text className="text-white text-2xl font-bold">
+                                    {formatShortVND((userProfile?.wallet?.amountTopUp || 0))}
+                                </Text>
+                            </View>
+                            <Text className="text-white/80 text-sm mt-1">Số dư nạp tiền</Text>
+                        </View>
+
+                        {/* Balance Learn */}
+                        <View className="bg-white/20 rounded-2xl p-5">
+                            <View className="flex-row items-center justify-between">
+                                <View className="flex-row items-center">
+                                    <View className="w-10 h-10 bg-white/30 rounded-xl items-center justify-center mr-3">
+                                        <Ionicons name="book-outline" size={24} color="white" />
+                                    </View>
+                                    <Text className="text-white text-lg font-medium">Balance Learn</Text>
+                                </View>
+                                <Text className="text-white text-2xl font-bold">
+                                    {(userProfile?.wallet?.amountLearn || 0)}
+                                </Text>
+                            </View>
+                            <Text className="text-white/80 text-sm mt-1">Số dư học tập</Text>
                         </View>
                     </View>
                 </View>
@@ -587,6 +785,5 @@ export default function LearnVocabulary() {
                 </View>
             </View>
         </>
-
     );
 }

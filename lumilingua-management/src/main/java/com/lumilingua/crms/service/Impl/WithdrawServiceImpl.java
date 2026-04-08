@@ -83,16 +83,15 @@ public class WithdrawServiceImpl implements WithdrawService {
     }
 
     @Override
-    public Result<BigDecimal> getSummaryWithdrawByEmailAndStatus(WithdrawRequest request) {
-        LOG.info("Get summary withdraw success for user email: {}", request.getEmail());
+    public Result<BigDecimal> getSummaryWithdrawByEmailAndStatus(String email, WithdrawStatusEnum status) {
+        LOG.info("Get summary withdraw success for user email: {}", email);
 
-        User user = userRepository.findUserByEmail(request.getEmail())
+        User user = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Unable to get user by email '%s'".formatted(request.getEmail())));
-//        BigDecimal total = withdrawRepository.findTotalWithdrawSuccess(user.getIdUser(),request.getStatus());
-//        LOG.info("Total withdraw success for user {}: {}", user.getIdUser(), total);
-//        return Result.get(total);
-        return null;
+                        "Unable to get user by email '%s'".formatted(email)));
+        BigDecimal total = withdrawRepository.findTotalWithdrawByStatusAndIdUser(user.getIdUser(), status);
+        LOG.info("Total withdraw success for user {}: {}", user.getIdUser(), total);
+        return Result.get(total);
     }
 
     @Override
