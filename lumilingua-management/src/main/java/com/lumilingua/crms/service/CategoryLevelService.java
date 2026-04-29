@@ -10,6 +10,7 @@ public interface CategoryLevelService {
 //  Role Admin
     Result<CategoryLevelResponse> createCategoryLevel(CategoryLevelRequest request);
     Result<List<CategoryLevelResponse>> getAllCategoryLevel();
+    Result<List<CategoryLevelResponse>> getCategoryLevelByStatus();
     Result<CategoryLevelResponse> getCategoryLevelById(long id);
     Result<CategoryLevelResponse> updateCategoryLevelById(long id, CategoryLevelRequest categoryLevelRequest);
     Result<CategoryLevelResponse> deleteCategoryLevelById(long id);

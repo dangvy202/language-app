@@ -28,6 +28,7 @@ export default function Index() {
     { text: string; route: string; isUser?: boolean; price?: string }[]
   >([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const [learnedBalance, setLearnedBalance] = useState(1240);
   const [topupBalance, setTopupBalance] = useState(45009);
@@ -150,10 +151,11 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={{ paddingBottom: 15 }}>
         <LinearGradient colors={['#FFB703', '#FB8500']}>
           <View style={styles.header}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowMenu(true)}>
               <Ionicons name="menu" size={28} color="#fff" />
             </TouchableOpacity>
 
@@ -193,6 +195,7 @@ export default function Index() {
         </LinearGradient>
       </View>
 
+      {/* Balance Cards */}
       <View style={styles.balanceContainer}>
         <View style={styles.balanceCard}>
           <View style={styles.balanceIcon}>
@@ -207,7 +210,7 @@ export default function Index() {
         <TouchableOpacity
           style={styles.balanceCard}
           activeOpacity={0.85}
-          onPress={() => router.push('/topup')}
+          onPress={() => router.push('/(tabs)/wallet')}
         >
           <View style={styles.balanceIcon}>
             <Ionicons name="wallet" size={28} color="#FF5722" />
@@ -222,6 +225,7 @@ export default function Index() {
         </TouchableOpacity>
       </View>
 
+      {/* Main Content */}
       <ScrollView
         style={styles.body}
         showsVerticalScrollIndicator={false}
@@ -335,6 +339,7 @@ export default function Index() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Notification Dialog */}
       {showDialog && (
         <View style={styles.notificationDialogOverlay}>
           <View style={styles.notificationDialog}>
@@ -392,6 +397,75 @@ export default function Index() {
                 <Text style={styles.markAllReadText}>Đánh dấu tất cả đã đọc</Text>
               </TouchableOpacity>
             )}
+          </View>
+        </View>
+      )}
+
+      {/* ==================== MENU HAMBURGER ĐÃ LÀM ĐẸP ==================== */}
+      {showMenu && (
+        <View style={styles.menuOverlay}>
+          {/* Backdrop */}
+          <TouchableOpacity 
+            style={styles.menuBackdrop} 
+            activeOpacity={1}
+            onPress={() => setShowMenu(false)} 
+          />
+
+          {/* Menu Container */}
+          <View style={styles.menuContainer}>
+            {/* Menu Header with Gradient */}
+            <LinearGradient 
+              colors={['#fb5800', '#fb5800']} 
+              style={styles.menuHeader}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={styles.menuHeaderTitle}>Menu</Text>
+                <TouchableOpacity onPress={() => setShowMenu(false)} hitSlop={10}>
+                  <Ionicons name="close" size={28} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.menuHeaderSubtitle}>LumiLingua</Text>
+            </LinearGradient>
+
+            {/* Menu Items */}
+            <View style={styles.menuContent}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  setShowMenu(false);
+                  router.push('/ShopBalanceLearn');
+                }}
+              >
+                <Ionicons name="book-outline" size={26} color="#FFB703" />
+                <Text style={styles.menuItemText}>Shop of Balance Learn</Text>
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  setShowMenu(false);
+                  router.push('/ShopBalanceTopup');
+                }}
+              >
+                <Ionicons name="wallet-outline" size={26} color="#FF5722" />
+                <Text style={styles.menuItemText}>Shop of Balance Topup</Text>
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+              
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  setShowMenu(false);
+                  router.push('/Advertisement');
+                }}
+              >
+                <Ionicons name="megaphone-outline" size={26} color="#62b807" />
+                <Text style={styles.menuItemText}>Advertisement for receive balance learn</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
@@ -470,4 +544,72 @@ const styles = StyleSheet.create({
   emptySubText: { fontSize: 14, color: '#aaa', textAlign: 'center', marginTop: 6, paddingHorizontal: 40 },
   markAllReadButton: { paddingVertical: 14, backgroundColor: '#f8f8f8', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#eee' },
   markAllReadText: { color: '#FB8500', fontWeight: '600', fontSize: 15 },
+
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1100,
+  },
+  menuBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: 300,
+    backgroundColor: '#fff',
+    borderTopRightRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 10, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 25,
+    elevation: 20,
+    overflow: 'hidden',
+  },
+  menuHeader: {
+    paddingTop: Platform.OS === 'android' ? 55 : 65,
+    paddingBottom: 25,
+    paddingHorizontal: 25,
+  },
+  menuHeaderTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  menuHeaderSubtitle: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 4,
+  },
+  menuContent: {
+    flex: 1,
+    paddingTop: 12,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 30,
+  },
+  menuItemText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 18,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
+    marginHorizontal: 25,
+  },
 });

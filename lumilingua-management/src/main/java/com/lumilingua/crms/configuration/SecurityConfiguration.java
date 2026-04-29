@@ -35,6 +35,7 @@ public class SecurityConfiguration implements WebMvcConfigurer {
                                 "/api/v1/user/info/**",
                                 "/avatars/**",
                                 "/uploads/**",
+                                "/categories/**",
                                 "/ws/**"
                         ).permitAll()
 //                        .requestMatchers("/api/v1/**").permitAll()

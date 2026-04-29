@@ -191,7 +191,7 @@ public class WalletServiceImpl implements WalletService {
             return Result.badRequestError("The fee must be greater than 0");
         }
         if(wallet.getAmountLearn().compareTo(request.getAmtFee()) < 0){
-            return Result.badRequestError("Insufficient balance");
+            return Result.badRequestError("The amount in wallet does not enough");
         }
         wallet.setAmountLearn(wallet.getAmountLearn().subtract(request.getAmtFee()));
         walletRepository.save(wallet);

@@ -30,6 +30,13 @@ public class CategoryLevelController {
         return new ResponseEntity<>(results, HttpStatus.OK);
     }
 
+    @GetMapping("/status")
+    public ResponseEntity<Result<List<CategoryLevelResponse>>> getAllCategoryLevelByStatusActive() {
+        LOG.info("Call api get all category level '%s' by controller".formatted("/api/v1/category-level/status"));
+        Result<List<CategoryLevelResponse>> results = categoryLevelService.getCategoryLevelByStatus();
+        return new ResponseEntity<>(results, HttpStatus.OK);
+    }
+
     @GetMapping("/id")
     public ResponseEntity<Result<CategoryLevelResponse>> getCategoryById(@RequestParam("id") long id) {
         LOG.info("Call api get category level by id '%s'".formatted("/api/v1/category-level/id?id=" + id));

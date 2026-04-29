@@ -4,10 +4,16 @@ package com.lumilingua.crms.dto.requests;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 @AllArgsConstructor
 public class CategoryLevelRequest {
     private String nameCategoryLevel;
     private String description;
-    private float price;
+    private BigDecimal price;
+    private int saleOff;
+    private String expiredDate;
+    private String status;
+    private String imgPath;
 }

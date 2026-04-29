@@ -928,3 +928,33 @@ export const fetchTotalWithdraw = async (status: string) => {
         return 0;
     }
 };
+
+export const fetchCategoriesByStatusActive = async () => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+    const email = await AsyncStorage.getItem("email");
+
+    if (!token || !email) return null;
+
+    const url = getCrmsEndpoint(`v1/category-level/status`);
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch categories");
+    }
+
+    const result = await res.json();
+    return result.data;
+
+  } catch (err) {
+    console.log("Fetch categories error:", err);
+    return null;
+  }
+};

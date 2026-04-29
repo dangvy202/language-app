@@ -9,9 +9,13 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.factory.Mappers;
 
+import java.math.BigDecimal;
+
 @Mapper(componentModel = "spring")
 public interface CategoryLevelMapper {
     CategoryLevelMapper INSTANT = Mappers.getMapper(CategoryLevelMapper.class);
+
+    CategoryLevel toCategoryLevelEntity(String nameCategoryLevel, String description, BigDecimal price, BigDecimal actualPrice, int saleOff, String expiredDate);
 
     CategoryLevel toCategoryLevelEntity(CategoryLevelRequest request);
 

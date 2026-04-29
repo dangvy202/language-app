@@ -293,7 +293,7 @@ export default function LearnVocabulary() {
         } else {
             Alert.alert(
                 "Thất bại", 
-                result?.message || result?.notification || "Không đủ số dư hoặc xảy ra lỗi."
+                result?.notification || "Không đủ số dư hoặc xảy ra lỗi."
             );
         }
     } catch (err) {
