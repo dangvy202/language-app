@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCrmsEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
-import { fetchCategoriesByStatusActive, fetchUserProfile } from '@/services/api';
+import { fetchCategoriesByStatusActive, fetchUserProfile, purchasePackageApi } from '@/services/api';
 import Loading from '@/component/loading';
 
 export default function ShopBalanceLearn() {
@@ -124,7 +124,7 @@ export default function ShopBalanceLearn() {
 
         const categories = await fetchCategoriesByStatusActive();
         const mappedPlans = categories.map((item: any) => ({
-          id: item.nameCategoryLevel,
+          id: item.idCategoryLevel,
           title: item.nameCategoryLevel,
           subtitle: item.description,
           price: item.actualPrice ?? item.price ?? 0,
@@ -149,6 +149,35 @@ export default function ShopBalanceLearn() {
 
     fetchData();
   }, []);
+
+  const handlePurchase = async () => {
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+
+      if (!selectedPlanData) {
+        Alert.alert("Lỗi", "Chưa chọn gói");
+        return;
+      }
+
+      const request = {
+        walletId: await AsyncStorage.getItem('walletId'),
+        packageCategoryId: selectedPlanData.id,
+        amtType: 'AMT_LEARN',
+      };
+
+      await purchasePackageApi(request, token);
+
+      Alert.alert("Thành công", "Mua gói thành công 🎉");
+
+      const userProfile = await fetchUserProfile();
+      setWalletBalance(userProfile.wallet?.amountLearn ?? 0);
+
+    } catch (err: any) {
+      Alert.alert("Lỗi", err.message);
+      console.log(err.message);
+    }
+  };
 
   const selectedPlanData = plans.find((p) => p.id === selectedPlan);
   const priceNumber = selectedPlanData?.price || 0;
@@ -261,6 +290,7 @@ export default function ShopBalanceLearn() {
       <View style={styles.bottomBar}>
         <TouchableOpacity
           disabled={missing > 0}
+          onPress={handlePurchase} 
           style={[
             styles.buyBtn,
             missing > 0 && { backgroundColor: '#ccc' },

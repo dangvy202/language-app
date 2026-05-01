@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -44,8 +45,8 @@ public class CategoryLevelController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @PostMapping
-    public ResponseEntity<Result<CategoryLevelResponse>> createCategoryLevel(@RequestBody CategoryLevelRequest categoryLevelRequest) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Result<CategoryLevelResponse>> createCategoryLevel(@ModelAttribute CategoryLevelRequest categoryLevelRequest) {
         LOG.info("Call api create category level '%s' by controller".formatted("/api/v1/category-level"));
         Result<CategoryLevelResponse> result = categoryLevelService.createCategoryLevel(categoryLevelRequest);
         if(result.code == ResultApiConstant.StatusCode.CREATED) {

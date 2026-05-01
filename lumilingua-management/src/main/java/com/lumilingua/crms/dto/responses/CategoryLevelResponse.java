@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 @Setter
 @AllArgsConstructor
 public class CategoryLevelResponse {
+    private long idCategoryLevel;
     private String nameCategoryLevel;
     private String description;
     private BigDecimal price;

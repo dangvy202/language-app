@@ -118,6 +118,7 @@ export default function Login() {
             await AsyncStorage.setItem('refreshToken', response.data.refreshToken || '');
             await AsyncStorage.setItem('expired', String(response.data.expired || Date.now() + 900000));
             await AsyncStorage.setItem('username', response.data.information.username);
+            await AsyncStorage.setItem('walletId', response.data.information.walletId);
             await AsyncStorage.setItem('email', response.data.information.email);
             await AsyncStorage.setItem('idUser', String(response.data.information.idUser || ''));
             await AsyncStorage.setItem('phone', response.data.information.phone);

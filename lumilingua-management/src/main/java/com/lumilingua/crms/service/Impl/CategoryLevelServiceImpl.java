@@ -1,11 +1,13 @@
 package com.lumilingua.crms.service.Impl;
 
 import com.lumilingua.crms.common.DateTimeUtils;
+import com.lumilingua.crms.constant.CrmsConstant;
 import com.lumilingua.crms.dto.Result;
 import com.lumilingua.crms.dto.requests.CategoryLevelRequest;
 import com.lumilingua.crms.dto.responses.CategoryLevelResponse;
 import com.lumilingua.crms.entity.CategoryLevel;
 import com.lumilingua.crms.enums.StatusEnum;
+import com.lumilingua.crms.helper.Helper;
 import com.lumilingua.crms.mapper.CategoryLevelMapper;
 import com.lumilingua.crms.repository.CategoryLevelRepository;
 import com.lumilingua.crms.service.CategoryLevelService;
@@ -35,8 +37,15 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             CategoryLevel categoryLevelEntityMapper = CategoryLevelMapper.INSTANT.toCategoryLevelEntity(
                     request.getNameCategoryLevel(), request.getDescription(),
-                    request.getPrice(), priceAfterDiscount, Integer.parseInt(String.valueOf(request.getSaleOff())),
+                    request.getPrice(), request.getPrice().subtract(priceAfterDiscount), Integer.parseInt(String.valueOf(request.getSaleOff())),
                     request.getExpiredDate());
+            String fileName = Helper.uploadFile(request.getImgPath(), CrmsConstant.Directory.CATEGORY_DIR);
+
+            if(fileName == null) {
+                return Result.serverError("Unable upload file, try again");
+            }
+            categoryLevelEntityMapper.setImgPath(fileName);
+            categoryLevelEntityMapper.setStatus(StatusEnum.ACTIVE);
             CategoryLevel categoryLevel = categoryLevelRepository.save(categoryLevelEntityMapper);
             LOG.info("Create category level is SUCCESS!");
             CategoryLevelResponse response = CategoryLevelMapper.INSTANT.toCategoryLevelResponse(categoryLevel);
@@ -97,8 +106,16 @@ public class CategoryLevelServiceImpl implements CategoryLevelService {
         try {
             LOG.info("Update category level by id in service is SUCCESS!");
             BigDecimal priceAfterDiscount = categoryLevelRequest.getPrice().multiply(BigDecimal.valueOf(categoryLevelRequest.getSaleOff()))
-                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);CategoryLevel categoryLevelMapper = CategoryLevelMapper.INSTANT.updateCategoryLevelFromRequest(categoryLevelRequest, categoryLevel);
-            categoryLevelMapper.setActualPrice(priceAfterDiscount);
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            String fileName = Helper.uploadFile(categoryLevelRequest.getImgPath(), CrmsConstant.Directory.CATEGORY_DIR);
+
+            if(fileName == null) {
+                return Result.serverError("Unable upload file, try again");
+            }
+            CategoryLevel categoryLevelMapper = CategoryLevelMapper.INSTANT.updateCategoryLevelFromRequest(categoryLevelRequest, categoryLevel);
+            categoryLevelMapper.setImgPath(fileName);
+            categoryLevelMapper.setActualPrice(categoryLevelRequest.getPrice().subtract(priceAfterDiscount));
             categoryLevelRepository.save(categoryLevelMapper);
             return Result.update();
         } catch (Exception ex) {

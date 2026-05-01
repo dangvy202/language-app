@@ -142,7 +142,7 @@ public class WalletServiceImpl implements WalletService {
         if(request.getAmtType() == AmountEnum.AMT_LEARN) {
             if(wallet.getAmountLearn().compareTo(categoryLevel.getPrice()) > 0) {
                 // set and update wallet
-                wallet.setAmountLearn(wallet.getAmountLearn().subtract(categoryLevel.getPrice()));
+                wallet.setAmountLearn(wallet.getAmountLearn().subtract(categoryLevel.getActualPrice()));
                 walletRepository.save(wallet);
                 // set and update user
                 user.setIdCategoryLevel(Integer.parseInt(String.valueOf(categoryLevel.getIdCategoryLevel())));

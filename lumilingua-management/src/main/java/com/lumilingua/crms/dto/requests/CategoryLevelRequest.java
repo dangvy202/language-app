@@ -3,6 +3,7 @@ package com.lumilingua.crms.dto.requests;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 
@@ -15,5 +16,5 @@ public class CategoryLevelRequest {
     private int saleOff;
     private String expiredDate;
     private String status;
-    private String imgPath;
+    private MultipartFile imgPath;
 }
