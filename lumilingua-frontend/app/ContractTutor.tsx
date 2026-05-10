@@ -18,6 +18,7 @@ import { fetchTotalWithdraw, fetchUserProfile, negotiateContractStaff } from "@/
 import { Contract } from "@/interfaces/interfaces";
 import Loading from "@/component/loading";
 import { Modal, TextInput } from "react-native";
+import { connectSocket, disconnectSocket } from '@/services/webSocket';
 
 
 const getStatusColor = (status: string) => {
@@ -50,6 +51,12 @@ const ContractTutor = () => {
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
     const [newFee, setNewFee] = useState("");
     const [totalWithdraw, setTotalWithdraw] = useState<number>(0);
+    const [notifications, setNotifications] = useState(0);
+    const [notificationList, setNotificationList] = useState<
+        { text: string; route: string; isUser?: boolean; price?: string }[]
+    >([]);
+
+    const [showDialog, setShowDialog] = useState(false);
 
     const refreshTokenApi = async (refreshToken: string) => {
         const endpoint = getCrmsEndpoint("v1/user/refresh");
@@ -122,6 +129,52 @@ const ContractTutor = () => {
         init();
     }, []);
 
+    useEffect(() => {
+        const setupSocket = async () => {
+            const idUser = await AsyncStorage.getItem("idUser");
+            if (!idUser) return;
+
+            connectSocket(idUser, (rawMessage) => {
+                let messageText = "Có thông báo mới về hợp đồng";
+                let route = "/ContractStudent";
+                let isUser = true;
+                let price = null;
+
+                try {
+                    const parsed = typeof rawMessage === 'string'
+                        ? JSON.parse(rawMessage)
+                        : rawMessage;
+
+                    messageText = parsed.message || messageText;
+                    isUser = parsed.isUser !== undefined ? parsed.isUser : true;
+                    price = parsed.price;
+
+                    route = isUser ? "/ContractStudent" : "/ContractTutor";
+                } catch (e) {
+                    messageText = String(rawMessage);
+                }
+
+                setNotifications((prev) => prev + 1);
+
+                setNotificationList((prev) => [
+                    {
+                        text: messageText,
+                        route: route,
+                        isUser: isUser,
+                        price: price
+                    },
+                    ...prev
+                ]);
+            });
+        };
+
+        setupSocket();
+
+        return () => {
+            disconnectSocket();
+        };
+    }, []);
+
     const fetchContracts = async () => {
         setLoading(true);
 
@@ -162,6 +215,17 @@ const ContractTutor = () => {
             currency: 'VND',
             maximumFractionDigits: 0,
         }).format(amount);
+    };
+
+    const formatVNDNotification = (price?: string | number) => {
+        if (!price) return '';
+        const num = typeof price === 'string' ? parseFloat(price) : price;
+        if (isNaN(num) || num === 0) return '';
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+            maximumFractionDigits: 0,
+        }).format(num);
     };
 
     const formatDate = (dateString: string) => {
@@ -248,6 +312,15 @@ const ContractTutor = () => {
                             <Ionicons name="chevron-back" size={28} color="#1F2937" />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle}>Hợp đồng giảng viên</Text>
+                        <TouchableOpacity style={{ position: "relative" }} onPress={() => setShowDialog(true)}>
+                            <Ionicons name="notifications-outline" size={28} color="#ff6600" />
+
+                            {notifications > 0 && (
+                                <View style={styles.notificationBadge}>
+                                    <Text style={styles.notificationText}>{notifications}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
                     </View>
 
                     {/* Main Projection Card */}
@@ -615,7 +688,70 @@ const ContractTutor = () => {
                     </View>
                 </Modal>
             </LinearGradient>
+            {/* Notification Dialog */}
+            {showDialog && (
+                <View style={styles.notificationDialogOverlay}>
+                    <View style={styles.notificationDialog}>
+                        <View style={styles.dialogHeader}>
+                            <Text style={styles.dialogTitle}>Notifications</Text>
+                            <TouchableOpacity onPress={() => { setShowDialog(false); setNotifications(0); }} hitSlop={10}>
+                                <Ionicons name="close" size={28} color="#333" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.notificationList} showsVerticalScrollIndicator={false}>
+                            {notificationList.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <Ionicons name="notifications-off-outline" size={60} color="#ccc" />
+                                    <Text style={styles.emptyText}>Không có thông báo nào</Text>
+                                    <Text style={styles.emptySubText}>Bạn sẽ nhận được thông báo khi có cập nhật hợp đồng</Text>
+                                </View>
+                            ) : (
+                                notificationList.map((item, index) => (
+                                    <TouchableOpacity
+                                        key={index}
+                                        style={styles.notificationItem}
+                                        activeOpacity={0.7}
+                                        onPress={() => {
+                                            setShowDialog(false);
+                                            setNotifications(0);
+                                            if (item.route) router.push(item.route as any);
+                                        }}
+                                    >
+                                        <View style={styles.notificationIcon}>
+                                            <Ionicons name="document-text-outline" size={24} color="#FB8500" />
+                                        </View>
+                                        <View style={styles.notificationContent}>
+                                            <Text style={styles.notificationTextDialog}>
+                                                {item.text}
+                                                {formatVNDNotification(item.price)}
+                                            </Text>
+                                            <Text style={styles.notificationTime}>Vừa xong</Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={20} color="#999" />
+                                    </TouchableOpacity>
+                                ))
+                            )}
+                        </ScrollView>
+
+                        {notificationList.length > 0 && (
+                            <TouchableOpacity
+                                style={styles.markAllReadButton}
+                                onPress={() => {
+                                    setNotificationList([]);
+                                    setNotifications(0);
+                                    setShowDialog(false);
+                                }}
+                            >
+                                <Text style={styles.markAllReadText}>Đánh dấu tất cả đã đọc</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+            )}
         </View>
+
+
     );
 };
 
@@ -641,6 +777,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 70,
+        justifyContent: 'space-between',
         marginBottom: 25,
     },
     backButton: {
@@ -652,7 +789,9 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: '700',
         color: '#1F2937',
-        marginLeft: 20,
+        textAlign: 'left',
+        flex: 1,
+        marginLeft: 20
     },
 
     // Main Card
@@ -1082,6 +1221,24 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: "center"
     },
+
+    notificationBadge: { position: "absolute", top: -5, right: -5, backgroundColor: "red", borderRadius: 10, minWidth: 18, height: 18, justifyContent: "center", alignItems: "center", paddingHorizontal: 4 },
+    notificationText: { color: "white", fontSize: 11, fontWeight: "bold" },
+
+    notificationDialogOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", zIndex: 1000 },
+    notificationDialog: { width: "88%", maxHeight: "70%", backgroundColor: "white", borderRadius: 20, overflow: "hidden", shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 15 },
+    dialogHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    dialogTitle: { fontSize: 20, fontWeight: '700', color: '#333' },
+    notificationList: { maxHeight: 420 },
+    notificationItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
+    notificationIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFF8E1', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+    notificationContent: { flex: 1 },
+    notificationTextDialog: { fontSize: 15, color: '#000000', lineHeight: 22, fontWeight: '600' },
+    notificationTime: { fontSize: 12, color: '#999', marginTop: 4 },
+
+    emptySubText: { fontSize: 14, color: '#aaa', textAlign: 'center', marginTop: 6, paddingHorizontal: 40 },
+    markAllReadButton: { paddingVertical: 14, backgroundColor: '#f8f8f8', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#eee' },
+    markAllReadText: { color: '#FB8500', fontWeight: '600', fontSize: 15 },
 });
 
 export default ContractTutor;

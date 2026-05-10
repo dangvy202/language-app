@@ -194,6 +194,22 @@ export default function RootLayout() {
             </Text>
           </TouchableOpacity>
 
+          {/* Dictionary */}
+          <TouchableOpacity
+            className="bg-orange-50 p-5 rounded-2xl mb-5 flex-row items-center shadow-sm"
+            onPress={() => {
+              closeOptionSheet();
+              setTimeout(() => {
+                router.push('/Dictionary');
+              }, 200);
+            }}
+          >
+            <Ionicons name="library-outline" size={28} color="#FFA500" />
+            <Text className="ml-4 text-lg font-medium text-[#2E2A47]">
+              Dictionary
+            </Text>
+          </TouchableOpacity>
+
           {/* Social */}
           <TouchableOpacity
             className="bg-orange-50 p-5 rounded-2xl flex-row items-center shadow-sm"
