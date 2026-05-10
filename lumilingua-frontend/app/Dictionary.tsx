@@ -4,7 +4,6 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    FlatList,
     ActivityIndicator,
     StyleSheet,
     SafeAreaView,
@@ -20,8 +19,10 @@ type TranslationResult = {
 export default function DictionaryScreen() {
     const [word, setWord] = useState("");
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<TranslationResult | null>(null)
+    const [result, setResult] = useState<TranslationResult | null>(null);
     const [error, setError] = useState("");
+    const [fromLang, setFromLang] = useState("en");
+    const [toLang, setToLang] = useState("vi");
 
     const translateWord = async () => {
         if (!word.trim()) return;
@@ -30,16 +31,33 @@ export default function DictionaryScreen() {
             setLoading(true);
             setError("");
 
+            // Detect Vietnamese text
+            const isVietnamese =
+                /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(
+                    word
+                );
+
+            const fromLang = isVietnamese ? "vi" : "en";
+            const toLang = isVietnamese ? "en" : "vi";
+
             const response = await fetch(
-                `https://api.mymemory.translated.net/get?q=${word}&langpair=en|vi`
+                `https://api.mymemory.translated.net/get?q=${word}&langpair=${fromLang}|${toLang}`
             );
 
             const data = await response.json();
 
+            const bestMatch =
+            data.responseData?.translatedText ||
+            data.matches?.[1]?.translation ||
+            "";
             setResult({
                 original: word,
-                translated: data.responseData.translatedText,
+                translated: bestMatch,
             });
+
+            console.log("bestMatch", bestMatch)
+            console.log("data: ", data)
+            console.log()
         } catch (err) {
             setError("Failed to translate word");
         } finally {
@@ -51,46 +69,75 @@ export default function DictionaryScreen() {
         <>
             <Stack.Screen
                 options={{
-                    title: 'Dictionary',
-                    headerTintColor: 'black',
-                    headerTitleStyle: { fontWeight: 'bold', fontSize: 20 },
+                    title: "Dictionary",
+                    headerTintColor: "black",
+                    headerTitleStyle: {
+                        fontWeight: "bold",
+                        fontSize: 20,
+                    },
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => router.back()}>
-                            <Ionicons name="arrow-back" size={28} color="black" style={{ marginLeft: 10 }} />
+                            <Ionicons
+                                name="arrow-back"
+                                size={28}
+                                color="black"
+                                style={{ marginLeft: 10 }}
+                            />
                         </TouchableOpacity>
                     ),
                 }}
             />
+
             <SafeAreaView style={styles.container}>
 
                 {/* Search Box */}
                 <View style={styles.searchContainer}>
-                    <Ionicons name="search-outline" size={22} color="#888" />
-
-                    <TextInput
-                        placeholder="Search English word..."
-                        value={word}
-                        onChangeText={setWord}
-                        style={styles.input}
-                        placeholderTextColor="#999"
+                    <Ionicons
+                        name="search-outline"
+                        size={22}
+                        color="#888"
                     />
 
-                    <TouchableOpacity style={styles.button} onPress={translateWord}>
-                        <Ionicons name="arrow-forward-outline" size={22} color="#fff" />
+                    <TextInput
+                        placeholder="Search word..."
+                        value={word}
+                        onChangeText={(text) => {
+                            setWord(text);
+                            setResult(null);
+                        }}
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                        onSubmitEditing={translateWord}
+                    />
+
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={translateWord}
+                    >
+                        <Ionicons
+                            name="arrow-forward-outline"
+                            size={22}
+                            color="#fff"
+                        />
                     </TouchableOpacity>
                 </View>
 
                 {/* Loading */}
                 {loading && (
                     <View style={styles.centerContainer}>
-                        <ActivityIndicator size="large" color="#FFA500" />
+                        <ActivityIndicator
+                            size="large"
+                            color="#FFA500"
+                        />
                     </View>
                 )}
 
                 {/* Error */}
                 {!!error && (
                     <View style={styles.errorBox}>
-                        <Text style={styles.errorText}>{error}</Text>
+                        <Text style={styles.errorText}>
+                            {error}
+                        </Text>
                     </View>
                 )}
 
@@ -98,16 +145,23 @@ export default function DictionaryScreen() {
                 {result && !loading && (
                     <View style={styles.resultCard}>
                         <View style={styles.wordRow}>
-                            <Text style={styles.word}>{result.original}</Text>
+
+                            <Text style={styles.word}>
+                                {result.original}
+                            </Text>
                         </View>
 
-                        <Text style={styles.label}>Vietnamese Meaning</Text>
+                        <Text style={styles.label}>
+                            Translation
+                        </Text>
 
-                        <Text style={styles.translation}>{result.translated}</Text>
+                        <Text style={styles.translation}>
+                            {result.translated}
+                        </Text>
                     </View>
                 )}
 
-                {/* Suggestion UI */}
+                {/* Empty State */}
                 {!result && !loading && (
                     <View style={styles.emptyContainer}>
                         <Ionicons
@@ -116,12 +170,17 @@ export default function DictionaryScreen() {
                             color="#D1D5DB"
                         />
 
-                        <Text style={styles.emptyTitle}>Search Any Word</Text>
+                        <Text style={styles.emptyTitle}>
+                            Search Any Word
+                        </Text>
+
+                        <Text style={styles.emptySubtitle}>
+                            Auto detect English ↔ Vietnamese
+                        </Text>
                     </View>
                 )}
             </SafeAreaView>
         </>
-
     );
 }
 
@@ -131,19 +190,6 @@ const styles = StyleSheet.create({
         backgroundColor: "#F5F7FB",
         paddingHorizontal: 20,
         paddingTop: 20,
-    },
-
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 25,
-    },
-
-    headerTitle: {
-        fontSize: 28,
-        fontWeight: "700",
-        marginLeft: 10,
-        color: "#111827",
     },
 
     searchContainer: {
@@ -161,7 +207,7 @@ const styles = StyleSheet.create({
         },
         shadowRadius: 8,
         elevation: 4,
-        marginTop: 20
+        marginTop: 20,
     },
 
     input: {
@@ -175,7 +221,7 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: 12,
-        backgroundColor: "#ffa600",
+        backgroundColor: "#FFA500",
         justifyContent: "center",
         alignItems: "center",
     },
@@ -222,7 +268,7 @@ const styles = StyleSheet.create({
     translation: {
         fontSize: 24,
         fontWeight: "600",
-        color: "#ff9900",
+        color: "#FFA500",
     },
 
     emptyContainer: {
