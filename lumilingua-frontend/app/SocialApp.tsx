@@ -12,13 +12,13 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
     FlatList,
-    Image,
     RefreshControl,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Image } from 'expo-image';
 
 import {
     getCrmsEndpoint,

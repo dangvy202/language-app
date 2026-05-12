@@ -6,12 +6,12 @@ import { useEffect, useState } from 'react';
 import {
     Alert,
     FlatList,
-    Image,
     RefreshControl,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
+import { Image } from 'expo-image';
 
 import Notfound from '@/component/404';
 import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";

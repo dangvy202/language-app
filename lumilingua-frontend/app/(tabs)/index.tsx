@@ -4,15 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from "react";
 import {
-  Image,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import Loading from '@/component/loading';
 import { fetchUserCache, saveOrUpdateUserCache } from '@/services/api';
 import useFetch from '@/services/useFetch';

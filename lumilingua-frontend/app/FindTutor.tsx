@@ -10,7 +10,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
     Alert,
     FlatList,
-    Image,
     Modal,
     ScrollView,
     StyleSheet,
@@ -19,6 +18,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { Image } from 'expo-image';
 import { GestureHandlerRootView, PinchGestureHandler, State } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 

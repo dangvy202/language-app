@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import {
   Alert,
   Dimensions,
-  Image,
   ImageBackground,
   Modal,
   ScrollView,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';

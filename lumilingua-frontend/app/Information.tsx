@@ -3,11 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Image } from 'expo-image';
 
 // Giả lập data từ BE (sau này thay bằng state từ API hoặc context)
 const mockUser = {

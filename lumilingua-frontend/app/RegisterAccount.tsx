@@ -6,12 +6,12 @@ import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Image,
     KeyboardAvoidingView, Platform, ScrollView,
     StyleSheet,
     Text, TextInput, TouchableOpacity,
     View
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCrmsEndpoint, getClientEndpoint } from "@/constants/configApi";
 

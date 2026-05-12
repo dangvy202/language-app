@@ -7,10 +7,10 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Image,
   Platform,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCrmsEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
 import { fetchCategoriesByStatusActive, fetchUserProfile, purchasePackageApi } from '@/services/api';
