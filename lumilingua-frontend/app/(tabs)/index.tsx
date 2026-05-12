@@ -164,6 +164,11 @@ export default function Index() {
               <Text style={styles.streakText}>{streak} ngày</Text>
             </View>
 
+            <View style={styles.vipBadge}>
+              <Ionicons name="diamond" size={16} color="#28d5f7" />
+              <Text style={styles.vipText}>VIP</Text>
+            </View>
+
             <TouchableOpacity style={{ position: "relative" }} onPress={() => setShowDialog(true)}>
               <Ionicons name="notifications-outline" size={28} color="#fff" />
 
@@ -226,118 +231,163 @@ export default function Index() {
       </View>
 
       {/* Main Content */}
+      {/* ================= SHOP SECTION ================= */}
+
+      <Text style={styles.title}>Shop</Text>
+
       <ScrollView
-        style={styles.body}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.shopScroll}
       >
-        <View style={styles.searchWrapper}>
-          <Ionicons name="search-outline" size={20} color="#999" />
-          <TextInput
-            placeholder="Tìm ngôn ngữ hoặc khóa học..."
-            placeholderTextColor="#999"
-            style={styles.searchInput}
-          />
-        </View>
+        {/* BALANCE LEARN */}
+        <TouchableOpacity
+          style={styles.shopCard}
+          activeOpacity={0.9}
+          onPress={() => router.push('/ShopBalanceLearn')}
+        >
+          <LinearGradient
+            colors={['#FFD54F', '#FFB300']}
+            style={styles.shopGradient}
+          >
+            <Image
+              source={{
+                uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135755.png',
+              }}
+              style={styles.shopImage}
+            />
 
-        <Text style={styles.title}>Categories</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
-          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
-            <Ionicons name="book-outline" size={24} color="#FFA500" />
-            <Text style={styles.activeCategoryText}>Grammar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]} onPress={() => router.push('/course/vocabulary')}>
-            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#FFA500" />
-            <Text style={styles.activeCategoryText}>Vocabulary</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
-            <Ionicons name="chatbubbles-outline" size={24} color="#FFA500" />
-            <Text style={styles.activeCategoryText}>Phrases</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
-            <Ionicons name="mic-outline" size={24} color="#FFA500" />
-            <Text style={styles.activeCategoryText}>Pronunciation</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.categoryTab, styles.activeCategoryTab]}>
-            <Ionicons name="ear-outline" size={24} color="#FFA500" />
-            <Text style={styles.activeCategoryText}>Listening</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            <View>
+              <Text style={styles.shopTitle}>
+                Balance Learn
+              </Text>
 
-        <Text style={styles.title}>Your course</Text>
-        <View style={styles.coursesContainer}>
-          <TouchableOpacity style={styles.course}>
-            <LinearGradient colors={['#FFECB3', '#FFE082']} style={{ padding: 20 }}>
-              <View style={styles.courseHeader}>
-                <Text style={styles.courseFlag}>🇬🇧</Text>
-                <Text style={styles.courseTitle}>Tiếng Anh Cơ Bản</Text>
-              </View>
-              <Text style={styles.analysisTitle}>Hoàn thành 45%</Text>
-              <View style={styles.learnedAnalysis}>
-                <View style={{ width: '45%', height: '100%', backgroundColor: '#FFA500', borderRadius: 4 }} />
-              </View>
-              <TouchableOpacity style={styles.continueButton}>
-                <Text style={styles.continueText}>Tiếp tục</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
+              <Text style={styles.shopSubtitle}>
+                Exchange XP rewards
+              </Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        <Text style={styles.title}>Teacher Suggest</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.teachersScroll}>
-          <TouchableOpacity style={styles.teacherCard}>
-            <LinearGradient colors={['#FFF8E1', '#FFE082']} style={styles.teacherGradient}>
-              <View style={styles.teacherAvatarContainer}>
-                <Image source={{ uri: 'https://thumbs.dreamstime.com/z/charming-vector-illustration-featuring-two-variations-cute-chibi-style-female-character-depicted-dark-hair-395145253.jpg' }} style={styles.teacherAvatar} />
-                <View style={styles.onlineBadge}>
-                  <Text style={styles.onlineText}>Online</Text>
-                </View>
-              </View>
-              <Text style={styles.teacherName}>Maria S.</Text>
-              <Text style={styles.teacherLang}>Tiếng Anh • Pháp</Text>
-              <View style={styles.ratingRow}>
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star-half" size={16} color="#FFA500" />
-                <Text style={styles.ratingText}>4.8 (120)</Text>
-              </View>
-              <TouchableOpacity style={styles.informationButton}>
-                <Ionicons name="information-circle" size={18} color="white" />
-                <Text style={styles.informationText}>Information</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </TouchableOpacity>
+        {/* TOPUP SHOP */}
+        <TouchableOpacity
+          style={styles.shopCard}
+          activeOpacity={0.9}
+          onPress={() => router.push('/ShopBalanceTopup')}
+        >
+          <LinearGradient
+            colors={['#FF8A65', '#F4511E']}
+            style={styles.shopGradient}
+          >
+            <Image
+              source={{
+                uri: 'https://cdn-icons-png.flaticon.com/512/2489/2489756.png',
+              }}
+              style={styles.shopImage}
+            />
 
-          <TouchableOpacity style={styles.teacherCard}>
-            <LinearGradient colors={['#FFF8E1', '#FFE082']} style={styles.teacherGradient}>
-              <View style={styles.teacherAvatarContainer}>
-                <Image source={{ uri: 'https://thumbs.dreamstime.com/b/smiling-female-character-d-render-digital-art-cartoon-style-ideal-websites-apps-presentations-cheerful-d-cartoon-woman-394946649.jpg' }} style={styles.teacherAvatar} />
-                <View style={[styles.onlineBadge, { backgroundColor: '#4CAF50' }]}>
-                  <Text style={styles.onlineText}>Online</Text>
-                </View>
-              </View>
-              <Text style={styles.teacherName}>Jean P.</Text>
-              <Text style={styles.teacherLang}>Tiếng Tây Ban Nha</Text>
-              <View style={styles.ratingRow}>
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Ionicons name="star" size={16} color="#FFA500" />
-                <Text style={styles.ratingText}>5.0 (85)</Text>
-              </View>
-              <TouchableOpacity style={styles.informationButton}>
-                <Ionicons name="information-circle" size={18} color="white" />
-                <Text style={styles.informationText}>Information</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </TouchableOpacity>
-        </ScrollView>
+            <View>
+              <Text style={styles.shopTitle}>
+                Topup Shop
+              </Text>
 
-        <View style={{ height: 100 }} />
+              <Text style={styles.shopSubtitle}>
+                Recharge & VIP
+              </Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* ADVERTISEMENT */}
+        <TouchableOpacity
+          style={styles.shopCard}
+          activeOpacity={0.9}
+          onPress={() => router.push('/Advertisement')}
+        >
+          <LinearGradient
+            colors={['#7EE081', '#1FAF38']}
+            style={styles.shopGradient}
+          >
+            <Image
+              source={{
+                uri: 'https://cdn-icons-png.flaticon.com/512/1048/1048953.png',
+              }}
+              style={styles.shopImage}
+            />
+
+            <View>
+              <Text style={styles.shopTitle}>
+                Advertisement
+              </Text>
+
+              <Text style={styles.shopSubtitle}>
+                Watch ads earn XP
+              </Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* ================= FREE LEARN ================= */}
+
+      <Text style={styles.title}>Free Learn</Text>
+
+      <View style={styles.freeLearnGrid}>
+        <TouchableOpacity style={styles.learnBox}>
+          <Image
+            source={{
+              uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+            }}
+            style={styles.learnImage}
+          />
+
+          <Text style={styles.learnBoxText}>
+            Dictionary
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.learnBox}>
+          <Image
+            source={{
+              uri: 'https://cdn-icons-png.flaticon.com/512/2583/2583344.png',
+            }}
+            style={styles.learnImage}
+          />
+
+          <Text style={styles.learnBoxText}>
+            Ranking
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.learnBox}>
+          <Image
+            source={{
+              uri: 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png',
+            }}
+            style={styles.learnImage}
+          />
+
+          <Text style={styles.learnBoxText}>
+            Social App
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.learnBox}
+          onPress={() => router.push('/course/vocabulary')}
+        >
+          <Image
+            source={{
+              uri: 'https://cdn-icons-png.flaticon.com/512/2436/2436874.png',
+            }}
+            style={styles.learnImage}
+          />
+
+          <Text style={styles.learnBoxText}>
+            Vocabulary
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Notification Dialog */}
       {showDialog && (
@@ -405,17 +455,17 @@ export default function Index() {
       {showMenu && (
         <View style={styles.menuOverlay}>
           {/* Backdrop */}
-          <TouchableOpacity 
-            style={styles.menuBackdrop} 
+          <TouchableOpacity
+            style={styles.menuBackdrop}
             activeOpacity={1}
-            onPress={() => setShowMenu(false)} 
+            onPress={() => setShowMenu(false)}
           />
 
           {/* Menu Container */}
           <View style={styles.menuContainer}>
             {/* Menu Header with Gradient */}
-            <LinearGradient 
-              colors={['#fb5800', '#fb5800']} 
+            <LinearGradient
+              colors={['#fb5800', '#fb5800']}
               style={styles.menuHeader}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -454,7 +504,7 @@ export default function Index() {
               </TouchableOpacity>
 
               <View style={styles.divider} />
-              
+
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
@@ -475,8 +525,31 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 25, paddingTop: Platform.OS === 'android' ? 40 : 50, paddingBottom: 10 },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 25,
+    paddingTop: Platform.OS === 'android' ? 40 : 50,
+    paddingBottom: 10
+  },
   headerContent: { alignItems: 'center', marginTop: 10 },
+  vipBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#046994',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    elevation: 4,
+  },
+
+  vipText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 5,
+    fontSize: 13,
+  },
   streakContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.3)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   streakText: { color: 'white', fontWeight: 'bold', marginLeft: 6 },
   avatarWrapper: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
@@ -494,8 +567,7 @@ const styles = StyleSheet.create({
 
   body: { flex: 1 },
   title: { fontSize: 20, fontWeight: 'bold', marginLeft: 20, marginTop: 10, marginBottom: 15 },
-  searchWrapper: { padding: 26, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F1F1', marginHorizontal: 15, borderRadius: 30, paddingVertical: 12, elevation: 3, marginBottom: 20 },
-  searchInput: { marginLeft: 10, fontSize: 16, flex: 1 },
+
 
   categoriesScroll: { paddingLeft: 20, marginBottom: 10, height: 100 },
   categoryTab: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f0f0', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, marginRight: 12 },
@@ -611,5 +683,104 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#f0f0f0',
     marginHorizontal: 25,
+  },
+
+
+
+
+
+
+
+  shopScroll: {
+    paddingLeft: 20,
+    paddingRight: 10,
+    marginBottom: 30,
+  },
+
+  shopCard: {
+    width: 190,
+    height: 210,
+    marginRight: 16,
+    borderRadius: 30,
+    overflow: 'hidden',
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+
+    elevation: 8,
+  },
+
+  shopGradient: {
+    flex: 1,
+    padding: 22,
+    justifyContent: 'space-between',
+  },
+
+  shopImage: {
+    width: 85,
+    height: 85,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginTop: 4,
+  },
+
+  shopTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+
+  shopSubtitle: {
+    color: 'rgba(255,255,255,0.95)',
+    fontSize: 14,
+    marginTop: 6,
+    lineHeight: 20,
+  },
+
+  /* FREE LEARN */
+
+  freeLearnGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 40,
+  },
+
+  learnBox: {
+    width: '47%',
+    backgroundColor: '#fff',
+    borderRadius: 26,
+    paddingVertical: 28,
+    alignItems: 'center',
+    marginBottom: 18,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+
+    elevation: 5,
+  },
+
+  learnImage: {
+    width: 62,
+    height: 62,
+    resizeMode: 'contain',
+  },
+
+  learnBoxText: {
+    marginTop: 14,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
   },
 });

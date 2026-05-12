@@ -216,7 +216,7 @@ export default function RootLayout() {
             onPress={() => {
               closeOptionSheet();
               setTimeout(() => {
-                router.push('/Social');
+                router.push('/SocialApp');
               }, 200);
             }}
           >

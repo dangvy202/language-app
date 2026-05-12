@@ -74,6 +74,13 @@ export default function RootLayout() {
               headerShown: false,
             }}
           />
+          
+          <Stack.Screen
+            name="SocialApp"
+            options={{
+              headerShown: false,
+            }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

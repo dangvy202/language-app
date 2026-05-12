@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Stack } from "expo-router";
+import Loading from "@/component/loading";
 
 type TranslationResult = {
     original: string;
@@ -21,8 +22,6 @@ export default function DictionaryScreen() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<TranslationResult | null>(null);
     const [error, setError] = useState("");
-    const [fromLang, setFromLang] = useState("en");
-    const [toLang, setToLang] = useState("vi");
 
     const translateWord = async () => {
         if (!word.trim()) return;
@@ -54,10 +53,6 @@ export default function DictionaryScreen() {
                 original: word,
                 translated: bestMatch,
             });
-
-            console.log("bestMatch", bestMatch)
-            console.log("data: ", data)
-            console.log()
         } catch (err) {
             setError("Failed to translate word");
         } finally {
@@ -124,12 +119,7 @@ export default function DictionaryScreen() {
 
                 {/* Loading */}
                 {loading && (
-                    <View style={styles.centerContainer}>
-                        <ActivityIndicator
-                            size="large"
-                            color="#FFA500"
-                        />
-                    </View>
+                    <Loading />
                 )}
 
                 {/* Error */}
@@ -189,7 +179,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#F5F7FB",
         paddingHorizontal: 20,
-        paddingTop: 20,
+        paddingTop: 10,
     },
 
     searchContainer: {
