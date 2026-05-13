@@ -205,3 +205,29 @@ export interface ContractTest {
 
   informationStaffResponse: InformationStaffTest;
 }
+
+
+interface PostMention {
+    idUser: number;
+}
+
+interface PostResponse {
+    idPost: number;
+    idUser: number;
+
+    username: string;
+
+    avatar: string;
+
+    content: string;
+
+    totalReact: number;
+
+    totalComment: number;
+
+    mentions: PostMention[];
+
+    comments: PostResponse[];
+
+    createdAt: string;
+}

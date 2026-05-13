@@ -1,15 +1,10 @@
 import Loading from '@/component/loading';
 import Notfound from '@/component/404';
-
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { router } from 'expo-router';
-
 import { useCallback, useEffect, useState } from 'react';
-
 import {
     FlatList,
     RefreshControl,
@@ -17,43 +12,17 @@ import {
     Text,
     TouchableOpacity,
     View,
+    TextInput,
 } from 'react-native';
 import { Image } from 'expo-image';
-
 import {
     getCrmsEndpoint,
     getCrmsImgEndpoint
 } from '@/constants/configApi';
-import { TextInput } from 'react-native';
 import { fetchInformation } from '@/services/api';
-
-interface PostMention {
-    idUser: number;
-}
-
-interface PostResponse {
-    idPost: number;
-    idUser: number;
-
-    username: string;
-
-    avatar: string;
-
-    content: string;
-
-    totalReact: number;
-
-    totalComment: number;
-
-    mentions: PostMention[];
-
-    comments: PostResponse[];
-
-    createdAt: string;
-}
+import { PostMention, PostResponse } from '@/interfaces/interfaces';
 
 export default function SocialScreen() {
-
     const [posts, setPosts] = useState<PostResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -62,15 +31,109 @@ export default function SocialScreen() {
     const [mentions, setMentions] = useState<PostMention[]>([]);
     const [posting, setPosting] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [expandedPosts, setExpandedPosts] = useState<number[]>([]);
+    const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
+    const [postComments, setPostComments] = useState<{
+        [key: number]: PostResponse[];
+    }>({});
+
+    const fetchCommentsByPost = async (
+        postId: number,
+        page = 0,
+        size = 3
+    ) => {
+
+        try {
+
+            const token = await getValidToken();
+
+            if (!token) return;
+
+            const endpoint = getCrmsEndpoint(
+                `v1/post/${postId}/comment?page=${page}&size=${size}`
+            );
+
+            const response = await fetch(endpoint, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            setPostComments(prev => {
+
+                const newComments = data.data || [];
+
+                // page đầu => replace
+                if (page === 0) {
+                    return {
+                        ...prev,
+                        [postId]: newComments,
+                    };
+                }
+
+                // page sau => merge
+                const oldComments = prev[postId] || [];
+
+                const merged = [...oldComments];
+
+                newComments.forEach((newItem: PostResponse) => {
+
+                    const exists = merged.some(
+                        item => item.idPost === newItem.idPost
+                    );
+
+                    if (!exists) {
+                        merged.push(newItem);
+                    }
+                });
+
+                return {
+                    ...prev,
+                    [postId]: merged,
+                };
+            });
+
+        } catch (err) {
+
+            console.log("FETCH COMMENT ERROR:", err);
+        }
+    };
+
+    const handleShowMoreComments = async (
+        postId: number,
+        total: number
+    ) => {
+
+        const current =
+            postComments[postId]?.length || 0;
+
+        if (current >= total) {
+
+            setPostComments(prev => ({
+                ...prev,
+                [postId]: prev[postId].slice(0, 3),
+            }));
+
+            return;
+        }
+
+        await fetchCommentsByPost(
+            postId,
+            Math.floor(current / 3),
+            3
+        );
+    };
+
     /*
      * REFRESH TOKEN
      */
-    const refreshTokenApi = async (
-        refreshToken: string
-    ) => {
+    const refreshTokenApi = async (refreshToken: string) => {
 
-        const endpoint =
-            getCrmsEndpoint("v1/user/refresh");
+        const endpoint = getCrmsEndpoint("v1/user/refresh");
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -175,6 +238,80 @@ export default function SocialScreen() {
             console.log("CREATE POST ERROR:", err);
         } finally {
             setPosting(false);
+        }
+    };
+
+    const createComment = async (idPost: number) => {
+        try {
+
+            const text = commentInputs[idPost];
+
+            if (!text?.trim()) return;
+
+            const token = await getValidToken();
+
+            if (!token) return;
+
+            const endpoint = getCrmsEndpoint("v1/post");
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    idUser: currentUser?.idUser,
+                    content: text,
+                    parentPostId: idPost,
+                }),
+            });
+
+            const data = await response.json();
+
+            const newComment = {
+                ...data.data,
+                username: currentUser?.username,
+                avatar: currentUser?.avatar
+                    ? currentUser.avatar.replace(
+                        getCrmsImgEndpoint("avatars/"),
+                        ""
+                    )
+                    : null,
+            };
+
+            // update comment list
+            setPostComments(prev => ({
+                ...prev,
+                [idPost]: [
+                    ...(prev[idPost] || []),
+                    newComment,
+                ],
+            }));
+
+            // update total comment
+            setPosts(prev =>
+                prev.map(post => {
+
+                    if (post.idPost === idPost) {
+                        return {
+                            ...post,
+                            totalComment:
+                                (post.totalComment || 0) + 1,
+                        };
+                    }
+
+                    return post;
+                })
+            );
+
+            setCommentInputs(prev => ({
+                ...prev,
+                [idPost]: "",
+            }));
+
+        } catch (err) {
+            console.log("CREATE COMMENT ERROR:", err);
         }
     };
 
@@ -283,6 +420,29 @@ export default function SocialScreen() {
             .toLocaleString("vi-VN");
     };
 
+    const toggleComments = async (postId: number) => {
+
+        const isExpanded =
+            expandedPosts.includes(postId);
+
+        if (isExpanded) {
+
+            setExpandedPosts(prev =>
+                prev.filter(id => id !== postId)
+            );
+
+            return;
+        }
+
+        setExpandedPosts(prev => [
+            ...prev,
+            postId
+        ]);
+
+        // luôn reload page đầu khi mở lại
+        await fetchCommentsByPost(postId, 0, 3);
+    };
+
     /*
      * RENDER COMMENT
      */
@@ -293,7 +453,7 @@ export default function SocialScreen() {
 
         return (
             <View
-                key={index}
+                key={comment.idPost}
                 style={styles.commentCard}
             >
 
@@ -451,53 +611,101 @@ export default function SocialScreen() {
 
                 {/* COMMENTS */}
 
+                {/* COMMENT TOGGLE */}
+
+                <TouchableOpacity
+                    onPress={() => toggleComments(item.idPost)}
+                    style={styles.showCommentBtn}
+                >
+                    <Text style={styles.showCommentText}>
+                        {
+                            expandedPosts.includes(item.idPost)
+                                ? "Hide all comments"
+                                : `View comments (${item.totalComment || 0})`
+                        }
+                    </Text>
+                </TouchableOpacity>
+
+                {/* COMMENT SECTION */}
+
                 {
-                    item.comments &&
-                    item.comments.length > 0 && (
+                    expandedPosts.includes(item.idPost) && (
 
-                        <View
-                            style={{
-                                marginTop: 18
-                            }}
-                        >
+                        <View style={{ marginTop: 16 }}>
 
-                            <Text
-                                style={{
-                                    fontWeight: "700",
-                                    marginBottom: 12,
-                                    color: "#666"
-                                }}
-                            >
-                                Comments
-                            </Text>
+                            {/* LIST COMMENT */}
 
                             {
-                                item.comments.map(
-                                    renderComment
+                                postComments[item.idPost] &&
+                                    postComments[item.idPost].length > 0 ? (
+
+                                    <>
+                                        {
+                                            postComments[item.idPost]
+                                                .map(renderComment)
+                                        }
+
+                                        {
+                                            item.totalComment > 3 && (
+
+                                                <TouchableOpacity
+                                                    onPress={() =>
+                                                        handleShowMoreComments(
+                                                            item.idPost,
+                                                            item.totalComment
+                                                        )
+                                                    }
+                                                >
+
+                                                    <Text style={styles.actionText}>
+                                                        {
+                                                            (postComments[item.idPost]?.length || 0)
+                                                                >= item.totalComment
+
+                                                                ? "Hide comments"
+
+                                                                : "View more comments"
+                                                        }
+                                                    </Text>
+
+                                                </TouchableOpacity>
+                                            )
+                                        }
+                                    </>
+
+                                ) : (
+                                    <Text>No comments yet</Text>
                                 )
                             }
+                            {/* INPUT COMMENT */}
 
-                            {
-                                item.totalComment > 3 && (
+                            <View style={styles.commentInputRow}>
 
-                                    <TouchableOpacity
-                                        style={{
-                                            marginTop: 10
-                                        }}
-                                    >
+                                <TextInput
+                                    placeholder="Write a comment..."
+                                    value={commentInputs[item.idPost] || ""}
+                                    onChangeText={(text) =>
+                                        setCommentInputs(prev => ({
+                                            ...prev,
+                                            [item.idPost]: text,
+                                        }))
+                                    }
+                                    style={styles.commentInput}
+                                    placeholderTextColor="#999"
+                                />
 
-                                        <Text
-                                            style={{
-                                                color: "#FB8500",
-                                                fontWeight: "700"
-                                            }}
-                                        >
-                                            View all {item.totalComment} comments
-                                        </Text>
+                                <TouchableOpacity
+                                    style={styles.sendBtn}
+                                    onPress={() => createComment(item.idPost)}
+                                >
+                                    <Ionicons
+                                        name="send"
+                                        size={20}
+                                        color="#fff"
+                                    />
+                                </TouchableOpacity>
 
-                                    </TouchableOpacity>
-                                )
-                            }
+                            </View>
 
                         </View>
                     )
@@ -524,6 +732,7 @@ export default function SocialScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
+                        onPress={() => toggleComments(item.idPost)}
                         style={styles.actionButton}
                     >
 
@@ -955,5 +1164,39 @@ const styles = StyleSheet.create({
     placeholderText: {
         color: "#666",
         fontSize: 14,
+    },
+    showCommentBtn: {
+        marginTop: 14,
+    },
+
+    showCommentText: {
+        color: "#FB8500",
+        fontWeight: "700",
+    },
+
+    commentInputRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 14,
+    },
+
+    commentInput: {
+        flex: 1,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 20,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        fontSize: 14,
+        color: "#222",
+    },
+
+    sendBtn: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        backgroundColor: "#FB8500",
+        justifyContent: "center",
+        alignItems: "center",
+        marginLeft: 10,
     },
 });
