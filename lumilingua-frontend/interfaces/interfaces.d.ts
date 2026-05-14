@@ -209,6 +209,7 @@ export interface ContractTest {
 
 interface PostMention {
     idUser: number;
+    username: string;
 }
 
 interface PostResponse {

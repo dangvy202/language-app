@@ -42,6 +42,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -119,6 +120,13 @@ public class UserServiceImpl implements UserService {
                 Integer.parseInt(String.valueOf(userEntity.getIdUser())), userEntity.getPhone(), userEntity.getUsername(), userEntity.getEmail(), userEntity.getAvatar(), userEntity.getStatus());
         response.setWallet(WalletMapper.INSTANT.toWalletResponse(wallet));
         return Result.get(response);
+    }
+
+    @Override
+    public Result<List<UserResponse>> searchUser(String name) {
+        LOG.info("Get information user in service...");
+        List<UserResponse> responses = UserMapper.INSTANT.toUserResponse(userRepository.searchUserByUsername(name));
+        return Result.get(responses);
     }
 
     @Override

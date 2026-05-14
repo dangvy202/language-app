@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface UserMapper {
     UserMapper INSTANT = Mappers.getMapper(UserMapper.class);
@@ -19,4 +21,5 @@ public interface UserMapper {
 
     UserResponse toUserResponse(User user);
 
+    List<UserResponse> toUserResponse(List<User> user);
 }

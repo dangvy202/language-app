@@ -9,6 +9,8 @@ import com.lumilingua.crms.dto.responses.InformationAccountResponse;
 import com.lumilingua.crms.dto.responses.UserResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface UserService {
 //  User register
     Result<UserResponse> registerAccountByCustomer(UserRequest userRequest);
@@ -18,4 +20,5 @@ public interface UserService {
     Result<UserResponse> editImageAccount(MultipartFile imgFile, long idUser);
     Result<InformationAccountResponse> getInformationAccountById(long id);
     Result<InformationAccountResponse> getInformationAndWalletByEmail(String email);
+    Result<List<UserResponse>> searchUser(String name);
 }

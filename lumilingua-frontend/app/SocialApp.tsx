@@ -1,26 +1,29 @@
-import Loading from '@/component/loading';
 import Notfound from '@/component/404';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import {
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    TextInput,
-} from 'react-native';
-import { Image } from 'expo-image';
+import Loading from '@/component/loading';
 import {
     getCrmsEndpoint,
     getCrmsImgEndpoint
 } from '@/constants/configApi';
-import { fetchInformation } from '@/services/api';
 import { PostMention, PostResponse } from '@/interfaces/interfaces';
+import { fetchInformation } from '@/services/api';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function SocialScreen() {
     const [posts, setPosts] = useState<PostResponse[]>([]);
@@ -36,6 +39,9 @@ export default function SocialScreen() {
     const [postComments, setPostComments] = useState<{
         [key: number]: PostResponse[];
     }>({});
+    const [openCreatePost, setOpenCreatePost] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState("");
+    const [suggestUsers, setSuggestUsers] = useState<any[]>([]);
 
     const fetchCommentsByPost = async (
         postId: number,
@@ -100,6 +106,43 @@ export default function SocialScreen() {
         } catch (err) {
 
             console.log("FETCH COMMENT ERROR:", err);
+        }
+    };
+
+    const searchUsers = async (keyword: string) => {
+
+        try {
+
+            setMentionQuery(keyword);
+
+            if (!keyword.trim()) {
+                setSuggestUsers([]);
+                return;
+            }
+
+            const token = await getValidToken();
+
+            if (!token) return;
+
+            const endpoint = getCrmsEndpoint(
+                `v1/user/search?name=${keyword}`
+            );
+
+            const response = await fetch(endpoint, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            setSuggestUsers(data.data || []);
+
+        } catch (err) {
+
+            console.log("SEARCH USER ERROR:", err);
         }
     };
 
@@ -191,16 +234,26 @@ export default function SocialScreen() {
     /*
      * CREATE POSTS
      */
-    const addMention = () => {
-        if (!tagInput.trim()) return;
+    const addMention = (user: any) => {
+
+        const exists = mentions.some(
+            item => item.idUser === user.idUser
+        );
+
+        if (exists) return;
 
         setMentions(prev => [
             ...prev,
-            { idUser: Number(tagInput) } // tạm dùng idUser
+            {
+                idUser: user.idUser,
+                username: user.username,
+            }
         ]);
 
-        setTagInput("");
+        setMentionQuery("");
+        setSuggestUsers([]);
     };
+
     const createPost = async () => {
         if (!content.trim()) return;
 
@@ -221,14 +274,31 @@ export default function SocialScreen() {
                 body: JSON.stringify({
                     idUser: Number(await AsyncStorage.getItem("idUser")),
                     content,
-                    postMentionRequests: mentions,
+                    postMentionRequests: mentions.map(item => ({
+                        idUser: item.idUser
+                    }))
                 }),
             });
 
             const data = await response.json();
+            console.log("CREATE POST RESPONSE:", data);
+            // add post lên đầu list
+            const newPost = {
+                ...data.data,
+                username: currentUser?.username,
+                avatar: currentUser?.avatar
+                    ? currentUser.avatar.replace(
+                        getCrmsImgEndpoint("avatars/"),
+                        ""
+                    )
+                    : null,
+                totalComment: 0,
+                totalReact: 0,
+                mentions: mentions,
+            };
 
             // add post lên đầu list
-            setPosts(prev => [data.data, ...prev]);
+            setPosts(prev => [newPost, ...prev]);
 
             // reset form
             setContent("");
@@ -780,9 +850,9 @@ export default function SocialScreen() {
             <FlatList
                 data={posts}
 
-                keyExtractor={(item) =>
-                    item.idPost.toString()
-                }
+                keyExtractor={(item, index) =>
+    (item.idPost ?? index).toString()
+}
 
                 renderItem={renderPost}
 
@@ -843,25 +913,29 @@ export default function SocialScreen() {
                         </View>
                         {/* CREATE POST FORM */}
                         <View style={styles.createBox}>
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => setOpenCreatePost(true)}
+                            >
 
-                            {/* USER ROW */}
-                            <View style={styles.userInputRow}>
+                                {/* USER ROW */}
+                                <View style={styles.userInputRow}>
 
-                                <Image
-                                    source={
-                                        currentUser?.avatar
-                                            ? { uri: currentUser.avatar }
-                                            : require('@/assets/images/accounts/logo.jpg')
-                                    }
-                                    style={styles.inputAvatar}
-                                />
+                                    <Image
+                                        source={
+                                            currentUser?.avatar
+                                                ? { uri: currentUser.avatar }
+                                                : require('@/assets/images/accounts/logo.jpg')
+                                        }
+                                        style={styles.inputAvatar}
+                                    />
 
-                                <Text style={styles.placeholderText}>
-                                    What’s on your mind, {currentUser?.username || "user"}?
-                                </Text>
+                                    <Text style={styles.placeholderText}>
+                                        What’s on your mind, {currentUser?.username || "user"}?
+                                    </Text>
 
-                            </View>
-
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     </LinearGradient>
                 }
@@ -870,7 +944,187 @@ export default function SocialScreen() {
                     paddingBottom: 120,
                 }}
             />
+            <Modal
+                visible={openCreatePost}
+                animationType="slide"
+                transparent
+            >
 
+                <KeyboardAvoidingView
+                    behavior={
+                        Platform.OS === "ios"
+                            ? "padding"
+                            : undefined
+                    }
+                    style={styles.modalContainer}
+                >
+
+                    <View style={styles.modalContent}>
+
+                        {/* HEADER */}
+                        <View style={styles.modalHeader}>
+
+                            <TouchableOpacity
+                                onPress={() =>
+                                    setOpenCreatePost(false)
+                                }
+                            >
+
+                                <Ionicons
+                                    name="close"
+                                    size={28}
+                                    color="#222"
+                                />
+
+                            </TouchableOpacity>
+
+                            <Text style={styles.modalTitle}>
+                                Create Post
+                            </Text>
+
+                            <TouchableOpacity
+                                disabled={posting}
+                                onPress={async () => {
+
+                                    await createPost();
+
+                                    setOpenCreatePost(false);
+                                }}
+                                style={styles.postBtn}
+                            >
+
+                                <Text style={styles.postNowText}>
+                                    {
+                                        posting
+                                            ? "Posting..."
+                                            : "Post"
+                                    }
+                                </Text>
+
+                            </TouchableOpacity>
+
+                        </View>
+
+                        {/* USER */}
+                        <View style={styles.userInputRow}>
+
+                            <Image
+                                source={
+                                    currentUser?.avatar
+                                        ? { uri: currentUser.avatar }
+                                        : require('@/assets/images/accounts/logo.jpg')
+                                }
+                                style={styles.inputAvatar}
+                            />
+
+                            <Text style={styles.userName}>
+                                {currentUser?.username}
+                            </Text>
+
+                        </View>
+
+                        {/* CONTENT */}
+                        <TextInput
+                            value={content}
+                            onChangeText={setContent}
+                            placeholder="What's on your mind?"
+                            placeholderTextColor="#999"
+                            multiline
+                            autoFocus
+                            style={styles.modalInput}
+                        />
+
+                        {/* TAG */}
+                        <View style={styles.tagInputRow}>
+
+                            <TextInput
+                                value={mentionQuery}
+                                onChangeText={searchUsers}
+                                placeholder="Tag username..."
+                                placeholderTextColor="#999"
+                                style={styles.tagInput}
+                            />
+                            {
+                                suggestUsers.length > 0 && (
+                                    <View style={styles.suggestBox}>
+
+                                        {
+                                            suggestUsers.map((user, index) => (
+
+                                                <TouchableOpacity
+                                                    key={index}
+                                                    style={styles.suggestItem}
+                                                    onPress={() => addMention(user)}
+                                                >
+
+                                                    <Image
+                                                        source={{
+                                                            uri: user.avatar
+                                                                ? getCrmsImgEndpoint(
+                                                                    `avatars/${user.avatar}`
+                                                                )
+                                                                : 'https://i.pravatar.cc/150?img=1'
+                                                        }}
+                                                        style={styles.suggestAvatar}
+                                                    />
+
+                                                    <View>
+                                                        <Text style={styles.suggestName}>
+                                                            {user.username}
+                                                        </Text>
+
+                                                        <Text style={styles.suggestEmail}>
+                                                            {user.email}
+                                                        </Text>
+                                                    </View>
+
+                                                </TouchableOpacity>
+                                            ))
+                                        }
+
+                                    </View>
+                                )
+                            }
+                        </View>
+
+                        {/* TAG PREVIEW */}
+                        {
+                            mentions.length > 0 && (
+
+                                <View style={styles.tagPreview}>
+
+                                    {
+                                        mentions.map((tag, index) => (
+
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.tag}
+                                                onPress={() =>
+                                                    setMentions(prev =>
+                                                        prev.filter(
+                                                            item => item.idUser !== tag.idUser
+                                                        )
+                                                    )
+                                                }
+                                            >
+
+                                                <Text style={styles.tagText}>
+                                                    @{tag.username} ✕
+                                                </Text>
+
+                                            </TouchableOpacity>
+                                        ))
+                                    }
+
+                                </View>
+                            )
+                        }
+
+                    </View>
+
+                </KeyboardAvoidingView>
+
+            </Modal>
         </View>
     );
 }
@@ -1143,11 +1397,11 @@ const styles = StyleSheet.create({
     },
 
     postBtn: {
-        marginTop: 10,
         backgroundColor: "#FB8500",
         padding: 12,
         borderRadius: 12,
         alignItems: "center",
+        textAlign: "right"
     },
     userInputRow: {
         flexDirection: "row",
@@ -1198,5 +1452,76 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginLeft: 10,
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.4)",
+    },
+
+    modalContent: {
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 50,
+        minHeight: "105%",
+    },
+
+    modalHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 20,
+    },
+
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: "800",
+        color: "#222",
+    },
+    postNowText: {
+        color: "#ffffff",
+        fontWeight: "800",
+        fontSize: 16,
+    },
+    modalInput: {
+        minHeight: 180,
+        fontSize: 18,
+        color: "#222",
+        marginTop: 20,
+        textAlignVertical: "top",
+    },
+    suggestBox: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: "#eee",
+        overflow: "hidden",
+    },
+
+    suggestItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "#f2f2f2",
+    },
+
+    suggestAvatar: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        marginRight: 10,
+    },
+
+    suggestName: {
+        fontWeight: "700",
+        color: "#222",
+    },
+
+    suggestEmail: {
+        color: "#888",
+        marginTop: 2,
+        fontSize: 12,
     },
 });

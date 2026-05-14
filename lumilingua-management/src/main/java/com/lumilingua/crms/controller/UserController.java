@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
@@ -93,6 +95,13 @@ public class UserController {
     public ResponseEntity<Result<InformationAccountResponse>> getInformationAndWalletByEmail(@PathVariable("email") String email) {
         LOG.info("Call api get information account by id '%s'".formatted("/api/v1/user/wallet/'" + email));
         var result = userService.getInformationAndWalletByEmail(email);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Result<List<UserResponse>>> searchUser(@RequestParam("name") String name) {
+        LOG.info("Get user by name in controller by api '%s'".formatted("/api/v1/user/search?name='%s'".formatted(name)));
+        var result = userService.searchUser(name);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
