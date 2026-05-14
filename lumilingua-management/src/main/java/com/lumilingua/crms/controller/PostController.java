@@ -31,15 +31,11 @@ public class PostController {
     @GetMapping
     public ResponseEntity<Result<List<PostResponse>>> getAllPostAndComment(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam Long currentUserId
     ) {
-
         LOG.info("Call API /api/v1/post - page: {}, size: {}", page, size);
-
-        return new ResponseEntity<>(
-                postService.getAllPostAndComment(page, size),
-                HttpStatus.OK
-        );
+        return new ResponseEntity<>(postService.getAllPostAndComment(page, size, currentUserId), HttpStatus.OK);
     }
 
     @GetMapping("/{idPost}/comment")
@@ -48,17 +44,7 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-
-        LOG.info(
-                "Call API /api/v1/post/{}/comment - page: {}, size: {}",
-                idPost,
-                page,
-                size
-        );
-
-        return new ResponseEntity<>(
-                postService.getCommentsByPost(idPost, page, size),
-                HttpStatus.OK
-        );
+        LOG.info("Call API /api/v1/post/{}/comment - page: {}, size: {}", idPost, page, size);
+        return new ResponseEntity<>(postService.getCommentsByPost(idPost, page, size), HttpStatus.OK);
     }
 }

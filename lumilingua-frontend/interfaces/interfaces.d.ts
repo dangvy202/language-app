@@ -220,6 +220,8 @@ interface PostResponse {
 
     avatar: string;
 
+    reacted: boolean;
+
     content: string;
 
     totalReact: number;

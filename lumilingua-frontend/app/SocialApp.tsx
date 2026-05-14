@@ -30,7 +30,6 @@ export default function SocialScreen() {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [content, setContent] = useState("");
-    const [tagInput, setTagInput] = useState("");
     const [mentions, setMentions] = useState<PostMention[]>([]);
     const [posting, setPosting] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
@@ -73,7 +72,6 @@ export default function SocialScreen() {
 
                 const newComments = data.data || [];
 
-                // page đầu => replace
                 if (page === 0) {
                     return {
                         ...prev,
@@ -81,11 +79,8 @@ export default function SocialScreen() {
                     };
                 }
 
-                // page sau => merge
                 const oldComments = prev[postId] || [];
-
                 const merged = [...oldComments];
-
                 newComments.forEach((newItem: PostResponse) => {
 
                     const exists = merged.some(
@@ -109,10 +104,55 @@ export default function SocialScreen() {
         }
     };
 
-    const searchUsers = async (keyword: string) => {
-
+    const reactPost = async (idPost: number) => {
         try {
 
+            const token = await getValidToken();
+
+            if (!token) return;
+
+            const endpoint = getCrmsEndpoint("v1/react");
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    idPost,
+                    idUser: currentUser?.idUser,
+                }),
+            });
+
+            const data = await response.json();
+            setPosts(prev =>
+                prev.map(post => {
+
+                    if (post.idPost !== idPost) {
+                        return post;
+                    }
+
+                    const reacted = post.reacted;
+
+                    return {
+                        ...post,
+                        reacted: !reacted,
+                        totalReact: reacted
+                            ? (post.totalReact || 1) - 1
+                            : (post.totalReact || 0) + 1,
+                    };
+                })
+            );
+
+        } catch (err) {
+
+            console.log("REACT ERROR:", err);
+        }
+    };
+
+    const searchUsers = async (keyword: string) => {
+        try {
             setMentionQuery(keyword);
 
             if (!keyword.trim()) {
@@ -281,8 +321,6 @@ export default function SocialScreen() {
             });
 
             const data = await response.json();
-            console.log("CREATE POST RESPONSE:", data);
-            // add post lên đầu list
             const newPost = {
                 ...data.data,
                 username: currentUser?.username,
@@ -294,13 +332,12 @@ export default function SocialScreen() {
                     : null,
                 totalComment: 0,
                 totalReact: 0,
+                reacted: false,
                 mentions: mentions,
             };
 
-            // add post lên đầu list
             setPosts(prev => [newPost, ...prev]);
 
-            // reset form
             setContent("");
             setMentions([]);
 
@@ -394,15 +431,11 @@ export default function SocialScreen() {
 
             setLoading(true);
 
-            const token =
-                await getValidToken();
+            const token = await getValidToken();
 
             if (!token) return;
-
-            const endpoint =
-                getCrmsEndpoint(
-                    "v1/post?page=0&size=10"
-                );
+            const idUser = await AsyncStorage.getItem("idUser");
+            const endpoint = getCrmsEndpoint(`v1/post?page=0&size=10&currentUserId=${idUser}`);
 
             const response = await fetch(
                 endpoint,
@@ -430,6 +463,7 @@ export default function SocialScreen() {
             const data = JSON.parse(text);
 
             setPosts(data.data || []);
+            console.log("CHECK POST RESPONSE: ", data.data)
 
         } catch (err) {
 
@@ -492,8 +526,7 @@ export default function SocialScreen() {
 
     const toggleComments = async (postId: number) => {
 
-        const isExpanded =
-            expandedPosts.includes(postId);
+        const isExpanded = expandedPosts.includes(postId);
 
         if (isExpanded) {
 
@@ -517,8 +550,7 @@ export default function SocialScreen() {
      * RENDER COMMENT
      */
     const renderComment = (
-        comment: PostResponse,
-        index: number
+        comment: PostResponse
     ) => {
 
         return (
@@ -787,10 +819,15 @@ export default function SocialScreen() {
 
                     <TouchableOpacity
                         style={styles.actionButton}
+                        onPress={() => reactPost(item.idPost)}
                     >
 
                         <Ionicons
-                            name="heart-outline"
+                            name={
+                                item.reacted
+                                    ? "heart"
+                                    : "heart-outline"
+                            }
                             size={22}
                             color="#ff5a5f"
                         />
@@ -851,8 +888,8 @@ export default function SocialScreen() {
                 data={posts}
 
                 keyExtractor={(item, index) =>
-    (item.idPost ?? index).toString()
-}
+                    (item.idPost ?? index).toString()
+                }
 
                 renderItem={renderPost}
 
@@ -1202,26 +1239,6 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
 
-    vipBadge: {
-        marginLeft: 8,
-
-        backgroundColor: '#00A6FB',
-
-        paddingHorizontal: 8,
-
-        paddingVertical: 3,
-
-        borderRadius: 12,
-    },
-
-    vipText: {
-        color: '#fff',
-
-        fontWeight: '700',
-
-        fontSize: 11,
-    },
-
     content: {
         marginTop: 16,
 
@@ -1362,12 +1379,6 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
 
-    input: {
-        minHeight: 60,
-        fontSize: 16,
-        color: "#333",
-    },
-
     tagInputRow: {
         flexDirection: "row",
         marginTop: 10,
@@ -1380,14 +1391,6 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 10,
         height: 40,
-    },
-
-    addTagBtn: {
-        backgroundColor: "#FB8500",
-        paddingHorizontal: 14,
-        justifyContent: "center",
-        marginLeft: 8,
-        borderRadius: 10,
     },
 
     tagPreview: {

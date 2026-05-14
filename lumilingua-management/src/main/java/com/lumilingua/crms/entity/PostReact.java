@@ -9,7 +9,10 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name = "tbl_post_react")
+@Table(name = "tbl_post_react",
+        uniqueConstraints = {
+            @UniqueConstraint(columnNames = {"id_post", "id_user"})
+        })
 public class PostReact {
 
     @Id

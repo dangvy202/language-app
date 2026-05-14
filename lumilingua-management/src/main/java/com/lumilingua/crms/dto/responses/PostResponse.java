@@ -21,6 +21,7 @@ public class PostResponse {
     private String content;
     private Long parentPostId;
     private PostType postType;
+    private boolean isReacted;
 
     /*
      * USER INFO

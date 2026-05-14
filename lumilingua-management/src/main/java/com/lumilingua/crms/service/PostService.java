@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface PostService {
     Result<PostResponse> createOrCommentPost(PostRequest request);
-    Result<List<PostResponse>> getAllPostAndComment(int page, int size);
+    Result<List<PostResponse>> getAllPostAndComment(int page, int size, Long currentUserId);
     Result<List<PostResponse>> getCommentsByPost(long idPost, int page, int size);
 }

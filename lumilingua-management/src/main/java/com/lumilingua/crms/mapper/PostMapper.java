@@ -1,6 +1,5 @@
 package com.lumilingua.crms.mapper;
 
-import com.lumilingua.crms.dto.requests.PostRequest;
 import com.lumilingua.crms.dto.responses.PostMentionResponse;
 import com.lumilingua.crms.dto.responses.PostResponse;
 import com.lumilingua.crms.entity.Post;

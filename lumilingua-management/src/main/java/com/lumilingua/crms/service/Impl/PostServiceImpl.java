@@ -6,11 +6,13 @@ import com.lumilingua.crms.dto.responses.PostMentionResponse;
 import com.lumilingua.crms.dto.responses.PostResponse;
 import com.lumilingua.crms.entity.Post;
 import com.lumilingua.crms.entity.PostMention;
+import com.lumilingua.crms.entity.PostReact;
 import com.lumilingua.crms.entity.User;
 import com.lumilingua.crms.enums.PostType;
 import com.lumilingua.crms.mapper.PostMapper;
 import com.lumilingua.crms.mapper.PostMentionMapper;
 import com.lumilingua.crms.repository.PostMentionRepository;
+import com.lumilingua.crms.repository.PostReactRepository;
 import com.lumilingua.crms.repository.PostRepository;
 import com.lumilingua.crms.repository.UserRepository;
 import com.lumilingua.crms.service.PostService;
@@ -24,10 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +36,7 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final PostMentionRepository postMentionRepository;
+    private final PostReactRepository postReactRepository;
     private final UserRepository userRepository;
 
     private List<PostMention> savePostMentionLogic(PostRequest request, long idPost) {
@@ -120,7 +120,8 @@ public class PostServiceImpl implements PostService {
     @Override
     public Result<List<PostResponse>> getAllPostAndComment(
             int page,
-            int size
+            int size,
+            Long currentUserId
     ) {
 
         Pageable pageable = PageRequest.of(page, size);
@@ -173,6 +174,18 @@ public class PostServiceImpl implements PostService {
                         .toList()
         );
 
+        /*
+         * STEP 5.1: GET REACTED POSTS
+         */
+        Set<Long> reactedPostIds =
+                postReactRepository
+                        .findByIdPostInAndIdUser(
+                                postIds,
+                                currentUserId
+                        )
+                        .stream()
+                        .map(PostReact::getIdPost)
+                        .collect(Collectors.toSet());
         /*
          * STEP 6: MENTION MAP
          */
@@ -269,7 +282,7 @@ public class PostServiceImpl implements PostService {
                                     mentions,
                                     userMap.get(post.getIdUser())
                             );
-
+                    response.setReacted(reactedPostIds.contains(post.getIdPost()));
                     response.setComments(commentResponses);
 
                     response.setTotalComment(
