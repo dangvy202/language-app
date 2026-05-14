@@ -187,6 +187,17 @@ public class PostServiceImpl implements PostService {
                         .map(PostReact::getIdPost)
                         .collect(Collectors.toSet());
         /*
+         * STEP 5.2: TOTAL REACT MAP
+         */
+        Map<Long, Long> reactCountMap =
+                postReactRepository
+                        .findByIdPostIn(allIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                PostReact::getIdPost,
+                                Collectors.counting()
+                        ));
+        /*
          * STEP 6: MENTION MAP
          */
         Map<Long, List<PostMention>> mentionMap =
@@ -283,6 +294,12 @@ public class PostServiceImpl implements PostService {
                                     userMap.get(post.getIdUser())
                             );
                     response.setReacted(reactedPostIds.contains(post.getIdPost()));
+                    response.setTotalReact(
+                            reactCountMap.getOrDefault(
+                                    post.getIdPost(),
+                                    0L
+                            ).intValue()
+                    );
                     response.setComments(commentResponses);
 
                     response.setTotalComment(

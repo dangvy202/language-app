@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface PostReactRepository extends JpaRepository<PostReact, Long> {
     Optional<PostReact> findPostReactByIdPostAndIdUser(long idPost, long idUser);
     List<PostReact> findByIdPostInAndIdUser(List<Long> postIds, Long idUser);
+    List<PostReact> findByIdPostIn(List<Long> idPosts);
 }
