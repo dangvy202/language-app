@@ -4,6 +4,7 @@ import {
     getCrmsEndpoint,
     getCrmsImgEndpoint
 } from '@/constants/configApi';
+import { useUserCache } from '@/hook/useUserCache';
 import { PostMention, PostResponse } from '@/interfaces/interfaces';
 import { fetchInformation } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +24,7 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    Share,
 } from 'react-native';
 
 export default function SocialScreen() {
@@ -38,9 +40,14 @@ export default function SocialScreen() {
     const [postComments, setPostComments] = useState<{
         [key: number]: PostResponse[];
     }>({});
+    const { cache: userCache, loadingCache, cacheError } = useUserCache();
     const [openCreatePost, setOpenCreatePost] = useState(false);
     const [mentionQuery, setMentionQuery] = useState("");
     const [suggestUsers, setSuggestUsers] = useState<any[]>([]);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [openMenu, setOpenMenu] = useState(false);
 
     const fetchCommentsByPost = async (
         postId: number,
@@ -101,6 +108,33 @@ export default function SocialScreen() {
         } catch (err) {
 
             console.log("FETCH COMMENT ERROR:", err);
+        }
+    };
+
+    const sharePost = async (
+        post: PostResponse
+    ) => {
+
+        try {
+
+            const deepLink =
+                `lumilinguafrontend://post/${post.idPost}`;
+
+            await Share.share({
+                message:
+                    `🔥 ${post.username} posted:
+
+            ${post.content}
+
+            ${deepLink}`,
+            });
+
+        } catch (err) {
+
+            console.log(
+                "SHARE ERROR:",
+                err
+            );
         }
     };
 
@@ -425,56 +459,97 @@ export default function SocialScreen() {
     /*
      * FETCH POSTS
      */
-    const fetchPosts = async () => {
+    const fetchPosts = async (
+        nextPage = 0,
+        isLoadMore = false
+    ) => {
 
         try {
 
-            setLoading(true);
+            if (isLoadMore) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
 
             const token = await getValidToken();
 
             if (!token) return;
-            const idUser = await AsyncStorage.getItem("idUser");
-            const endpoint = getCrmsEndpoint(`v1/post?page=0&size=10&currentUserId=${idUser}`);
+
+            const idUser =
+                await AsyncStorage.getItem("idUser");
+
+            const endpoint = getCrmsEndpoint(
+                `v1/post?page=${nextPage}&size=10&currentUserId=${idUser}`
+            );
 
             const response = await fetch(
                 endpoint,
                 {
                     method: "GET",
                     headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "Authorization":
-                            `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
 
-            const text =
-                await response.text();
+            const text = await response.text();
 
             if (!text) {
-                throw new Error(
-                    "Empty response body"
-                );
+                throw new Error("Empty response body");
             }
 
             const data = JSON.parse(text);
 
-            setPosts(data.data || []);
-            console.log("CHECK POST RESPONSE: ", data.data)
+            const newPosts = data.data || [];
+
+            /*
+             * NO MORE POSTS
+             */
+            if (newPosts.length < 10) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
+
+            /*
+             * FIRST PAGE
+             */
+            if (nextPage === 0) {
+
+                setPosts(newPosts);
+
+            } else {
+
+                setPosts(prev => {
+
+                    const merged = [...prev];
+
+                    newPosts.forEach((newItem: PostResponse) => {
+
+                        const exists = merged.some(
+                            item => item.idPost === newItem.idPost
+                        );
+
+                        if (!exists) {
+                            merged.push(newItem);
+                        }
+                    });
+
+                    return merged;
+                });
+            }
 
         } catch (err) {
 
-            console.log(
-                "FETCH POST ERROR:",
-                err
-            );
+            console.log("FETCH POST ERROR:", err);
 
         } finally {
 
             setLoading(false);
+
+            setLoadingMore(false);
 
             setRefreshing(false);
         }
@@ -504,16 +579,36 @@ export default function SocialScreen() {
             }
         };
         loadUser();
-        fetchPosts();
+        fetchPosts(0);
     }, []);
 
     const onRefresh = useCallback(() => {
 
         setRefreshing(true);
 
-        fetchPosts();
+        setPage(0);
+
+        setHasMore(true);
+
+        fetchPosts(0);
 
     }, []);
+
+    const handleLoadMore = async () => {
+
+        if (loadingMore || !hasMore) {
+            return;
+        }
+
+        const nextPage = page + 1;
+
+        setPage(nextPage);
+
+        await fetchPosts(
+            nextPage,
+            true
+        );
+    };
 
     /*
      * FORMAT TIME
@@ -857,6 +952,7 @@ export default function SocialScreen() {
 
                     <TouchableOpacity
                         style={styles.actionButton}
+                        onPress={() => sharePost(item)}
                     >
 
                         <Ionicons
@@ -886,21 +982,28 @@ export default function SocialScreen() {
 
             <FlatList
                 data={posts}
-
                 keyExtractor={(item, index) =>
                     (item.idPost ?? index).toString()
                 }
-
                 renderItem={renderPost}
-
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
                 showsVerticalScrollIndicator={false}
-
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
                         colors={['#FB8500']}
                     />
+                }
+                ListFooterComponent={
+                    loadingMore ? (
+                        <View style={{ padding: 20 }}>
+                            <Text style={{ textAlign: "center" }}>
+                                Loading more posts...
+                            </Text>
+                        </View>
+                    ) : null
                 }
 
                 ListEmptyComponent={
@@ -921,7 +1024,11 @@ export default function SocialScreen() {
 
                             <View style={styles.leftHeader}>
 
-                                <TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        setOpenMenu(!openMenu)
+                                    }
+                                >
 
                                     <Ionicons
                                         name="menu"
@@ -948,6 +1055,7 @@ export default function SocialScreen() {
                             </TouchableOpacity>
 
                         </View>
+
                         {/* CREATE POST FORM */}
                         <View style={styles.createBox}>
                             <TouchableOpacity
@@ -1158,11 +1266,148 @@ export default function SocialScreen() {
                         }
 
                     </View>
-
                 </KeyboardAvoidingView>
-
             </Modal>
+            {
+                openMenu && (
+
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        style={styles.dropdownMenu}
+                        onPress={() =>
+                            setOpenMenu(false)
+                        }
+                    >
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+
+                                setOpenMenu(false);
+
+                                router.push("/");
+                            }}
+                        >
+
+                            <Ionicons
+                                name="home-outline"
+                                size={20}
+                                color="#333"
+                            />
+
+                            <Text style={styles.menuText}>
+                                Home
+                            </Text>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                                setOpenMenu(false);
+                                router.push('/course/vocabulary');
+                            }}
+                        >
+
+                            <Ionicons name="library-outline" size={20} color="#333"/>
+                            <Text style={styles.menuText}>
+                                Vocabulary
+                            </Text>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                                setOpenMenu(false);
+                                router.push('/learn');
+                            }}
+                        >
+
+                            <Ionicons name="git-network-outline" size={20} color="#333"/>
+                            <Text style={styles.menuText}>
+                                Learn Process
+                            </Text>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+
+                                setOpenMenu(false);
+
+                                router.push("/ShopBalanceLearn");
+                            }}
+                        >
+                            <Ionicons name="book-outline" size={20} color="#333"/>
+                            <Text style={styles.menuText}>
+                                Shop Balance Learn
+                            </Text>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+
+                                setOpenMenu(false);
+
+                                router.push("/ShopBalanceTopup");
+                            }}
+                        >
+                            <Ionicons name="wallet-outline" size={20} color="#333"/>
+                            <Text style={styles.menuText}>
+                                Shop Balance Topup
+                            </Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                                setOpenMenu(false);
+                                router.push('/Ranking')
+                            }}
+                        >
+                            <Ionicons name="trophy-outline" size={20} color="#333"/>
+                            <Text style={styles.menuText}>
+                                Ranking
+                            </Text>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                                setOpenMenu(false);
+                                router.push('/(tabs)/wallet')
+                            }}
+                        >
+                            <Ionicons name="card-outline" size={20} color="#333"/>
+                            <Text style={styles.menuText}>
+                                Wallet
+                            </Text>
+
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                                setOpenMenu(false);
+                                router.push('/FindTutor')
+                            }}
+                        >
+                            <Ionicons name="bulb-outline" size={20} color="#333"/>
+                            <Text style={styles.menuText}>
+                                Tutor
+                            </Text>
+
+                        </TouchableOpacity>
+                    </TouchableOpacity>
+                )
+            }
         </View>
+
     );
 }
 
@@ -1526,5 +1771,55 @@ const styles = StyleSheet.create({
         color: "#888",
         marginTop: 2,
         fontSize: 12,
+    },
+    dropdownMenu: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgb(255, 255, 255)",
+    zIndex: 999,
+    justifyContent: "flex-start",
+    marginTop: 100
+},
+
+menuContent: {
+    width: 280,
+
+    height: "100%",
+
+    backgroundColor: "#fff",
+
+    paddingTop: 120,
+
+    paddingHorizontal: 20,
+
+    shadowColor: "#000",
+
+    shadowOffset: {
+        width: 4,
+        height: 0,
+    },
+
+    shadowOpacity: 0.15,
+
+    shadowRadius: 10,
+
+    elevation: 10,
+},
+
+    menuItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+    },
+
+    menuText: {
+        marginLeft: 12,
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#333",
     },
 });
