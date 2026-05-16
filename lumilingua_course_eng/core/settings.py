@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'modules.course.apps.CourseConfig',
     'modules.progress.apps.ProgressConfig',
-    'modules.exercise.apps.ExerciseConfig'
+    'modules.exercise.apps.ExerciseConfig',
+    'modules.premium_course.apps.PremiumCourseConfig'
 ]
 
 MIDDLEWARE = [
