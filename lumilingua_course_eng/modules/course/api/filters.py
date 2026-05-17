@@ -9,6 +9,7 @@ class VocabularyFilter(django_filters.FilterSet):
         model = Vocabulary
         fields = ['level', 'topic']
 
+
     def filter_topic(self, queryset, name, value):
         if value.isdigit():
             return queryset.filter(topic_id=int(value))

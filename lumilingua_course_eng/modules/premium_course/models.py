@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 
 def validate_exercise_type(value):
-    valid_types = ['multiple_choice', 'sentence_order', 'matching', 'fill_blank', 'all']
+    valid_types = ['multiple_choice', 'sentence_order', 'matching', 'fill_blank', 'all', 'true_false_notgiven']
     if value not in valid_types:
         raise ValidationError(f'Type must be one of: {", ".join(valid_types)}')
 
@@ -11,6 +11,12 @@ def validate_difficulty(value):
     valid_diff = ['easy', 'medium', 'hard']
     if value and value not in valid_diff:
         raise ValidationError(f'Difficulty must be one of: {", ".join(valid_diff)}')
+
+
+def validate_question_type(value):
+    valid_types = ['multiple_choice', 'sentence_order', 'matching', 'fill_blank', 'true_false_notgiven']
+    if value not in valid_types:
+        raise ValidationError(f'Type must be one of: {", ".join(valid_types)}')
 
 class ExerciseProgressReadingPremium(models.Model):
     id_exercise_progress = models.AutoField(primary_key=True)
@@ -115,7 +121,7 @@ class Reading(models.Model):
         to_field='id_level',
         related_name='reading_level'
     )
-    img_path = models.TextField()
+    img_path = models.ImageField(upload_to='reading/', null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -129,3 +135,58 @@ class Reading(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['title'], name='unique_title')
         ]
+
+class QuestionPremium(models.Model):
+    id_question_premium = models.AutoField(primary_key=True)
+    exercise_reading_premium = models.ForeignKey(
+        'ExerciseReadingPremium',
+        on_delete=models.CASCADE,
+        db_column='id_exercise',
+        related_name='question_premium_exercise'
+    )
+    content = models.TextField(null=False, blank=False)
+    type = models.CharField(
+        max_length=50,
+        validators=[validate_question_type],
+        help_text="Type exercise: multiple_choice, sentence_order, matching, fill_blank, true_false_notgiven",
+        null=False,
+        blank=False
+    )
+    words = models.JSONField(
+        null=True,
+        blank=True,
+        default=list,
+        help_text="User sort order: (example['element 1', 'element 2',...])"
+    )
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        default=list,
+        help_text='{"pairs":[{ "id": 1, "left": "Dog", "right": "Chó" },{ "id": 2, "left": "Cat", "right": "Mèo" },{ "id": 3, "left": "Bird", "right": "Chim" }]}'
+    )
+    correct_answer = models.TextField(null=True, blank=False)
+    points = models.IntegerField(default=0)
+    image_url = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_questions_premium"
+        managed = False
+
+class QuestionOptions(models.Model):
+    id_question_premium_option = models.AutoField(primary_key=True)
+    question_premium = models.ForeignKey(
+        'QuestionPremium',
+        on_delete=models.CASCADE,
+        db_column='id_question_premium',
+        related_name='question_premium_option'
+    )
+    content = models.TextField(null=False, blank=False)
+    is_correct = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_question_premium_options"
+        managed = False

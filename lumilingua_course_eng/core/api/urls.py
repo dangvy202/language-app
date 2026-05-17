@@ -3,10 +3,16 @@ from rest_framework import routers
 from modules.course.api.urls import levels_router, topics_router, vocabularies_router, languages_router, means_router
 from modules.exercise.api.urls import exercises_router, exercise_progress_router, questions_router, \
     question_option_router
+from modules.premium_course.api.urls import readings_router
 from modules.progress.api.urls import users_cache_router, certificates_router, certificate_caches_router, \
     users_note_router, histories_progress_router, category_level_router
 
 router = routers.DefaultRouter()
+#course premium
+#reading
+router.registry.extend(readings_router.registry)
+#end course premium
+
 # course
 router.registry.extend(levels_router.registry)
 router.registry.extend(topics_router.registry)
