@@ -174,7 +174,7 @@ class QuestionPremium(models.Model):
         db_table = "tbl_questions_premium"
         managed = False
 
-class QuestionOptions(models.Model):
+class QuestionOptionsPremium(models.Model):
     id_question_premium_option = models.AutoField(primary_key=True)
     question_premium = models.ForeignKey(
         'QuestionPremium',
