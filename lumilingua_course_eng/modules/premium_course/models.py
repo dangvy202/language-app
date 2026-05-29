@@ -18,6 +18,33 @@ def validate_question_type(value):
     if value not in valid_types:
         raise ValidationError(f'Type must be one of: {", ".join(valid_types)}')
 
+class Goals(models.Model):
+    id_goal = models.AutoField(primary_key=True)
+    description = models.TextField()
+    goal_reading = models.IntegerField(null=False,blank=False)
+    goal_listening = models.IntegerField(null=False,blank=False)
+    goal_writing = models.IntegerField(null=False,blank=False)
+    goal_speaking = models.IntegerField(null=False,blank=False)
+    goal_xp = models.IntegerField(null=False,blank=False)
+    actual_reading = models.IntegerField(default=0)
+    actual_listening = models.IntegerField(default=0)
+    actual_writing = models.IntegerField(default=0)
+    actual_speaking = models.IntegerField(default=0)
+    actual_xp = models.IntegerField(default=0)
+    user_cache = models.ForeignKey(
+        'progress.UserCache',
+        on_delete=models.CASCADE,
+        db_column='id_user_cache',
+        related_name='user_goals',
+        to_field='id_user_cache',
+    )
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        db_table = "tbl_goals"
+        managed = False
+
 class ExerciseProgressReadingPremium(models.Model):
     id_exercise_progress = models.AutoField(primary_key=True)
     user_cache = models.ForeignKey(

@@ -2,7 +2,11 @@ from rest_framework import routers
 
 from modules.exercise.api.urls import question_option_router
 from modules.premium_course.api.views import ReadingViewSet, SaveVocabularyReadingViewSet, QuestionOptionPremiumViewSet, \
-    QuestionPremiumViewSet, ExerciseReadingPremiumViewSet, ExerciseProgressReadingPremiumViewSet
+    QuestionPremiumViewSet, ExerciseReadingPremiumViewSet, ExerciseProgressReadingPremiumViewSet, GoalViewSet
+
+# Goals
+goals_router = routers.SimpleRouter()
+goals_router.register(r'goal', GoalViewSet)
 
 # Reading
 readings_router = routers.SimpleRouter()

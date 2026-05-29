@@ -1,375 +1,1007 @@
-import { Level, Skill } from '@/interfaces/interfaces';
-import { fetchLevel } from '@/services/api';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import Loading from "@/component/loading";
-import useFetch from '@/services/useFetch';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image as ExpoImage } from 'expo-image';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    TouchableOpacity,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+    Image, Modal, Pressable, SafeAreaView,
+    ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View
 } from 'react-native';
 
+import { getCrmsEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
+import { useUserCache } from '@/hook/useUserCache';
+import { fetchUserProfile, getLevelByCategoryId, getRankByUserId } from '@/services/api';
+import { saveGoals } from '@/services/apiLearn';
+import { Alert } from 'react-native';
+
+const skills = [
+    {
+        title: 'Reading',
+        subtitle: 'Improve your reading comprehension',
+        lessons: '12 lessons',
+        icon: '📖',
+        color: '#DFF8E8',
+    },
+    {
+        title: 'Listening',
+        subtitle: 'Train your listening and understanding',
+        lessons: '10 lessons',
+        icon: '🎧',
+        color: '#E3F0FF',
+    },
+    {
+        title: 'Writing',
+        subtitle: 'Practice your writing and grammar',
+        lessons: '8 lessons',
+        icon: '✍️',
+        color: '#EEE5FF',
+    },
+    {
+        title: 'Speaking',
+        subtitle: 'Practice speaking and pronunciation',
+        lessons: '10 lessons',
+        icon: '🎙️',
+        color: '#FFF0DD',
+    },
+];
+
 export default function Learn() {
-    const router = useRouter();
+    const [goals, setGoals] = useState<any[]>([]);
+    const [loadingGoals, setLoadingGoals] = useState(false);
+    const [editingGoal, setEditingGoal] = useState<any>(null);
+    const [description, setDescription] = useState('');
+    const [goalReading, setGoalReading] = useState('');
+    const [goalListening, setGoalListening] = useState('');
+    const [goalWriting, setGoalWriting] = useState('');
+    const [goalSpeaking, setGoalSpeaking] = useState('');
+    const [goalXp, setGoalXp] = useState('');
+    const [goalModalVisible, setGoalModalVisible] = useState(false);
+    const [activeTab, setActiveTab] = useState<
+        'progress' | 'finished' | 'add'
+    >('progress');
+    const [userProfile, setUserProfile] = useState<any>(null);
+    const [categoryLevel, setCategoryLevel] = useState<any>(null);
+    const [rank, setRank] = useState<any>(null);
 
-    const {
-        data: rawData,
-        loading: levelLoading,
-        error: levelError,
-    } = useFetch(() => fetchLevel({ query: "" }));
-    
-    if (levelLoading) {
-        return <Loading />;
-    }
-    const levels = rawData ?? [];
+    const { cache: userCache } = useUserCache();
 
-    const defaultSkills: Skill[] = [
-        { key_skill: 'listening', label: 'Listening', icon: 'ear-outline' },
-        { key_skill: 'reading', label: 'Reading', icon: 'book-outline' },
-        { key_skill: 'speaking', label: 'Speaking', icon: 'mic-outline' },
-        { key_skill: 'writing', label: 'Writing', icon: 'create-outline' },
-    ];
+    const refreshTokenApi = async (refreshToken: string) => {
+        const endpoint = getCrmsEndpoint('v1/user/refresh');
 
-    const levelsWithSkills: Level[] = levels.map(level => ({
-        ...level,
-        skills: defaultSkills,
-    }));
-    
-    const currentLevel = 'A1';
-    const earnedCoins = 450;
-    const dailyCoinsGoal = 50;
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.notification);
+        }
+
+        return await response.json();
+    };
+
+
+    useEffect(() => {
+        const init = async () => {
+            try {
+                const token = await AsyncStorage.getItem('token');
+                const expiredStr = await AsyncStorage.getItem('expired');
+
+                const expired = expiredStr
+                    ? parseInt(expiredStr, 10)
+                    : null;
+
+                if (!(token && expired && Date.now() < expired)) {
+                    const refreshToken = await AsyncStorage.getItem(
+                        'refreshToken'
+                    );
+
+                    if (refreshToken) {
+                        try {
+                            const res = await refreshTokenApi(refreshToken);
+
+                            await AsyncStorage.setItem(
+                                'token',
+                                res.data.token || ''
+                            );
+
+                            await AsyncStorage.setItem(
+                                'expired',
+                                String(
+                                    res.data.expired ||
+                                    Date.now() + 900000
+                                )
+                            );
+                        } catch (err) {
+                            await AsyncStorage.multiRemove([
+                                'token',
+                                'refreshToken',
+                                'expired',
+                            ]);
+
+                            router.replace('/Login');
+                            return;
+                        }
+                    } else {
+                        router.replace('/Login');
+                        return;
+                    }
+                }
+
+                const profile = await fetchUserProfile();
+                setUserProfile(profile);
+
+                if (userCache && userCache.length > 0) {
+                    const categoryId = userCache[0].category_level;
+                    const userId = userCache[0].id_user_cache;
+
+                    const [levelData, rankData] = await Promise.all([
+                        getLevelByCategoryId(categoryId),
+                        getRankByUserId(userId),
+                    ]);
+
+                    setCategoryLevel(levelData);
+                    setRank(rankData);
+                }
+            } catch (err) {
+                console.log(err);
+
+                router.replace('/Login');
+            }
+        };
+
+        init();
+    }, [userCache]);
+
+    const saveGoal = async () => {
+        try {
+            const data = await saveGoals({
+                description: description.trim(),
+                goal_reading: parseInt(goalReading),
+                goal_listening: parseInt(goalListening),
+                goal_writing: parseInt(goalWriting),
+                goal_speaking: parseInt(goalSpeaking),
+                goal_xp: parseInt(goalXp),
+                user_cache: parseInt(userCache[0].id_user_cache)
+            });
+            if (data.id_goal) {
+
+                Alert.alert("Success", "Save goal successful");
+                setGoalModalVisible(false);
+
+                // Reset form
+                setDescription('');
+                setGoalReading('');
+                setGoalListening('');
+                setGoalWriting('');
+                setGoalSpeaking('');
+                setGoalXp('');
+                setEditingGoal(null);
+            } else {
+                Alert.alert("Fail", data.notification);
+            }
+        } catch (error) {
+            Alert.alert("Fail", "Cannot save goals on server");
+        }
+    };
+
+    const handleEditGoal = (goal: any) => {
+        setEditingGoal(goal);
+
+        setDescription(goal.description || '');
+
+        setGoalReading(
+            String(goal.goal_reading || 0)
+        );
+
+        setGoalListening(
+            String(goal.goal_listening || 0)
+        );
+
+        setGoalWriting(
+            String(goal.goal_writing || 0)
+        );
+
+        setGoalSpeaking(
+            String(goal.goal_speaking || 0)
+        );
+
+        setGoalXp(
+            String(goal.goal_xp || 0)
+        );
+
+        setActiveTab('add');
+    };
 
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <LinearGradient colors={['#FFB703', '#FB8500']} style={styles.headerGradient}>
-                <View style={styles.headerTop}>
-                    <View style={styles.streakBadge}>
-                        <Ionicons name="cash-outline" size={20} color="#FFD700" />
-                        <Text style={styles.streakText}>100 coins</Text>
+        <SafeAreaView style={styles.container}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {/* Header */}
+                <View style={styles.header}>
+                    <View style={styles.headerLeft}>
+                        {userProfile?.avatar ? (
+                            <ExpoImage
+                                source={{
+                                    uri: getCrmsImgEndpoint(`avatars/${userProfile.avatar}`),
+                                }}
+                                style={styles.avatar}
+                            />
+                        ) : (
+                            <View
+                                style={[
+                                    styles.avatar,
+                                    {
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        backgroundColor: '#E5E7EB',
+                                    },
+                                ]}
+                            >
+                                <Text style={{ fontSize: 24 }}>👤</Text>
+                            </View>
+                        )}
+
+                        <View>
+                            <Text style={styles.helloText}>
+                                Hi, {userProfile?.username || 'User'} 👋
+                            </Text>
+
+                            <Text style={styles.subText}>
+                                Let's improve your English skills
+                            </Text>
+                        </View>
+                    </View>
+
+                    <Text style={styles.bell}>🔔</Text>
+                </View>
+
+                {/* XP Card */}
+                <View style={styles.xpCard}>
+                    <View style={styles.xpTop}>
+                        <View>
+                            <Text style={styles.xpLabel}>YOUR LEVEL</Text>
+                            <Text style={styles.level}>
+                                {categoryLevel?.[0]?.level || 'A1'}
+                            </Text>
+
+                            <Text style={styles.levelSub}>
+                                {categoryLevel?.[0]?.description || 'Beginner'}
+                            </Text>
+                        </View>
+
+                        <View style={{ alignItems: 'flex-end' }}>
+                            <Text style={styles.xpLabel}>XP HAVE</Text>
+                            <Text style={styles.xpNumber}>
+                                {rank?.gain_xp || 0}
+                            </Text>
+
+                            <Text style={styles.levelSub}>
+                                Rank #{rank?.rank || 0}
+                            </Text>
+                        </View>
                     </View>
                 </View>
 
-                <View style={styles.headerContent}>
-                    <Text style={styles.courseTitle}>English Basic</Text>
-                    <Text style={styles.courseSubtitle}>
-                        Level {currentLevel} • Đã kiếm {earnedCoins.toLocaleString()} coins
-                    </Text>
-                    <Text style={styles.earnTip}>
-                        Học hôm nay để kiếm thêm {dailyCoinsGoal} coins!
-                    </Text>
+                {/* Goal */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Today's Goal</Text>
+
+                        <TouchableOpacity
+                            onPress={() => setGoalModalVisible(true)}
+                        >
+                            <Text style={styles.linkText}>Edit Goal</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity style={styles.goalCard}
+                        onPress={() => setGoalModalVisible(true)}>
+                        <View style={styles.goalRow}>
+                            <View style={styles.goalIcon}>
+                                <Text style={{ fontSize: 28 }}>🎯</Text>
+                            </View>
+
+                            <View>
+                                <Text style={styles.goalTitle}>
+                                    Complete 2 lessons
+                                </Text>
+
+                                <Text style={styles.goalSubtitle}>
+                                    1 / 2 completed
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.goalProgressBg}>
+                            <View style={styles.goalProgressFill} />
+                        </View>
+                    </TouchableOpacity>
                 </View>
-            </LinearGradient>
 
-            {/* Container */}
-            <ScrollView
-                style={styles.content}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 40 }}
-            >
-                <Text style={styles.sectionTitle}>Level</Text>
-                {levelLoading ? (
-                    <ActivityIndicator size="large" color="#FFA500" style={{ marginTop: 40 }} />
-                ) : levelError ? (
-                    <Text style={{ textAlign: 'center', color: 'red', marginTop: 40 }}>
-                        Có lỗi xảy ra khi tải levels: {levelError.message || 'Unknown error'}
+                {/* Skills */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                        Improve Your Skills
                     </Text>
-                ) : levels.length === 0 ? (
-                    <Text style={{ textAlign: 'center', color: '#666', marginTop: 40 }}>
-                        Chưa có level nào
-                    </Text>
-                ) : (
-                    
-                    levelsWithSkills.map((level) => {
-                        const isUnlocked = 'A1' === currentLevel;
-                        
 
-                        return (
+                    <View style={styles.skillsContainer}>
+                        {skills.map((skill) => (
                             <TouchableOpacity
-                                key={level.id_level}
-                                style={[
-                                    styles.levelCard,
-                                    isUnlocked && styles.currentLevelCard,
-                                ]}
-                                activeOpacity={isUnlocked ? 0.8 : 1}
-                                disabled={!isUnlocked}
-                                onPress={() => {
-                                    if (isUnlocked) {
-                                        console.log(`Bắt đầu/tiếp tục học level ${level.id_level}`);
-                                        // router.push(`/learn/${level.id}`);
-                                    } else {
-                                        console.log(`Cần mở khóa level ${level.id_level}`);
-                                    }
-                                }}
+                                key={skill.title}
+                                style={styles.skillCard}
+                                activeOpacity={0.8}
                             >
-                                <LinearGradient
-                                    colors={
-                                        isUnlocked
-                                            ? ['#FFF3E0', '#FFE0B2']
-                                            : ['#FAFAFA', '#EEEEEE']
-                                    }
-                                    style={styles.levelGradient}
+                                <View
+                                    style={[
+                                        styles.skillIcon,
+                                        { backgroundColor: skill.color },
+                                    ]}
                                 >
-                                    <View style={styles.levelHeader}>
-                                        <Text style={styles.levelName}>{level.rank}</Text>
+                                    <Text style={styles.skillEmoji}>
+                                        {skill.icon}
+                                    </Text>
+                                </View>
 
-                                        <View style={styles.progressCircle}>
-                                            <Text style={styles.progressText}>
-                                                {/* {Math.round(level.overallProgress || 0)}% */}
-                                                10%
-                                            </Text>
-                                        </View>
-                                    </View>
+                                <View style={styles.skillHeader}>
+                                    <Text style={styles.skillTitle}>
+                                        {skill.title}
+                                    </Text>
 
-                                    <Text style={styles.levelDesc}>{level.level_name}: {level.description}</Text>
+                                    <Text style={styles.arrow}>›</Text>
+                                </View>
 
+                                <Text style={styles.skillSubtitle}>
+                                    {skill.subtitle}
+                                </Text>
 
-                                    {/* 4 Skills */}
-                                    <View style={[styles.skillsContainer, !isUnlocked && { opacity: 0.5 }]}>
-                                        {level.skills?.map((skill) => (
-                                            <View key={skill.key_skill} style={styles.skillItem}>
-                                                <View style={styles.skillIconContainer}>
-                                                    <Ionicons name={skill.icon} size={28} color="#FFA500" />
-                                                </View>
-                                                <Text style={styles.skillName}>{skill.label}</Text>
-                                                <View style={styles.skillProgressBg}>
-                                                    <View
-                                                        style={[
-                                                            styles.skillProgressFill,
-                                                            { width: '10%' },
-                                                        ]}
-                                                    />
-                                                </View>
-                                                <Text style={styles.skillProgressText}>
-                                                   10%
-                                                </Text>
-                                            </View>
-                                        ))}
-                                    </View>
-
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.startButton,
-                                            !isUnlocked && styles.lockedButton,
-                                        ]}
-                                        disabled={!isUnlocked}
-                                        onPress={() => {
-                                            if (isUnlocked) {
-                                                console.log(`Bắt đầu/tiếp tục học level ${level.id_level}`);
-                                            } else {
-                                                console.log(`Mở khóa level ${level.id_level} - cần coins hoặc điều kiện`);
-                                            }
-                                        }}
-                                    >
-                                        <Ionicons
-                                            name={isUnlocked ? 'lock-open-outline' : 'lock-closed-outline'}
-                                            size={20}
-                                            color={isUnlocked ? '#fff' : '#666'}
-                                            style={{ marginRight: 8 }}
-                                        />
-                                        <Text style={styles.startButtonText}>
-                                            {isUnlocked
-                                                ? (10) > 0
-                                                    ? 'Tiếp tục học'
-                                                    : 'Bắt đầu ngay'
-                                                : 'Mở khóa level'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                </LinearGradient>
+                                <Text style={styles.lessonText}>
+                                    {skill.lessons}
+                                </Text>
                             </TouchableOpacity>
-                        );
-                    })
-                )}
-                <View style={{ height: 80 }} />
+                        ))}
+                    </View>
+                </View>
+
+                {/* Continue Learning */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>
+                            Continue Learning
+                        </Text>
+
+                        <TouchableOpacity>
+                            <Text style={styles.linkText}>See All</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.learningCard}>
+                        <Image
+                            source={{
+                                uri: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=500',
+                            }}
+                            style={styles.learningImage}
+                        />
+
+                        <View style={styles.learningContent}>
+                            <Text style={styles.readingTag}>
+                                READING
+                            </Text>
+
+                            <Text style={styles.learningTitle}>
+                                The Future of Work
+                            </Text>
+
+                            <View style={styles.learningProgressBg}>
+                                <View style={styles.learningProgressFill} />
+                            </View>
+
+                            <Text style={styles.percent}>60%</Text>
+                        </View>
+                    </View>
+                </View>
+                <Modal
+                    visible={goalModalVisible}
+                    animationType="slide"
+                    transparent
+                    statusBarTranslucent
+                    onRequestClose={() => setGoalModalVisible(false)}
+                >
+                    {/* Overlay nền tối */}
+                    <Pressable
+                        style={styles.modalOverlay}
+                        onPress={() => setGoalModalVisible(false)}
+                    >
+                        {/* Modal Content */}
+                        <Pressable
+                            style={styles.modalContent}
+                            onPress={(e) => e.stopPropagation()}   // Ngăn click bên trong đóng modal
+                        >
+                            {/* HEADER */}
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Goals</Text>
+
+                                <TouchableOpacity
+                                    onPress={() => setGoalModalVisible(false)}
+                                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                                >
+                                    <Text style={styles.closeIcon}>✕</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* TABS */}
+                            <View style={styles.tabContainer}>
+                                <TouchableOpacity
+                                    style={[styles.tabItem, activeTab === 'progress' && styles.tabActive]}
+                                    onPress={() => setActiveTab('progress')}
+                                >
+                                    <Text style={activeTab === 'progress' ? styles.tabTextActive : styles.tabText}>
+                                        In Progress
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.tabItem, activeTab === 'finished' && styles.tabActive]}
+                                    onPress={() => setActiveTab('finished')}
+                                >
+                                    <Text style={activeTab === 'finished' ? styles.tabTextActive : styles.tabText}>
+                                        Finished
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.tabItem, activeTab === 'add' && styles.tabActive]}
+                                    onPress={() => setActiveTab('add')}
+                                >
+                                    <Text style={activeTab === 'add' ? styles.tabTextActive : styles.tabText}>
+                                        Add Goal
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* CONTENT */}
+                            <ScrollView
+                                showsVerticalScrollIndicator={false}
+                                style={styles.modalScroll}
+                            >
+                                {activeTab === 'progress' && (
+                                    <View>
+                                        <TouchableOpacity
+                                            style={styles.goalItem}
+                                            onPress={() =>
+                                                handleEditGoal({
+                                                    description: 'Finish Reading',
+                                                    goal_reading: 3,
+                                                    goal_listening: 2,
+                                                    goal_writing: 1,
+                                                    goal_speaking: 1,
+                                                    goal_xp: 100,
+                                                })
+                                            }
+                                        >
+                                            <Text style={styles.goalItemTitle}>Reading Goal</Text>
+                                            <Text style={styles.goalItemProgress}>1 / 3</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+
+                                {activeTab === 'finished' && (
+                                    <View style={styles.emptyState}>
+                                        <Text>Finished Goals</Text>
+                                    </View>
+                                )}
+
+                                {activeTab === 'add' && (
+                                    <View>
+                                        <TextInput
+                                            placeholder="Description"
+                                            value={description}
+                                            onChangeText={setDescription}
+                                            placeholderTextColor="#999"
+                                            style={styles.input}
+                                        />
+
+                                        <TextInput
+                                            placeholder="Reading Goal"
+                                            value={goalReading}
+                                            onChangeText={setGoalReading}
+                                            placeholderTextColor="#999"
+                                            keyboardType="numeric"
+                                            style={styles.input}
+                                        />
+
+                                        <TextInput
+                                            placeholder="Listening Goal"
+                                            value={goalListening}
+                                            onChangeText={setGoalListening}
+                                            placeholderTextColor="#999"
+                                            keyboardType="numeric"
+                                            style={styles.input}
+                                        />
+
+                                        <TextInput
+                                            placeholder="Writing Goal"
+                                            value={goalWriting}
+                                            onChangeText={setGoalWriting}
+                                            placeholderTextColor="#999"
+                                            keyboardType="numeric"
+                                            style={styles.input}
+                                        />
+
+                                        <TextInput
+                                            placeholder="Speaking Goal"
+                                            value={goalSpeaking}
+                                            onChangeText={setGoalSpeaking}
+                                            placeholderTextColor="#999"
+                                            keyboardType="numeric"
+                                            style={styles.input}
+                                        />
+
+                                        <TextInput
+                                            placeholder="XP Goal"
+                                            value={goalXp}
+                                            onChangeText={setGoalXp}
+                                            placeholderTextColor="#999"
+                                            keyboardType="numeric"
+                                            style={styles.input}
+                                        />
+
+                                        <TouchableOpacity
+                                            style={styles.saveBtn}
+                                            onPress={saveGoal}
+                                        >
+                                            <Text style={styles.saveBtnText}>
+                                                {editingGoal ? 'Update Goal' : 'Save Goal'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </ScrollView>
+                        </Pressable>
+                    </Pressable>
+                </Modal>
             </ScrollView>
-        </View>
+
+
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
-
-    headerGradient: {
-        paddingTop: Platform.OS === 'android' ? 50 : 60,
-        paddingBottom: 35,
+    container: {
+        flex: 1,
+        backgroundColor: '#F5F7FF',
     },
-    headerTop: {
+
+    scrollContent: {
+        padding: 20,
+        paddingBottom: 120,
+    },
+
+    header: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
-        paddingHorizontal: 20,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    avatar: {
+        width: 54,
+        height: 54,
+        borderRadius: 27,
+        marginRight: 14,
+    },
+
+    helloText: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#111827',
+    },
+
+    subText: {
+        color: '#6B7280',
+        marginTop: 4,
+    },
+
+    bell: {
+        fontSize: 24,
+    },
+
+    xpCard: {
+        backgroundColor: '#FF9500',
+        borderRadius: 28,
+        padding: 22,
+        marginBottom: 28,
+    },
+
+    xpTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 24,
+    },
+
+    xpLabel: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 12,
+        marginBottom: 6,
+    },
+
+    level: {
+        fontSize: 42,
+        fontWeight: '800',
+        color: '#fff',
+    },
+
+    levelSub: {
+        color: 'rgba(255,255,255,0.8)',
+    },
+
+    xpNumber: {
+        fontSize: 36,
+        fontWeight: '800',
+        color: '#fff',
+    },
+
+    progressBg: {
+        width: '100%',
+        height: 10,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        borderRadius: 999,
+        overflow: 'hidden',
+    },
+
+    progressFill: {
+        width: '75%',
+        height: '100%',
+        backgroundColor: '#fff',
+        borderRadius: 999,
+    },
+
+    section: {
+        marginBottom: 30,
+    },
+
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: 16,
     },
-    streakBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.35)',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 30,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 215, 0, 0.4)',
+
+    sectionTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#111827',
     },
-    streakText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        marginLeft: 8,
-        fontSize: 15,
-    },
-    headerContent: {
-        alignItems: 'center',
-        paddingHorizontal: 20,
-    },
-    courseTitle: {
-        fontSize: 32,
-        fontWeight: '900',
-        color: '#fff',
-        letterSpacing: 0.5,
-    },
-    courseSubtitle: {
-        fontSize: 17,
-        color: '#fff',
-        opacity: 0.95,
-        marginTop: 8,
+
+    linkText: {
+        color: '#5B5FEF',
         fontWeight: '600',
     },
-    earnTip: {
-        fontSize: 15,
-        color: '#FFD700',
-        marginTop: 12,
-        fontWeight: 'bold',
-        textAlign: 'center',
+
+    goalCard: {
+        backgroundColor: '#fff',
+        borderRadius: 28,
+        padding: 20,
     },
 
-    content: { flex: 1 },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginLeft: 20,
-        marginTop: 20,
-        marginBottom: 16,
-        color: '#333',
-    },
-
-    levelCard: {
-        marginHorizontal: 16,
-        marginBottom: 20,
-        borderRadius: 20,
-        overflow: 'hidden',
-        elevation: 6,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-    },
-    currentLevelCard: {
-        borderWidth: 2,
-        borderColor: '#FFA500',
-    },
-    levelGradient: { padding: 20 },
-
-    levelHeader: {
+    goalRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    levelId: {
-        fontSize: 36,
-        fontWeight: '900',
-        color: '#FFA500',
-    },
-    levelName: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#333',
-        flex: 1,
-        marginLeft: 16,
-    },
-    progressCircle: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#FFA500',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    progressText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        marginBottom: 18,
     },
 
-    levelDesc: {
-        fontSize: 15,
-        color: '#666',
-        marginBottom: 20,
-        lineHeight: 22,
+    goalIcon: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#FFE6D5',
+        marginRight: 16,
+    },
+
+    goalTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+    },
+
+    goalSubtitle: {
+        color: '#6B7280',
+        marginTop: 4,
+    },
+
+    goalProgressBg: {
+        width: '100%',
+        height: 10,
+        backgroundColor: '#E5E7EB',
+        borderRadius: 999,
+        overflow: 'hidden',
+    },
+
+    goalProgressFill: {
+        width: '50%',
+        height: '100%',
+        backgroundColor: '#FF9500',
     },
 
     skillsContainer: {
-        marginBottom: 20,
-    },
-    skillItem: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+
+    skillCard: {
+        width: '48%',
+        backgroundColor: '#fff',
+        borderRadius: 26,
+        padding: 18,
+        marginBottom: 16,
+    },
+
+    skillIcon: {
+        width: 62,
+        height: 62,
+        borderRadius: 20,
+        justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
     },
-    skillIconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: 'rgba(255,165,0,0.15)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
-    skillName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        width: 90,
-    },
-    skillProgressBg: {
-        flex: 1,
-        height: 10,
-        backgroundColor: '#E0E0E0',
-        borderRadius: 5,
-        overflow: 'hidden',
-        marginHorizontal: 12,
-    },
-    skillProgressFill: {
-        height: '100%',
-        backgroundColor: '#FFA500',
-    },
-    skillProgressText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#FFA500',
-        minWidth: 40,
-        textAlign: 'right',
+
+    skillEmoji: {
+        fontSize: 28,
     },
 
-    startButton: {
+    skillHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+
+    skillTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+    },
+
+    arrow: {
+        color: '#9CA3AF',
+        fontSize: 22,
+    },
+
+    skillSubtitle: {
+        color: '#6B7280',
+        lineHeight: 20,
+        minHeight: 58,
+    },
+
+    lessonText: {
+        marginTop: 10,
+        color: '#5B5FEF',
+        fontWeight: '600',
+    },
+
+    learningCard: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        borderRadius: 28,
+        padding: 14,
+    },
+
+    learningImage: {
+        width: 110,
+        height: 100,
+        borderRadius: 22,
+        marginRight: 14,
+    },
+
+    learningContent: {
+        flex: 1,
         justifyContent: 'center',
-        backgroundColor: '#FFA500',
+    },
+
+    readingTag: {
+        color: '#22C55E',
+        fontWeight: '700',
+        fontSize: 12,
+        marginBottom: 6,
+    },
+
+    learningTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+        marginBottom: 14,
+    },
+
+    learningProgressBg: {
+        width: '100%',
+        height: 8,
+        backgroundColor: '#E5E7EB',
+        borderRadius: 999,
+        overflow: 'hidden',
+        marginBottom: 6,
+    },
+
+    learningProgressFill: {
+        width: '60%',
+        height: '100%',
+        backgroundColor: '#FF9500',
+    },
+
+    percent: {
+        alignSelf: 'flex-end',
+        color: '#6B7280',
+    },
+
+    bottomTab: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderColor: '#F3F4F6',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 14,
+        paddingBottom: 28,
+    },
+
+    tabButton: {
+        alignItems: 'center',
+    },
+
+    tabIcon: {
+        fontSize: 24,
+        marginBottom: 4,
+    },
+
+    tabLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+
+
+    modalContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
+        padding: 20,
+    },
+    goalItem: {
+        backgroundColor: '#F9FAFB',
+        borderRadius: 20,
+        padding: 18,
+        marginBottom: 14,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+
+    input: {
+        backgroundColor: '#F9FAFB',
+        borderRadius: 18,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginBottom: 16,
+        fontSize: 16,
+    },
+
+    saveBtn: {
+        backgroundColor: '#FF9500',
         paddingVertical: 16,
-        borderRadius: 30,
+        borderRadius: 18,
+        alignItems: 'center',
+        marginTop: 8,
     },
-    lockedButton: {
-        backgroundColor: '#ccc',
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    startButtonText: {
+
+    modalContent: {
+        width: '90%',
+        maxHeight: '95%',
+        backgroundColor: '#fff',
+        borderRadius: 24,
+        padding: 20,
+        paddingBottom: 30,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+        elevation: 10,
+    },
+
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+
+    modalTitle: {
+        fontSize: 26,
+        fontWeight: '700',
+        color: '#111827',
+    },
+
+    closeIcon: {
+        fontSize: 28,
+        color: '#6B7280',
+        fontWeight: '300',
+    },
+
+    modalScroll: {
+        maxHeight: 500, // Giới hạn chiều cao nếu cần
+    },
+
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#F3F4F6',
+        borderRadius: 16,
+        padding: 6,
+        marginBottom: 24,
+    },
+
+    tabItem: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        borderRadius: 12,
+    },
+
+    tabActive: {
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+
+    tabText: {
+        color: '#6B7280',
+        fontWeight: '600',
+    },
+
+    tabTextActive: {
+        color: '#111827',
+        fontWeight: '700',
+    },
+
+    goalItemTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+
+    goalItemProgress: {
+        color: '#22C55E',
+        fontWeight: '700',
+    },
+
+    saveBtnText: {
         color: '#fff',
-        fontSize: 17,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+
+    emptyState: {
+        padding: 40,
+        alignItems: 'center',
     },
 });

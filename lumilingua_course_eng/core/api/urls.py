@@ -5,12 +5,14 @@ from modules.exercise.api.urls import exercises_router, exercise_progress_router
     question_option_router
 from modules.premium_course.api.urls import readings_router, save_vocabularies_reading_router, \
     question_option_premium_router, question_premium_router, exercise_reading_premium_router, \
-    exercise_progress_reading_premium_router
+    exercise_progress_reading_premium_router, goals_router
 from modules.progress.api.urls import users_cache_router, certificates_router, certificate_caches_router, \
     users_note_router, histories_progress_router, category_level_router
 
 router = routers.DefaultRouter()
 #course premium
+#goals
+router.registry.extend(goals_router.registry)
 #reading
 router.registry.extend(readings_router.registry)
 #save vocabulary reading

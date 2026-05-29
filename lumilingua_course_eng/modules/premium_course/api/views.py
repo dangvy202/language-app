@@ -1,10 +1,12 @@
-from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework import viewsets,status
+from datetime import date
 
 from modules.premium_course.api.serializers import ReadingSerializer, SaveVocabularyReadingSerializer, \
     QuestionOptionPremiumSerializer, QuestionPremiumSerializer, ExerciseReadingPremiumSerializer, \
-    ExerciseProgressReadingPremiumSerializer
+    ExerciseProgressReadingPremiumSerializer, GoalSerializer
 from modules.premium_course.models import Reading, SaveVocabularyReading, QuestionOptionsPremium, QuestionPremium, \
-    ExerciseReadingPremium, ExerciseProgressReadingPremium
+    ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals
 
 
 class ReadingViewSet(viewsets.ModelViewSet):
@@ -30,3 +32,46 @@ class QuestionPremiumViewSet(viewsets.ModelViewSet):
 class QuestionOptionPremiumViewSet(viewsets.ModelViewSet):
     queryset = QuestionOptionsPremium.objects.all()
     serializer_class = QuestionOptionPremiumSerializer
+
+class GoalViewSet(viewsets.ModelViewSet):
+    queryset = Goals.objects.all()
+    serializer_class = GoalSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_cache = self.request.query_params.get('user_cache')
+        is_completed = self.request.query_params.get('is_completed')
+        is_completed = is_completed.lower() == 'true'
+        if user_cache:
+            queryset = queryset.filter(user_cache=user_cache, is_completed=is_completed)
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+
+        user_cache = request.data.get('user_cache')
+
+        unfinished_goal = Goals.objects.filter(user_cache_id=user_cache, is_completed=False).exists()
+
+        if unfinished_goal:
+            return Response(
+                {
+                    "notification": "You must complete current goal first"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        is_today_goal = Goals.objects.filter(user_cache_id=user_cache, created_at__date=date.today()).exists()
+
+        if is_today_goal:
+            return Response(
+                {
+                    "notification": "You already created goal today"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().create(
+            request,
+            *args,
+            **kwargs
+        )
