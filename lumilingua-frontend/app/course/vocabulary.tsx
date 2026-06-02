@@ -83,7 +83,7 @@ export default function LearnVocabulary() {
         init();
     }, [router]);
 
-    
+
 
     const loadUserProfile = async () => {
         try {
@@ -226,81 +226,81 @@ export default function LearnVocabulary() {
     };
 
     const handlePaidExercise = async (exercise: Exercise) => {
-    if (!userProfile?.wallet?.walletId) {
-        Alert.alert("Lỗi", "Không tìm thấy thông tin ví của bạn.");
-        return;
-    }
-
-    try {
-        const requestBody = {
-            walletId: userProfile.wallet.walletId,
-            amtType: "AMT_LEARN",
-            amtFee: exercise.balance_learn || 0
-        };
-
-        const token = await AsyncStorage.getItem('token');
-
-        const response = await fetch(getCrmsEndpoint("v1/wallet/paid/exercise"), {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(requestBody),
-        });
-
-        if (response.status === 204) {
-            router.push({
-                pathname: '/course/exercise/[id]',
-                params: {
-                    id: exercise.id_exercise,
-                    time_limit: exercise.time_limit,
-                },
-            });
+        if (!userProfile?.wallet?.walletId) {
+            Alert.alert("Lỗi", "Không tìm thấy thông tin ví của bạn.");
             return;
         }
 
-        let result;
         try {
-            result = await response.json();
-        } catch (jsonErr) {
-            if (response.ok) {
-                Alert.alert("Thành công", "Thanh toán bài tập thành công!");
+            const requestBody = {
+                walletId: userProfile.wallet.walletId,
+                amtType: "AMT_LEARN",
+                amtFee: exercise.balance_learn || 0
+            };
+
+            const token = await AsyncStorage.getItem('token');
+
+            const response = await fetch(getCrmsEndpoint("v1/wallet/paid/exercise"), {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (response.status === 204) {
                 router.push({
                     pathname: '/course/exercise/[id]',
-                    params: { id: exercise.id_exercise, time_limit: exercise.time_limit },
+                    params: {
+                        id: exercise.id_exercise,
+                        time_limit: exercise.time_limit,
+                    },
                 });
                 return;
             }
-            throw jsonErr;
-        }
 
-        if (response.ok || result?.code === 200 || result?.code === "SUCCESS") {
-            Alert.alert("Thành công", "Thanh toán bài tập thành công!", [
-                {
-                    text: "OK",
-                    onPress: () => {
-                        router.push({
-                            pathname: '/course/exercise/[id]',
-                            params: {
-                                id: exercise.id_exercise,
-                                time_limit: exercise.time_limit,
-                            },
-                        });
-                    }
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonErr) {
+                if (response.ok) {
+                    Alert.alert("Thành công", "Thanh toán bài tập thành công!");
+                    router.push({
+                        pathname: '/course/exercise/[id]',
+                        params: { id: exercise.id_exercise, time_limit: exercise.time_limit },
+                    });
+                    return;
                 }
-            ]);
-        } else {
-            Alert.alert(
-                "Thất bại", 
-                result?.notification || "Không đủ số dư hoặc xảy ra lỗi."
-            );
+                throw jsonErr;
+            }
+
+            if (response.ok || result?.code === 200 || result?.code === "SUCCESS") {
+                Alert.alert("Thành công", "Thanh toán bài tập thành công!", [
+                    {
+                        text: "OK",
+                        onPress: () => {
+                            router.push({
+                                pathname: '/course/exercise/[id]',
+                                params: {
+                                    id: exercise.id_exercise,
+                                    time_limit: exercise.time_limit,
+                                },
+                            });
+                        }
+                    }
+                ]);
+            } else {
+                Alert.alert(
+                    "Thất bại",
+                    result?.notification || "Không đủ số dư hoặc xảy ra lỗi."
+                );
+            }
+        } catch (err) {
+            console.error("Paid exercise error:", err);
+            Alert.alert("Lỗi", "Không thể kết nối đến server. Vui lòng thử lại sau.");
         }
-    } catch (err) {
-        console.error("Paid exercise error:", err);
-        Alert.alert("Lỗi", "Không thể kết nối đến server. Vui lòng thử lại sau.");
-    }
-};
+    };
 
     const getProgressColor = (progress: number) => {
         if (progress === 100) return "#22C55E";

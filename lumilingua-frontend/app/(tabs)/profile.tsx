@@ -26,7 +26,7 @@ import {
 } from '@/services/api';
 import Loading from '@/component/loading';
 import * as ImagePicker from 'expo-image-picker';
-import { getCrmsEndpoint, getClientEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
+import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

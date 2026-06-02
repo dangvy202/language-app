@@ -1,72 +1,22 @@
-// app/reading.tsx
-
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
-
-const lessons = [
-    {
-        id: 1,
-        title: 'Daily Routine',
-        description:
-            'Learn vocabulary and common expressions used in daily life.',
-        image:
-            'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800',
-        level: 'A1',
-        xp: 10,
-        completed: true,
-    },
-    {
-        id: 2,
-        title: 'My Hometown',
-        description:
-            'Practice reading texts about cities, culture and local life.',
-        image:
-            'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800',
-        level: 'A1',
-        xp: 15,
-        completed: true,
-    },
-    {
-        id: 3,
-        title: 'Technology Today',
-        description:
-            'Discover modern technology and its impact on society.',
-        image:
-            'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800',
-        level: 'A2',
-        xp: 20,
-        completed: false,
-    },
-    {
-        id: 4,
-        title: 'Climate Change',
-        description:
-            'Understand environmental issues and global warming.',
-        image:
-            'https://images.unsplash.com/photo-1569163139394-de4e4f43e4e3?w=800',
-        level: 'B1',
-        xp: 25,
-        completed: false,
-    },
-    {
-        id: 5,
-        title: 'Future Careers',
-        description:
-            'Explore future jobs and career opportunities.',
-        image:
-            'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800',
-        level: 'B1',
-        xp: 30,
-        completed: false,
-    },
-];
+import { ReadingItem } from '@/interfaces/interfaces';
+import { getClientEndpoint } from '@/constants/configApi';
+import Loading from '@/component/loading';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { getCrmsEndpoint } from '@/constants/configApi';
 
 export default function ReadingScreen() {
+    const [lessons, setLessons] = useState<ReadingItem[]>([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<
         'all' | 'completed' | 'uncompleted'
     >('all');
+    const router = useRouter();
+    const [loadingLogin, setLoadingLogin] = useState(true);
 
     const [searchText, setSearchText] = useState('');
 
@@ -74,41 +24,156 @@ export default function ReadingScreen() {
         'ALL' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
     >('ALL');
 
+
     const { width } = useWindowDimensions();
 
+    const refreshTokenApi = async (refreshToken: string) => {
+        const endpoint = getCrmsEndpoint('v1/user/refresh');
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            body: JSON.stringify({
+                refreshToken,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.notification);
+        }
+
+        return await response.json();
+    };
+
+    const loadReading = async () => {
+        try {
+            setLoading(true);
+
+            const response = await fetch(
+                getClientEndpoint('reading/')
+            );
+
+            const data = await response.json();
+
+            setLessons(data || []);
+        } catch (err) {
+            console.log('Load reading error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkAuth = async () => {
+            const token = await AsyncStorage.getItem('token');
+            const expiredStr = await AsyncStorage.getItem('expired');
+
+            const expired = expiredStr ? parseInt(expiredStr, 10) : null;
+
+            // token còn hạn
+            if (token && expired && Date.now() < expired) {
+                if (isMounted) {
+                    setLoadingLogin(false);
+                }
+                return;
+            }
+
+            const refreshToken =
+                await AsyncStorage.getItem(
+                    'refreshToken'
+                );
+
+            // refresh token
+            if (refreshToken) {
+                try {
+                    const response =
+                        await refreshTokenApi(
+                            refreshToken
+                        );
+
+                    await AsyncStorage.setItem(
+                        'token',
+                        response.data.token || ''
+                    );
+
+                    await AsyncStorage.setItem(
+                        'expired',
+                        String(
+                            response.data.expired ||
+                                Date.now() + 900000
+                        )
+                    );
+                } catch (error) {
+                    console.log(
+                        'Refresh token error:',
+                        error
+                    );
+
+                    await AsyncStorage.multiRemove([
+                        'token',
+                        'refreshToken',
+                        'expired',
+                        'username',
+                        'email',
+                    ]);
+
+                    router.replace('/Login');
+                    return;
+                }
+            } else {
+                router.replace('/Login');
+                return;
+            }
+
+            if (isMounted) {
+                setLoadingLogin(false);
+            }
+        };
+
+        checkAuth();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (loadingLogin) return;
+
+        loadReading();
+    }, [loadingLogin]);
+
     const filteredLessons = lessons.filter((item) => {
-        if (filter === 'completed' && !item.completed) {
-            return false;
-        }
+    if (
+        levelFilter !== 'ALL' &&
+        item.options?.[0]?.rank !== levelFilter
+    ) {
+        return false;
+    }
 
-        if (filter === 'uncompleted' && item.completed) {
-            return false;
-        }
+    if (
+        !item.title
+            .toLowerCase()
+            .includes(searchText.toLowerCase())
+    ) {
+        return false;
+    }
 
-        if (
-            levelFilter !== 'ALL' &&
-            item.level !== levelFilter
-        ) {
-            return false;
-        }
+    return true;
+});
 
-        if (
-            !item.title
-                .toLowerCase()
-                .includes(searchText.toLowerCase())
-        ) {
-            return false;
-        }
-
-        return true;
-    });
-
-    const completedCount = lessons.filter(
-        (item) => item.completed
-    ).length;
+    const completedCount = 0
 
     const progress =
         (completedCount / lessons.length) * 100;
+
+    if (loading || loadingLogin) return <Loading />;
 
     return (
         <>
@@ -151,12 +216,13 @@ export default function ReadingScreen() {
                         </View>
 
                         <Text style={styles.xpText}>
-                            ⭐ {lessons.reduce((sum, lesson) =>
+                            ⭐ 0
+                            {/* {lessons.reduce((sum, lesson) =>
                                 lesson.completed
                                     ? sum + lesson.xp
                                     : sum,
                                 0
-                            )}{' '}
+                            )}{' '} */}
                             XP Earned
                         </Text>
                     </View>
@@ -259,7 +325,7 @@ export default function ReadingScreen() {
                                         | 'B1'
                                         | 'B2'
                                         | 'C1'
-                                        | 'C1'
+                                        | 'C2'
                                     )
                                 }
                             >
@@ -284,13 +350,13 @@ export default function ReadingScreen() {
 
                     {filteredLessons.map((lesson) => (
                         <TouchableOpacity
-                            key={lesson.id}
+                            key={lesson.id_reading}
                             activeOpacity={0.9}
                             style={styles.lessonCard}
                         >
                             <Image
                                 source={{
-                                    uri: lesson.image,
+                                    uri: lesson.img_path,
                                 }}
                                 style={[
                                     styles.lessonImage,
@@ -320,7 +386,7 @@ export default function ReadingScreen() {
                                                 styles.levelBadgeText
                                             }
                                         >
-                                            {lesson.level}
+                                            {lesson.options?.[0]?.rank}
                                         </Text>
                                     </View>
 
@@ -334,7 +400,7 @@ export default function ReadingScreen() {
                                                 styles.xpBadgeText
                                             }
                                         >
-                                            ⭐ {lesson.xp}
+                                            ⭐ 10
                                         </Text>
                                     </View>
                                 </View>
@@ -347,14 +413,8 @@ export default function ReadingScreen() {
                                     {lesson.title}
                                 </Text>
 
-                                <Text
-                                    style={
-                                        styles.lessonDescription
-                                    }
-                                >
-                                    {
-                                        lesson.description
-                                    }
+                                <Text style={styles.lessonDescription}>
+                                    {lesson.content.slice(0, 120)}...
                                 </Text>
 
                                 {lesson.completed ? (
@@ -536,7 +596,7 @@ const styles = StyleSheet.create({
     },
 
     xpBadgeText: {
-        color: '#02d169',
+        color: '#01d4e7',
         fontWeight: '700',
     },
 

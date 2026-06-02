@@ -234,3 +234,17 @@ interface PostResponse {
 
     createdAt: string;
 }
+
+interface ReadingItem {
+    id_reading: number;
+    title: string;
+    content: string;
+    mean_content: string;
+    img_path: string;
+    level: number;
+    options: {
+        rank: string;
+        level_name: string;
+        description: string;
+    }[];
+}
