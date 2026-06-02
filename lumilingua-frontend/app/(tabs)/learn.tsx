@@ -19,7 +19,7 @@ const skills = [
         title: 'Reading',
         subtitle: 'Improve your reading comprehension',
         lessons: '12 lessons',
-        icon: '📖',
+        image: require('@/assets/images/reading.jpg'),
         color: '#DFF8E8',
         router: '/Reading'
     },
@@ -27,7 +27,7 @@ const skills = [
         title: 'Listening',
         subtitle: 'Train your listening and understanding',
         lessons: '10 lessons',
-        icon: '🎧',
+        image: require('@/assets/images/listening.jpg'),
         color: '#E3F0FF',
         router: '/Listening'
     },
@@ -35,7 +35,7 @@ const skills = [
         title: 'Writing',
         subtitle: 'Practice your writing and grammar',
         lessons: '8 lessons',
-        icon: '✍️',
+        image: require('@/assets/images/writing.jpg'),
         color: '#EEE5FF',
         router: '/Writing'
     },
@@ -43,7 +43,7 @@ const skills = [
         title: 'Speaking',
         subtitle: 'Practice speaking and pronunciation',
         lessons: '10 lessons',
-        icon: '🎙️',
+        image: require('@/assets/images/speaking.jpg'),
         color: '#FFF0DD',
         router: '/Speaking'
     },
@@ -440,9 +440,11 @@ export default function Learn() {
                                         { backgroundColor: skill.color },
                                     ]}
                                 >
-                                    <Text style={styles.skillEmoji}>
-                                        {skill.icon}
-                                    </Text>
+                                    <ExpoImage
+                                        source={skill.image}
+                                        style={styles.skillImage}
+                                        resizeMode="contain"
+                                    />
                                 </View>
 
                                 <View style={styles.skillHeader}>
@@ -1045,5 +1047,9 @@ const styles = StyleSheet.create({
     flatListContent: {
         paddingBottom: 100,
         flexGrow: 1,
+    },
+    skillImage: {
+        width: 38,
+        height: 38,
     },
 });
