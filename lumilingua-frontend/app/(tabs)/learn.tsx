@@ -3,7 +3,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    Image, Modal, Pressable, SafeAreaView,
+    Image, Modal, Pressable, SafeAreaView, 
     ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View
 } from 'react-native';
 
@@ -21,6 +21,7 @@ const skills = [
         lessons: '12 lessons',
         icon: '📖',
         color: '#DFF8E8',
+        router: '/Reading'
     },
     {
         title: 'Listening',
@@ -28,6 +29,7 @@ const skills = [
         lessons: '10 lessons',
         icon: '🎧',
         color: '#E3F0FF',
+        router: '/Listening'
     },
     {
         title: 'Writing',
@@ -35,6 +37,7 @@ const skills = [
         lessons: '8 lessons',
         icon: '✍️',
         color: '#EEE5FF',
+        router: '/Writing'
     },
     {
         title: 'Speaking',
@@ -42,13 +45,13 @@ const skills = [
         lessons: '10 lessons',
         icon: '🎙️',
         color: '#FFF0DD',
+        router: '/Speaking'
     },
 ];
 
 export default function Learn() {
     const [inProgressGoals, setInProgressGoals] = useState<any[]>([]);
     const [finishedGoals, setFinishedGoals] = useState<any[]>([]);
-    const [goals, setGoals] = useState<any[]>([]);
     const [loadingGoals, setLoadingGoals] = useState(false);
     const [editingGoal, setEditingGoal] = useState<any>(null);
     const [description, setDescription] = useState('');
@@ -192,34 +195,6 @@ export default function Learn() {
         } catch (error) {
             Alert.alert("Fail", "Cannot save goals on server");
         }
-    };
-
-    const handleEditGoal = (goal: any) => {
-        setEditingGoal(goal);
-
-        setDescription(goal.description || '');
-
-        setGoalReading(
-            String(goal.goal_reading || 0)
-        );
-
-        setGoalListening(
-            String(goal.goal_listening || 0)
-        );
-
-        setGoalWriting(
-            String(goal.goal_writing || 0)
-        );
-
-        setGoalSpeaking(
-            String(goal.goal_speaking || 0)
-        );
-
-        setGoalXp(
-            String(goal.goal_xp || 0)
-        );
-
-        setActiveTab('add');
     };
 
     const loadGoals = async () => {
@@ -386,7 +361,7 @@ export default function Learn() {
                         <TouchableOpacity
                             onPress={() => setGoalModalVisible(true)}
                         >
-                            <Text style={styles.linkText}>Edit Goal</Text>
+                            <Text style={styles.linkText}>Add Goal</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -457,6 +432,7 @@ export default function Learn() {
                                 key={skill.title}
                                 style={styles.skillCard}
                                 activeOpacity={0.8}
+                                onPress={() => router.push(skill.router as any)}
                             >
                                 <View
                                     style={[
@@ -768,21 +744,6 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
 
-    progressBg: {
-        width: '100%',
-        height: 10,
-        backgroundColor: 'rgba(255,255,255,0.3)',
-        borderRadius: 999,
-        overflow: 'hidden',
-    },
-
-    progressFill: {
-        width: '75%',
-        height: '100%',
-        backgroundColor: '#fff',
-        borderRadius: 999,
-    },
-
     section: {
         marginBottom: 30,
     },
@@ -961,40 +922,6 @@ const styles = StyleSheet.create({
         color: '#6B7280',
     },
 
-    bottomTab: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderColor: '#F3F4F6',
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingVertical: 14,
-        paddingBottom: 28,
-    },
-
-    tabButton: {
-        alignItems: 'center',
-    },
-
-    tabIcon: {
-        fontSize: 24,
-        marginBottom: 4,
-    },
-
-    tabLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-
-
-    modalContainer: {
-        flex: 1,
-        backgroundColor: '#fff',
-        padding: 20,
-    },
     goalItem: {
         backgroundColor: '#F9FAFB',
         borderRadius: 20,
@@ -1102,11 +1029,6 @@ const styles = StyleSheet.create({
     goalItemTitle: {
         fontSize: 16,
         fontWeight: '600',
-    },
-
-    goalItemProgress: {
-        color: '#22C55E',
-        fontWeight: '700',
     },
 
     saveBtnText: {
