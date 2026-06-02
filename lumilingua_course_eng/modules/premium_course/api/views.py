@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets,status
 from datetime import date
@@ -39,12 +40,30 @@ class GoalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+
         user_cache = self.request.query_params.get('user_cache')
         is_completed = self.request.query_params.get('is_completed')
-        is_completed = is_completed.lower() == 'true'
+
         if user_cache:
-            queryset = queryset.filter(user_cache=user_cache, is_completed=is_completed)
+            queryset = queryset.filter(user_cache=user_cache)
+
+        if is_completed:
+            queryset = queryset.filter(
+                is_completed=is_completed.lower() == 'true'
+            )
+
         return queryset
+
+    @action(detail=True, methods=['patch'])
+    def complete(self, request, pk=None):
+        goal = self.get_object()
+
+        goal.is_completed = True
+        goal.save()
+
+        return Response({
+            "message": "Goal completed"
+        })
 
     def create(self, request, *args, **kwargs):
 

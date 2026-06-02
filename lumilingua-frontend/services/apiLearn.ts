@@ -37,3 +37,34 @@ export const saveGoals = async ({
 
     return await response.json();
 };
+
+export const getGoals = async (
+    userCache: number,
+    isCompleted: boolean
+) => {
+    
+    const endpoint = getClientEndpoint(`goal/?user_cache=${userCache}&is_completed=${isCompleted}`);
+
+    const response = await fetch(endpoint);
+
+    return await response.json();
+};
+
+export const completeGoal = async (idGoal: number) => {
+    
+    const endpoint = getClientEndpoint(`goal/${idGoal}/complete/`);
+    const response = await fetch(
+        endpoint,
+        {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                is_completed: true,
+            }),
+        }
+    );
+
+    return await response.json();
+};

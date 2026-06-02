@@ -10,8 +10,9 @@ import {
 import { getCrmsEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
 import { useUserCache } from '@/hook/useUserCache';
 import { fetchUserProfile, getLevelByCategoryId, getRankByUserId } from '@/services/api';
-import { saveGoals } from '@/services/apiLearn';
+import { completeGoal, getGoals, saveGoals } from '@/services/apiLearn';
 import { Alert } from 'react-native';
+import { FlatList } from 'react-native-gesture-handler';
 
 const skills = [
     {
@@ -45,6 +46,8 @@ const skills = [
 ];
 
 export default function Learn() {
+    const [inProgressGoals, setInProgressGoals] = useState<any[]>([]);
+    const [finishedGoals, setFinishedGoals] = useState<any[]>([]);
     const [goals, setGoals] = useState<any[]>([]);
     const [loadingGoals, setLoadingGoals] = useState(false);
     const [editingGoal, setEditingGoal] = useState<any>(null);
@@ -171,6 +174,8 @@ export default function Learn() {
             if (data.id_goal) {
 
                 Alert.alert("Success", "Save goal successful");
+                await loadGoals();
+                setActiveTab('progress');
                 setGoalModalVisible(false);
 
                 // Reset form
@@ -216,6 +221,90 @@ export default function Learn() {
 
         setActiveTab('add');
     };
+
+    const loadGoals = async () => {
+        if (!userCache?.[0]?.id_user_cache) return;
+
+        try {
+            setLoadingGoals(true);
+
+            const userId = userCache[0].id_user_cache;
+
+            const [progressData, finishedData] = await Promise.all([
+                getGoals(userId, false),
+                getGoals(userId, true),
+            ]);
+
+            setInProgressGoals(progressData);
+            setFinishedGoals(finishedData);
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoadingGoals(false);
+        }
+    };
+
+    useEffect(() => {
+        loadGoals();
+    }, [userCache]);
+
+    const isGoalReached = (goal: any) => {
+        return (
+            goal.actual_reading >= goal.goal_reading &&
+            goal.actual_listening >= goal.goal_listening &&
+            goal.actual_writing >= goal.goal_writing &&
+            goal.actual_speaking >= goal.goal_speaking &&
+            goal.actual_xp >= goal.goal_xp
+        );
+    };
+
+    const handleDoneGoal = async (goal: any) => {
+        try {
+            await completeGoal(goal.id_goal);
+
+            Alert.alert('Success', 'Goal completed');
+
+            loadGoals();
+        } catch (error) {
+            Alert.alert('Error', 'Cannot complete goal');
+        }
+    };
+
+    const calculateProgress = (goal: any) => {
+        if (!goal) return 0;
+
+        const reading =
+            goal.goal_reading > 0
+                ? Math.min(goal.actual_reading / goal.goal_reading, 1)
+                : 1;
+
+        const listening =
+            goal.goal_listening > 0
+                ? Math.min(goal.actual_listening / goal.goal_listening, 1)
+                : 1;
+
+        const writing =
+            goal.goal_writing > 0
+                ? Math.min(goal.actual_writing / goal.goal_writing, 1)
+                : 1;
+
+        const speaking =
+            goal.goal_speaking > 0
+                ? Math.min(goal.actual_speaking / goal.goal_speaking, 1)
+                : 1;
+
+        const xp =
+            goal.goal_xp > 0
+                ? Math.min(goal.actual_xp / goal.goal_xp, 1)
+                : 1;
+
+        return (
+            ((reading + listening + writing + speaking + xp) / 5) *
+            100
+        );
+    };
+
+    const currentGoal = inProgressGoals?.[0];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -301,27 +390,58 @@ export default function Learn() {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={styles.goalCard}
-                        onPress={() => setGoalModalVisible(true)}>
+                    <TouchableOpacity
+                        style={styles.goalCard}
+                        onPress={() => setGoalModalVisible(true)}
+                    >
                         <View style={styles.goalRow}>
                             <View style={styles.goalIcon}>
                                 <Text style={{ fontSize: 28 }}>🎯</Text>
                             </View>
 
-                            <View>
+                            <View style={{ flex: 1 }}>
                                 <Text style={styles.goalTitle}>
-                                    Complete 2 lessons
+                                    Complete Goal
                                 </Text>
 
-                                <Text style={styles.goalSubtitle}>
-                                    1 / 2 completed
-                                </Text>
+                                {currentGoal ? (
+                                    <>
+                                        <Text style={styles.goalSubtitle}>
+                                            {currentGoal?.description || 'No active goal'}
+                                        </Text>
+                                    </>
+                                ) : (
+                                    <Text style={styles.goalSubtitle}>
+                                        Create your first goal
+                                    </Text>
+                                )}
                             </View>
                         </View>
 
-                        <View style={styles.goalProgressBg}>
-                            <View style={styles.goalProgressFill} />
-                        </View>
+                        {currentGoal && (
+                            <>
+                                <View style={styles.goalProgressBg}>
+                                    <View
+                                        style={[
+                                            styles.goalProgressFill,
+                                            {
+                                                width: `${calculateProgress(currentGoal)}%`,
+                                            },
+                                        ]}
+                                    />
+                                </View>
+
+                                <Text
+                                    style={{
+                                        marginTop: 8,
+                                        fontWeight: '600',
+                                        color: '#6B7280',
+                                    }}
+                                >
+                                    {Math.round(calculateProgress(currentGoal))}% completed
+                                </Text>
+                            </>
+                        )}
                     </TouchableOpacity>
                 </View>
 
@@ -406,6 +526,7 @@ export default function Learn() {
                         </View>
                     </View>
                 </View>
+                {/* Modal Goals */}
                 <Modal
                     visible={goalModalVisible}
                     animationType="slide"
@@ -413,20 +534,17 @@ export default function Learn() {
                     statusBarTranslucent
                     onRequestClose={() => setGoalModalVisible(false)}
                 >
-                    {/* Overlay nền tối */}
                     <Pressable
                         style={styles.modalOverlay}
                         onPress={() => setGoalModalVisible(false)}
                     >
-                        {/* Modal Content */}
                         <Pressable
                             style={styles.modalContent}
-                            onPress={(e) => e.stopPropagation()}   // Ngăn click bên trong đóng modal
+                            onPress={(e) => e.stopPropagation()}
                         >
                             {/* HEADER */}
                             <View style={styles.modalHeader}>
                                 <Text style={styles.modalTitle}>Goals</Text>
-
                                 <TouchableOpacity
                                     onPress={() => setGoalModalVisible(false)}
                                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -466,103 +584,100 @@ export default function Learn() {
                             </View>
 
                             {/* CONTENT */}
-                            <ScrollView
-                                showsVerticalScrollIndicator={false}
-                                style={styles.modalScroll}
-                            >
+                            <View style={styles.modalScroll}>
                                 {activeTab === 'progress' && (
-                                    <View>
-                                        <TouchableOpacity
-                                            style={styles.goalItem}
-                                            onPress={() =>
-                                                handleEditGoal({
-                                                    description: 'Finish Reading',
-                                                    goal_reading: 3,
-                                                    goal_listening: 2,
-                                                    goal_writing: 1,
-                                                    goal_speaking: 1,
-                                                    goal_xp: 100,
-                                                })
-                                            }
-                                        >
-                                            <Text style={styles.goalItemTitle}>Reading Goal</Text>
-                                            <Text style={styles.goalItemProgress}>1 / 3</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                    <FlatList
+                                        data={inProgressGoals}
+                                        keyExtractor={(item) => item.id_goal.toString()}
+                                        renderItem={({ item: goal }) => (
+                                            <View style={styles.goalItem}>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.goalItemTitle}>{goal.description}</Text>
+                                                    <Text>Reading: {goal.actual_reading}/{goal.goal_reading}</Text>
+                                                    <Text>Listening: {goal.actual_listening}/{goal.goal_listening}</Text>
+                                                    <Text>Writing: {goal.actual_writing}/{goal.goal_writing}</Text>
+                                                    <Text>Speaking: {goal.actual_speaking}/{goal.goal_speaking}</Text>
+                                                    <Text>XP: {goal.actual_xp}/{goal.goal_xp}</Text>
+                                                </View>
+
+                                                {isGoalReached(goal) ? (
+                                                    <TouchableOpacity
+                                                        style={{
+                                                            backgroundColor: '#22C55E',
+                                                            paddingHorizontal: 15,
+                                                            paddingVertical: 8,
+                                                            borderRadius: 10,
+                                                        }}
+                                                        onPress={() => handleDoneGoal(goal)}
+                                                    >
+                                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Done</Text>
+                                                    </TouchableOpacity>
+                                                ) : (
+                                                    <Text style={{ color: '#F59E0B', fontWeight: '600' }}>In Progress</Text>
+                                                )}
+                                            </View>
+                                        )}
+                                        ListEmptyComponent={
+                                            <View style={styles.emptyState}>
+                                                <Text style={{ color: '#6B7280', fontSize: 16 }}>
+                                                    No goals in progress
+                                                </Text>
+                                            </View>
+                                        }
+                                        contentContainerStyle={styles.flatListContent}
+                                        showsVerticalScrollIndicator={true}
+                                    />
                                 )}
 
                                 {activeTab === 'finished' && (
-                                    <View style={styles.emptyState}>
-                                        <Text>Finished Goals</Text>
-                                    </View>
+                                    <FlatList
+                                        data={finishedGoals}
+                                        keyExtractor={(item) => item.id_goal.toString()}
+                                        renderItem={({ item: goal }) => (
+                                            <View style={styles.goalItem}>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.goalItemTitle}>{goal.description}</Text>
+                                                    <Text>📖 Reading: {goal.actual_reading}/{goal.goal_reading}</Text>
+                                                    <Text>🎧 Listening: {goal.actual_listening}/{goal.goal_listening}</Text>
+                                                    <Text>✍️ Writing: {goal.actual_writing}/{goal.goal_writing}</Text>
+                                                    <Text>🎙️ Speaking: {goal.actual_speaking}/{goal.goal_speaking}</Text>
+                                                    <Text>⭐ XP: {goal.actual_xp}/{goal.goal_xp}</Text>
+
+                                                    <Text style={{ marginTop: 10, color: '#22C55E', fontWeight: 'bold' }}>
+                                                        Completed ✅
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        )}
+                                        ListEmptyComponent={
+                                            <View style={styles.emptyState}>
+                                                <Text style={{ color: '#6B7280', fontSize: 16 }}>
+                                                    Chưa có mục tiêu nào hoàn thành
+                                                </Text>
+                                            </View>
+                                        }
+                                        contentContainerStyle={styles.flatListContent}
+                                        showsVerticalScrollIndicator={true}
+                                    />
                                 )}
 
                                 {activeTab === 'add' && (
-                                    <View>
-                                        <TextInput
-                                            placeholder="Description"
-                                            value={description}
-                                            onChangeText={setDescription}
-                                            placeholderTextColor="#999"
-                                            style={styles.input}
-                                        />
+                                    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 30 }}>
+                                        <TextInput placeholder="Description" value={description} onChangeText={setDescription} placeholderTextColor="#999" style={styles.input} />
+                                        <TextInput placeholder="Reading Goal" value={goalReading} onChangeText={setGoalReading} placeholderTextColor="#999" keyboardType="numeric" style={styles.input} />
+                                        <TextInput placeholder="Listening Goal" value={goalListening} onChangeText={setGoalListening} placeholderTextColor="#999" keyboardType="numeric" style={styles.input} />
+                                        <TextInput placeholder="Writing Goal" value={goalWriting} onChangeText={setGoalWriting} placeholderTextColor="#999" keyboardType="numeric" style={styles.input} />
+                                        <TextInput placeholder="Speaking Goal" value={goalSpeaking} onChangeText={setGoalSpeaking} placeholderTextColor="#999" keyboardType="numeric" style={styles.input} />
+                                        <TextInput placeholder="XP Goal" value={goalXp} onChangeText={setGoalXp} placeholderTextColor="#999" keyboardType="numeric" style={styles.input} />
 
-                                        <TextInput
-                                            placeholder="Reading Goal"
-                                            value={goalReading}
-                                            onChangeText={setGoalReading}
-                                            placeholderTextColor="#999"
-                                            keyboardType="numeric"
-                                            style={styles.input}
-                                        />
-
-                                        <TextInput
-                                            placeholder="Listening Goal"
-                                            value={goalListening}
-                                            onChangeText={setGoalListening}
-                                            placeholderTextColor="#999"
-                                            keyboardType="numeric"
-                                            style={styles.input}
-                                        />
-
-                                        <TextInput
-                                            placeholder="Writing Goal"
-                                            value={goalWriting}
-                                            onChangeText={setGoalWriting}
-                                            placeholderTextColor="#999"
-                                            keyboardType="numeric"
-                                            style={styles.input}
-                                        />
-
-                                        <TextInput
-                                            placeholder="Speaking Goal"
-                                            value={goalSpeaking}
-                                            onChangeText={setGoalSpeaking}
-                                            placeholderTextColor="#999"
-                                            keyboardType="numeric"
-                                            style={styles.input}
-                                        />
-
-                                        <TextInput
-                                            placeholder="XP Goal"
-                                            value={goalXp}
-                                            onChangeText={setGoalXp}
-                                            placeholderTextColor="#999"
-                                            keyboardType="numeric"
-                                            style={styles.input}
-                                        />
-
-                                        <TouchableOpacity
-                                            style={styles.saveBtn}
-                                            onPress={saveGoal}
-                                        >
+                                        <TouchableOpacity style={styles.saveBtn} onPress={saveGoal}>
                                             <Text style={styles.saveBtnText}>
                                                 {editingGoal ? 'Update Goal' : 'Save Goal'}
                                             </Text>
                                         </TouchableOpacity>
-                                    </View>
+                                    </ScrollView>
                                 )}
-                            </ScrollView>
+                            </View>
                         </Pressable>
                     </Pressable>
                 </Modal>
@@ -915,7 +1030,7 @@ const styles = StyleSheet.create({
 
     modalContent: {
         width: '90%',
-        maxHeight: '95%',
+        height: '85%',
         backgroundColor: '#fff',
         borderRadius: 24,
         padding: 20,
@@ -947,7 +1062,7 @@ const styles = StyleSheet.create({
     },
 
     modalScroll: {
-        maxHeight: 500, // Giới hạn chiều cao nếu cần
+        flex: 1,
     },
 
     tabContainer: {
@@ -1003,5 +1118,10 @@ const styles = StyleSheet.create({
     emptyState: {
         padding: 40,
         alignItems: 'center',
+    },
+
+    flatListContent: {
+        paddingBottom: 100,
+        flexGrow: 1,
     },
 });
