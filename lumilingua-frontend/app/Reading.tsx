@@ -276,6 +276,27 @@ export default function ReadingScreen() {
         });
     }, [averageScore]);
 
+    const handleStartLesson = (lesson: any) => {
+        router.push({
+            pathname: '/course/reading/[id]',
+            params: {
+                id: lesson.exercises_premium?.[0]?.id_reading_exercise,
+                time_limit: lesson.exercises_premium?.[0]?.time_limit,
+            },
+        });
+    };
+
+    const handleReviewLesson = (lesson: any) => {
+        router.push({
+            pathname: '/course/reading/[id]',
+            params: {
+                id: lesson.exercises_premium?.[0]?.id_reading_exercise,
+                time_limit: lesson.exercises_premium?.[0]?.time_limit,
+                mode: 'review',        // mode review
+            },
+        });
+    };
+
     const chartData = [
         {
             value: excellentCount,
@@ -707,28 +728,34 @@ export default function ReadingScreen() {
                                     {lesson.content.slice(0, 120)}...
                                 </Text>
 
-                                <TouchableOpacity
-                                    style={[
-                                        styles.startButton,
-                                        lesson.completed &&
-                                        styles.restartButton,
-                                    ]}
-                                    onPress={() =>
-                                        router.push({
-                                            pathname: '/course/reading/[id]',
-                                            params: {
-                                                id: lesson.exercises_premium?.[0]?.id_reading_exercise,
-                                                time_limit: lesson.exercises_premium?.[0]?.time_limit,
-                                            },
-                                        })
-                                    }
-                                >
-                                    <Text style={styles.startButtonText}>
-                                        {lesson.completed
-                                            ? "Start Again Lesson"
-                                            : "Start Lesson"}
-                                    </Text>
-                                </TouchableOpacity>
+                                <View style={styles.buttonContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.mainButton,
+                                            lesson.completed && styles.restartButton,
+                                        ]}
+                                        onPress={() => handleStartLesson(lesson)}
+                                    >
+                                        <Ionicons 
+                                            name={lesson.completed ? "refresh-outline" : "play-circle"} 
+                                            size={20} 
+                                            color="#fff" 
+                                        />
+                                        <Text style={styles.mainButtonText}>
+                                            {lesson.completed ? "Restart" : "Start Lesson"}
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                    {lesson.completed && (
+                                        <TouchableOpacity
+                                            style={styles.reviewButton}
+                                            onPress={() => handleReviewLesson(lesson)}
+                                        >
+                                            <Ionicons name="eye-outline" size={20} color="#fff" />
+                                            <Text style={styles.reviewButtonText}>Review</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
                             </View>
                         </TouchableOpacity>
                     ))}
@@ -1003,5 +1030,44 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
+    },
+        buttonContainer: {
+        marginTop: 20,
+        flexDirection: 'row',
+        gap: 12,
+    },
+
+    mainButton: {
+        flex: 1,
+        backgroundColor: '#ff7b00',
+        borderRadius: 16,
+        paddingVertical: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+
+    reviewButton: {
+        flex: 1,
+        backgroundColor: '#4F46E5',
+        borderRadius: 16,
+        paddingVertical: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+
+    mainButtonText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 15.5,
+    },
+
+    reviewButtonText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 15.5,
     },
 });
