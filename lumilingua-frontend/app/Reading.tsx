@@ -1,7 +1,7 @@
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { ReadingItem } from '@/interfaces/interfaces';
 import { getClientEndpoint } from '@/constants/configApi';
 import Loading from '@/component/loading';
@@ -10,8 +10,14 @@ import { useRouter } from 'expo-router';
 import { getCrmsEndpoint } from '@/constants/configApi';
 import { useUserCache } from '@/hook/useUserCache';
 import { getProgressReadingPremium } from '@/services/apiLearn';
+import { PieChart } from "react-native-gifted-charts";
 
 export default function ReadingScreen() {
+    const [selectedSlice, setSelectedSlice] = useState({
+        label: 'Avg Score',
+        value: '0',
+        color: '#ff6200',
+    });
     const [lessons, setLessons] = useState<ReadingItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<
@@ -124,7 +130,6 @@ export default function ReadingScreen() {
 
             const expired = expiredStr ? parseInt(expiredStr, 10) : null;
 
-            // token còn hạn
             if (token && expired && Date.now() < expired) {
                 if (isMounted) {
                     setLoadingLogin(false);
@@ -137,7 +142,6 @@ export default function ReadingScreen() {
                     'refreshToken'
                 );
 
-            // refresh token
             if (refreshToken) {
                 try {
                     const response =
@@ -211,19 +215,12 @@ export default function ReadingScreen() {
     const filteredLessons = lessons.filter((item) => {
 
         // level
-        if (
-            levelFilter !== 'ALL' &&
-            item.options?.[0]?.rank !== levelFilter
-        ) {
+        if (levelFilter !== 'ALL' && item.options?.[0]?.rank !== levelFilter) {
             return false;
         }
 
         // search
-        if (
-            !item.title
-                .toLowerCase()
-                .includes(searchText.toLowerCase())
-        ) {
+        if (!item.title.toLowerCase().includes(searchText.toLowerCase())) {
             return false;
         }
 
@@ -239,13 +236,100 @@ export default function ReadingScreen() {
         return true;
     });
 
-    const completedCount =
-        lessons.filter(
-            lesson => lesson.completed
-        ).length;
+    const completedLessons = lessons.filter(
+        lesson => lesson.score !== null
+    );
 
-    const progress =
-        (completedCount / lessons.length) * 100;
+    const excellentCount = completedLessons.filter(
+        lesson => lesson.score! >= 90
+    ).length;
+
+    const goodCount = completedLessons.filter(
+        lesson => lesson.score! >= 70 &&
+            lesson.score! < 90
+    ).length;
+
+    const averageCount = completedLessons.filter(
+        lesson => lesson.score! >= 50 &&
+            lesson.score! < 70
+    ).length;
+
+    const needPracticeCount = completedLessons.filter(
+        lesson => lesson.score! < 50
+    ).length;
+
+    const averageScore =
+        completedLessons.length > 0
+            ? (
+                completedLessons.reduce(
+                    (sum, lesson) => sum + lesson.score!,
+                    0
+                ) / completedLessons.length
+            ).toFixed(1)
+            : 0;
+
+    useEffect(() => {
+        setSelectedSlice({
+            label: 'Avg Score',
+            value: String(averageScore),
+            color: '#ff6200',
+        });
+    }, [averageScore]);
+
+    const chartData = [
+        {
+            value: excellentCount,
+            color: '#3B82F6',
+            text: 'Excellent',
+            onPress: () =>
+                setSelectedSlice({
+                    label: 'Excellent',
+                    value: `${excellentCount}/${completedLessons.length}`,
+                    color: '#3B82F6',
+                }),
+        },
+        {
+            value: goodCount,
+            color: '#22C55E',
+            text: 'Good',
+            onPress: () =>
+                setSelectedSlice({
+                    label: 'Good',
+                    value: `${goodCount}/${completedLessons.length}`,
+                    color: '#22C55E',
+                }),
+        },
+        {
+            value: averageCount,
+            color: '#FB923C',
+            text: 'Average',
+            onPress: () =>
+                setSelectedSlice({
+                    label: 'Average',
+                    value: `${averageCount}/${completedLessons.length}`,
+                    color: '#FB923C',
+                }),
+        },
+        {
+            value: needPracticeCount,
+            color: '#FACC15',
+            text: 'Need Practice',
+            onPress: () =>
+                setSelectedSlice({
+                    label: 'Need Practice',
+                    value: `${needPracticeCount}/${completedLessons.length}`,
+                    color: '#FACC15',
+                }),
+        }
+    ].filter(item => item.value > 0);
+
+    const resetToAverage = () => {
+        setSelectedSlice({
+            label: 'Avg Score',
+            value: String(averageScore),
+            color: '#ff6200',
+        });
+    };
 
     if (loading || loadingLogin) return <Loading />;
 
@@ -268,37 +352,100 @@ export default function ReadingScreen() {
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.content}
                 >
-                    {/* PROGRESS */}
-                    <View style={styles.progressCard}>
-                        <Text style={styles.progressTitle}>
-                            Weekly Progress
+                    {/* ANALYTIC */}
+                    <View style={styles.analyticsCard}>
+                        <Text style={styles.analyticsTitle}>
+                            Learning Reading Analytics
                         </Text>
 
-                        <Text style={styles.progressText}>
-                            {completedCount} / {lessons.length} lessons completed
-                        </Text>
+                        <PieChart
+                            donut
+                            radius={90}
+                            innerRadius={55}
+                            data={chartData}
+                            focusOnPress
+                            centerLabelComponent={() => (
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    onPress={resetToAverage}
+                                    style={{
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            fontSize: 20,
+                                            fontWeight: 'bold',
+                                            color: selectedSlice.color,
+                                        }}
+                                    >
+                                        {selectedSlice.value}
+                                    </Text>
 
-                        <View style={styles.progressBar}>
-                            <View
-                                style={[
-                                    styles.progressFill,
-                                    {
-                                        width: `${progress}%`,
-                                    },
-                                ]}
-                            />
+                                    <Text
+                                        style={{
+                                            fontSize: 12,
+                                            color: '#6B7280',
+                                        }}
+                                    >
+                                        {selectedSlice.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        />
+
+                        <View style={styles.legendContainer}>
+                            <View style={styles.legendItem}>
+                                <View
+                                    style={[
+                                        styles.legendDot,
+                                        { backgroundColor: '#3B82F6' }
+                                    ]}
+                                />
+                                <Text>Excellent</Text>
+                            </View>
+
+                            <View style={styles.legendItem}>
+                                <View
+                                    style={[
+                                        styles.legendDot,
+                                        { backgroundColor: '#22C55E' }
+                                    ]}
+                                />
+                                <Text>Good</Text>
+                            </View>
+
+                            <View style={styles.legendItem}>
+                                <View
+                                    style={[
+                                        styles.legendDot,
+                                        { backgroundColor: '#FB923C' }
+                                    ]}
+                                />
+                                <Text>Average</Text>
+                            </View>
+
+                            <View style={styles.legendItem}>
+                                <View
+                                    style={[
+                                        styles.legendDot,
+                                        { backgroundColor: '#FACC15' }
+                                    ]}
+                                />
+                                <Text>Need Practice</Text>
+                            </View>
                         </View>
 
-                        <Text style={styles.xpText}>
-                            ⭐ 0
-                            {/* {lessons.reduce((sum, lesson) =>
-                                lesson.completed
-                                    ? sum + lesson.xp
-                                    : sum,
-                                0
-                            )}{' '} */}
-                            XP Earned
-                        </Text>
+                        <View style={styles.analyticsStats}>
+                            <Text>
+                                📚 Completed: {completedLessons.length}
+                            </Text>
+
+                            <Text>
+                                🏆 Avg Score: {averageScore}
+                            </Text>
+                        </View>
                     </View>
 
                     {/* FILTER */}
@@ -588,60 +735,6 @@ const styles = StyleSheet.create({
         paddingBottom: 50,
     },
 
-    header: {
-        marginBottom: 24,
-    },
-
-    title: {
-        fontSize: 32,
-        fontWeight: '800',
-        color: '#111827',
-    },
-
-    subtitle: {
-        marginTop: 6,
-        color: '#6B7280',
-        fontSize: 15,
-    },
-
-    progressCard: {
-        backgroundColor: '#ff6200',
-        padding: 20,
-        borderRadius: 24,
-        marginBottom: 24,
-    },
-
-    progressTitle: {
-        color: '#fff',
-        fontSize: 22,
-        fontWeight: '700',
-    },
-
-    progressText: {
-        color: '#fff',
-        marginTop: 8,
-    },
-
-    progressBar: {
-        marginTop: 15,
-        height: 10,
-        borderRadius: 999,
-        backgroundColor:
-            'rgba(255,255,255,0.3)',
-        overflow: 'hidden',
-    },
-
-    progressFill: {
-        height: '100%',
-        backgroundColor: '#fff',
-    },
-
-    xpText: {
-        color: '#fff',
-        marginTop: 12,
-        fontWeight: '700',
-    },
-
     filterContainer: {
         flexDirection: 'row',
         marginBottom: 20,
@@ -731,20 +824,6 @@ const styles = StyleSheet.create({
         marginTop: 8,
         color: '#6B7280',
         lineHeight: 22,
-    },
-
-    completedBadge: {
-        marginTop: 15,
-        alignSelf: 'flex-start',
-        backgroundColor: '#DCFCE7',
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 12,
-    },
-
-    completedText: {
-        color: '#16A34A',
-        fontWeight: '700',
     },
 
     startButton: {
@@ -855,5 +934,46 @@ const styles = StyleSheet.create({
 
     dateChip: {
         backgroundColor: '#DCFCE7',
+    },
+    analyticsCard: {
+        backgroundColor: '#fff',
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 24,
+        alignItems: 'center',
+    },
+
+    analyticsTitle: {
+        fontSize: 22,
+        fontWeight: '700',
+        marginBottom: 20,
+        color: '#111827',
+    },
+
+    legendContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        marginTop: 20,
+    },
+
+    legendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    legendDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        marginRight: 6,
+    },
+
+    analyticsStats: {
+        marginTop: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
     },
 });
