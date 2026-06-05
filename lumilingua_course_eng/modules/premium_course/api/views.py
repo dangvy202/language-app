@@ -22,6 +22,13 @@ class ExerciseProgressReadingPremiumViewSet(viewsets.ModelViewSet):
     queryset = ExerciseProgressReadingPremium.objects.all()
     serializer_class = ExerciseProgressReadingPremiumSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_cache = self.request.query_params.get('user_cache')
+        if user_cache:
+            queryset = queryset.filter(user_cache=user_cache)
+        return queryset
+
 class ExerciseReadingPremiumViewSet(viewsets.ModelViewSet):
     queryset = ExerciseReadingPremium.objects.all()
     serializer_class = ExerciseReadingPremiumSerializer

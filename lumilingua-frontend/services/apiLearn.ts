@@ -68,3 +68,26 @@ export const completeGoal = async (idGoal: number) => {
 
     return await response.json();
 };
+
+export const getProgressReadingPremium = async (
+    userCacheId: number
+) => {
+    const endpoint = getClientEndpoint(
+        `exercise_progress_reading_premium/?user_cache=${userCacheId}`
+    );
+
+    const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            "Failed to fetch exercise progress reading"
+        );
+    }
+    const data = await response.json();
+    return data;
+};

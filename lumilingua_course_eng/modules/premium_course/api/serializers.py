@@ -6,19 +6,6 @@ from modules.course.models import Level
 from modules.premium_course.models import Reading, SaveVocabularyReading, QuestionOptionsPremium, \
     ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals
 
-
-class ReadingSerializer(serializers.ModelSerializer):
-    options = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = Reading
-        fields =  ['id_reading', 'title', 'content', 'mean_content', 'img_path', 'level', 'options']
-        read_only_fields = ['created_at', 'updated_at']
-
-    def get_options(self, obj):
-        options = Level.objects.filter(id_level=obj.level_id)
-        return LevelSerializer(options, many=True).data
-
 class SaveVocabularyReadingSerializer(serializers.ModelSerializer):
     class Meta:
         model = SaveVocabularyReading
@@ -79,3 +66,19 @@ class GoalSerializer(serializers.ModelSerializer):
         model = Goals
         fields = ['id_goal', 'description', 'goal_reading', 'goal_listening', 'goal_writing', 'goal_speaking', 'goal_xp', 'actual_reading', 'actual_listening', 'actual_writing', 'actual_speaking', 'actual_xp', 'user_cache', 'is_completed']
         read_only_fields = ['created_at', 'updated_at']
+
+class ReadingSerializer(serializers.ModelSerializer):
+    options = serializers.SerializerMethodField(read_only=True)
+    exercises_premium = ExerciseReadingPremiumSerializer(
+        source='exercise_reading',
+        many=True,
+        read_only=True
+    )
+    class Meta:
+        model = Reading
+        fields =  ['id_reading', 'title', 'content', 'mean_content', 'img_path', 'level', 'options', 'exercises_premium']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_options(self, obj):
+        options = Level.objects.filter(id_level=obj.level_id)
+        return LevelSerializer(options, many=True).data

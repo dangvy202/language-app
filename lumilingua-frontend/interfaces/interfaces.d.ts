@@ -247,4 +247,22 @@ interface ReadingItem {
         level_name: string;
         description: string;
     }[];
+    exercises_premium: {
+        id_reading_exercise: number,
+        name: string,
+        description: string,
+        icon: string,
+        xp_receive: number,
+        balance_learn: number,
+        type: string,
+        difficulty: string,
+        reading: number,
+        time_limit: number,
+        points: number,
+        question_count: number
+    }[];
+    completed?: boolean;
+    score?: number | null;
+    attempts?: number | null;
+    completedAt?: string | null;
 }

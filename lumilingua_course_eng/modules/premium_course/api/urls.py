@@ -18,7 +18,7 @@ save_vocabularies_reading_router.register(r'save_vocabulary_reading', SaveVocabu
 
 # exercise progress reading premium
 exercise_progress_reading_premium_router = routers.SimpleRouter()
-exercise_progress_reading_premium_router.register(r'exercise_reading_premium', ExerciseProgressReadingPremiumViewSet)
+exercise_progress_reading_premium_router.register(r'exercise_progress_reading_premium', ExerciseProgressReadingPremiumViewSet)
 
 # exercise reading premium
 exercise_reading_premium_router = routers.SimpleRouter()

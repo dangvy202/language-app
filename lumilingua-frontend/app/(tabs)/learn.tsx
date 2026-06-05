@@ -3,9 +3,11 @@ import { Image as ExpoImage } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    Image, Modal, Pressable, SafeAreaView, 
+    Image, Modal, Pressable,
     ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View
 } from 'react-native';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getCrmsEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
 import { useUserCache } from '@/hook/useUserCache';

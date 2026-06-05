@@ -8,6 +8,8 @@ import Loading from '@/component/loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { getCrmsEndpoint } from '@/constants/configApi';
+import { useUserCache } from '@/hook/useUserCache';
+import { getProgressReadingPremium } from '@/services/apiLearn';
 
 export default function ReadingScreen() {
     const [lessons, setLessons] = useState<ReadingItem[]>([]);
@@ -15,6 +17,7 @@ export default function ReadingScreen() {
     const [filter, setFilter] = useState<
         'all' | 'completed' | 'uncompleted'
     >('all');
+    const { cache: userCache, loadingCache, cacheError } = useUserCache();
     const router = useRouter();
     const [loadingLogin, setLoadingLogin] = useState(true);
 
@@ -67,6 +70,51 @@ export default function ReadingScreen() {
         }
     };
 
+    const loadData = async () => {
+        if (!userCache?.[0]?.id_user_cache) return;
+
+        try {
+            setLoading(true);
+
+            const [readingData, progressData] =
+                await Promise.all([
+                    fetch(
+                        getClientEndpoint('reading/')
+                    ).then(res => res.json()),
+                    getProgressReadingPremium(
+                        userCache[0].id_user_cache
+                    )
+                ]);
+
+            const lessonsWithProgress =
+                readingData.map((lesson: any) => {
+
+                    const exerciseId =
+                        lesson.exercises_premium?.[0]
+                            ?.id_reading_exercise;
+
+                    const progress =
+                        progressData.find(
+                            (p: any) =>
+                                p.exercises === exerciseId
+                        );
+                    return {
+                        ...lesson,
+                        completed: progress?.is_completed ?? false,
+                        score: progress ? progress.score : null,
+                        attempts: progress ? progress.attempts : null,
+                        completedAt: progress ? progress.completed_at : null,
+                    };
+                });
+
+            setLessons(lessonsWithProgress);
+        } catch (err) {
+            console.log(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         let isMounted = true;
 
@@ -106,7 +154,7 @@ export default function ReadingScreen() {
                         'expired',
                         String(
                             response.data.expired ||
-                                Date.now() + 900000
+                            Date.now() + 900000
                         )
                     );
                 } catch (error) {
@@ -149,26 +197,52 @@ export default function ReadingScreen() {
         loadReading();
     }, [loadingLogin]);
 
+    useEffect(() => {
+        if (
+            loadingLogin ||
+            !userCache?.[0]?.id_user_cache
+        ) {
+            return;
+        }
+
+        loadData();
+    }, [loadingLogin, userCache]);
+
     const filteredLessons = lessons.filter((item) => {
-    if (
-        levelFilter !== 'ALL' &&
-        item.options?.[0]?.rank !== levelFilter
-    ) {
-        return false;
-    }
 
-    if (
-        !item.title
-            .toLowerCase()
-            .includes(searchText.toLowerCase())
-    ) {
-        return false;
-    }
+        // level
+        if (
+            levelFilter !== 'ALL' &&
+            item.options?.[0]?.rank !== levelFilter
+        ) {
+            return false;
+        }
 
-    return true;
-});
+        // search
+        if (
+            !item.title
+                .toLowerCase()
+                .includes(searchText.toLowerCase())
+        ) {
+            return false;
+        }
 
-    const completedCount = 0
+        // completed filter
+        if (filter === 'completed' && !item.completed) {
+            return false;
+        }
+
+        if (filter === 'uncompleted' && item.completed) {
+            return false;
+        }
+
+        return true;
+    });
+
+    const completedCount =
+        lessons.filter(
+            lesson => lesson.completed
+        ).length;
 
     const progress =
         (completedCount / lessons.length) * 100;
@@ -371,39 +445,102 @@ export default function ReadingScreen() {
                                     styles.lessonContent
                                 }
                             >
-                                <View
-                                    style={
-                                        styles.badgeRow
-                                    }
-                                >
-                                    <View
-                                        style={
-                                            styles.levelBadge
-                                        }
-                                    >
-                                        <Text
-                                            style={
-                                                styles.levelBadgeText
-                                            }
-                                        >
+                                <View style={styles.badgeRow}>
+                                    <View style={styles.levelBadge}>
+                                        <Text style={styles.levelBadgeText}>
                                             {lesson.options?.[0]?.rank}
                                         </Text>
                                     </View>
 
+                                    <View style={styles.xpBadge}>
+                                        <Text style={styles.xpBadgeText}>
+                                            ⭐ {lesson?.exercises_premium?.[0]?.xp_receive}
+                                        </Text>
+                                    </View>
+
                                     <View
-                                        style={
-                                            styles.xpBadge
-                                        }
+                                        style={[
+                                            styles.statusBadge,
+                                            lesson.completed
+                                                ? styles.completedStatus
+                                                : styles.notCompletedStatus,
+                                        ]}
                                     >
-                                        <Text
-                                            style={
-                                                styles.xpBadgeText
-                                            }
-                                        >
-                                            ⭐ 10
+                                        <Text style={styles.statusText}>
+                                            {lesson.completed
+                                                ? '✓ Completed'
+                                                : '⏳ Not Started'}
                                         </Text>
                                     </View>
                                 </View>
+                                <View style={styles.chipRow}>
+                                    <View style={styles.chip}>
+                                        <Text style={styles.chipText}>
+                                            🎯 {lesson.exercises_premium?.[0]?.difficulty}
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.chip}>
+                                        <Text style={styles.chipText}>
+                                            📚 {lesson.exercises_premium?.[0]?.type}
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.chip}>
+                                        <Text style={styles.chipText}>
+                                            ⏱ {lesson.exercises_premium?.[0]?.time_limit / 60} phút
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.chip}>
+                                        <Text style={styles.chipText}>
+                                            ❓ {lesson.exercises_premium?.[0]?.question_count} Questions
+                                        </Text>
+                                    </View>
+                                </View>
+                                {lesson.completed && (
+                                    <>
+
+                                        <View className="h-px bg-gray-100 my-4" />
+                                        <View style={styles.progressChipRow}>
+                                            <View
+                                                style={[
+                                                    styles.chip,
+                                                    styles.scoreChip,
+                                                ]}
+                                            >
+                                                <Text style={styles.chipText}>
+                                                    🏆 {lesson.score} score
+                                                </Text>
+                                            </View>
+
+                                            <View
+                                                style={[
+                                                    styles.chip,
+                                                    styles.attemptChip,
+                                                ]}
+                                            >
+                                                <Text style={styles.chipText}>
+                                                    🔄 {lesson.attempts} Attempts
+                                                </Text>
+                                            </View>
+
+                                            <View
+                                                style={[
+                                                    styles.chip,
+                                                    styles.dateChip,
+                                                ]}
+                                            >
+                                                <Text style={styles.chipText}>
+                                                    📅 {new Date(
+                                                        lesson.completedAt!
+                                                    ).toLocaleDateString('vi-VN')}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <View className="h-px bg-gray-100 my-4" />
+                                    </>
+                                )}
 
                                 <Text
                                     style={
@@ -417,35 +554,19 @@ export default function ReadingScreen() {
                                     {lesson.content.slice(0, 120)}...
                                 </Text>
 
-                                {lesson.completed ? (
-                                    <View
-                                        style={
-                                            styles.completedBadge
-                                        }
-                                    >
-                                        <Text
-                                            style={
-                                                styles.completedText
-                                            }
-                                        >
-                                            ✓ Completed
-                                        </Text>
-                                    </View>
-                                ) : (
-                                    <TouchableOpacity
-                                        style={
-                                            styles.startButton
-                                        }
-                                    >
-                                        <Text
-                                            style={
-                                                styles.startButtonText
-                                            }
-                                        >
-                                            Start Lesson
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.startButton,
+                                        lesson.completed &&
+                                        styles.restartButton,
+                                    ]}
+                                >
+                                    <Text style={styles.startButtonText}>
+                                        {lesson.completed
+                                            ? "Start Again Lesson"
+                                            : "Start Lesson"}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
                         </TouchableOpacity>
                     ))}
@@ -675,5 +796,64 @@ const styles = StyleSheet.create({
     levelTextActive: {
         color: '#fff',
         fontWeight: '700',
+    },
+    chipRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginTop: 12,
+    },
+
+    chip: {
+        backgroundColor: '#F3F4F6',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 10,
+    },
+
+    chipText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#374151',
+    },
+    statusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 12,
+        marginLeft: 8,
+    },
+
+    completedStatus: {
+        backgroundColor: '#DCFCE7',
+    },
+
+    notCompletedStatus: {
+        backgroundColor: '#FEE2E2',
+    },
+
+    statusText: {
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    restartButton: {
+        backgroundColor: '#16A34A',
+    },
+    progressChipRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginTop: 10,
+    },
+
+    scoreChip: {
+        backgroundColor: '#FEF3C7',
+    },
+
+    attemptChip: {
+        backgroundColor: '#DBEAFE',
+    },
+
+    dateChip: {
+        backgroundColor: '#DCFCE7',
     },
 });
