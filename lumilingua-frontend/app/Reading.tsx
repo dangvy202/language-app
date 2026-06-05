@@ -605,6 +605,12 @@ export default function ReadingScreen() {
                                         </Text>
                                     </View>
 
+                                    <View style={styles.targetScore}>
+                                        <Text style={styles.targetScoreText}>
+                                            🥇 {lesson?.exercises_premium?.[0]?.points}
+                                        </Text>
+                                    </View>
+
                                     <View
                                         style={[
                                             styles.statusBadge,
@@ -707,6 +713,15 @@ export default function ReadingScreen() {
                                         lesson.completed &&
                                         styles.restartButton,
                                     ]}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: '/course/reading/[id]',
+                                            params: {
+                                                id: lesson.exercises_premium?.[0]?.id_reading_exercise,
+                                                time_limit: lesson.exercises_premium?.[0]?.time_limit,
+                                            },
+                                        })
+                                    }
                                 >
                                     <Text style={styles.startButtonText}>
                                         {lesson.completed
@@ -807,10 +822,23 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 5,
         borderRadius: 12,
+        marginRight: 8
     },
 
     xpBadgeText: {
         color: '#01d4e7',
+        fontWeight: '700',
+    },
+
+    targetScore: {
+        backgroundColor: '#f84b5a',
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 12,
+    },
+
+    targetScoreText: {
+        color: '#f3f7f8',
         fontWeight: '700',
     },
 
