@@ -33,7 +33,7 @@ class QuestionPremiumSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = QuestionPremium
-        fields = ['id_question_premium', 'content', 'type', 'words', 'metadata', 'correct_answer', 'points', 'image_url', 'options']
+        fields = ['id_question_premium', 'content', 'type', 'words', 'metadata', 'correct_answer', 'points', 'explain_question', 'image_url', 'options']
 
     def get_options(self, obj):
         if obj.type in [

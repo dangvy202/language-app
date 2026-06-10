@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getClientEndpoint } from '@/constants/configApi';
 import Loading from '@/component/loading';
+import { StatsItem } from '@/interfaces/interfaces';
 
 export default function ReadingExamScreen() {
     const { id, time_limit } = useLocalSearchParams();
@@ -24,6 +25,7 @@ export default function ReadingExamScreen() {
     const [submitted, setSubmitted] = useState(false);
     const [score, setScore] = useState(0);
     const [time, setTime] = useState(600);
+    const [expandedExplain, setExpandedExplain] = useState<number | null>(null);
 
     useEffect(() => {
         fetchReading();
@@ -78,26 +80,11 @@ export default function ReadingExamScreen() {
         let totalScore = 0;
 
         questionGroups.forEach((group: any) => {
-            group.questions.forEach(
-                (q: any) => {
-                    const answer =
-                        answers[
-                        q.id_question_premium
-                        ];
-
-                    if (
-                        answer ===
-                        q.options?.find(
-                            (x: any) =>
-                                x.is_correct
-                        )?.content
-                    ) {
-                        totalScore += Number(
-                            q.points
-                        );
-                    }
+            group.questions.forEach((q: any) => {
+                if (isCorrectAnswer(q)) {
+                    totalScore += Number(q.points);
                 }
-            );
+            });
         });
 
         setScore(totalScore);
@@ -111,12 +98,56 @@ export default function ReadingExamScreen() {
         setTime(exercise?.time_limit || 1800);
     };
 
+    const isCorrectAnswer = (q: any) => {
+        const userAnswer =
+            answers[q.id_question_premium]?.trim().toLowerCase();
 
+        if (q.options?.length > 0) {
+            const correctOption = q.options.find(
+                (x: any) => x.is_correct
+            )?.content?.trim().toLowerCase();
+
+            return userAnswer === correctOption;
+        }
+
+        return (
+            userAnswer ===
+            q.correct_answer?.trim().toLowerCase()
+        );
+    };
 
     const totalQuestions = questionGroups.reduce((sum: number, group: any) => sum + group.questions.length, 0);
 
     const answeredCount = Object.keys(answers).length;
     const progressPercentage = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+
+    const getStats = (): StatsItem[] => {
+        return questionGroups.map((group: any) => {
+            let correct = 0;
+            let wrong = 0;
+            let skipped = 0;
+
+            group.questions.forEach((q: any) => {
+                const answer = answers[q.id_question_premium];
+
+                if (!answer) {
+                    skipped++;
+                } else if (isCorrectAnswer(q)) {
+                    correct++;
+                } else {
+                    wrong++;
+                }
+            });
+
+            return {
+                title: group.title,
+                total: group.questions.length,
+                correct,
+                wrong,
+                skipped,
+            };
+        });
+    };
 
     return (
         <View style={styles.container}>
@@ -230,10 +261,9 @@ export default function ReadingExamScreen() {
 
                                 {q.options?.length > 0 ? (
                                     q.options.map((op: any) => {
-                                        const selected =
-                                            answers[q.id_question_premium] ===
-                                            op.content;
-
+                                        const selected = answers[q.id_question_premium] === op.content;
+                                        const isCorrect = op.is_correct;
+                                        const isWrong = selected && !op.is_correct;
                                         return (
                                             <TouchableOpacity
                                                 key={
@@ -247,14 +277,25 @@ export default function ReadingExamScreen() {
                                                 }
                                                 style={[
                                                     styles.option,
+                                                    !submitted &&
                                                     selected &&
                                                     styles.selectedOption,
+
+                                                    submitted &&
+                                                    isCorrect &&
+                                                    styles.correctOption,
+
+                                                    submitted &&
+                                                    isWrong &&
+                                                    styles.wrongOption,
                                                 ]}
                                             >
                                                 <Text
-                                                    style={
-                                                        styles.optionText
-                                                    }
+                                                    style={[
+                                                        styles.optionText,
+                                                        submitted && isCorrect && styles.correctText,
+                                                        submitted && isWrong && styles.wrongText,
+                                                    ]}
                                                 >
                                                     {op.content}
                                                 </Text>
@@ -284,6 +325,75 @@ export default function ReadingExamScreen() {
                                         }}
                                     />
                                 )}
+                                {submitted && (
+                                    <>
+                                        {q.explain_question && (
+                                            <>
+                                                <TouchableOpacity
+                                                    onPress={() =>
+                                                        setExpandedExplain(
+                                                            expandedExplain === q.id_question_premium
+                                                                ? null
+                                                                : q.id_question_premium
+                                                        )
+                                                    }
+                                                    style={styles.explainButton}
+                                                >
+                                                    <Ionicons
+                                                        name={
+                                                            expandedExplain === q.id_question_premium
+                                                                ? 'chevron-up'
+                                                                : 'chevron-down'
+                                                        }
+                                                        size={18}
+                                                        color="#FF6B00"
+                                                    />
+                                                    <Text style={styles.explainButtonText}>
+                                                        Explanation
+                                                    </Text>
+                                                </TouchableOpacity>
+
+                                                {expandedExplain === q.id_question_premium && (
+                                                    <View style={styles.explainCard}>
+                                                        <Text style={styles.explainTitle}>
+                                                            💡 Explanation
+                                                        </Text>
+
+                                                        <Text style={styles.explainText}>
+                                                            {q.explain_question}
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </>
+                                        )}
+
+                                        <View
+                                            style={{
+                                                marginTop: 10,
+                                                padding: 12,
+                                                borderRadius: 12,
+                                                backgroundColor: isCorrectAnswer(q)
+                                                    ? '#DCFCE7'
+                                                    : '#FEE2E2',
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: isCorrectAnswer(q)
+                                                        ? '#166534'
+                                                        : '#991B1B',
+                                                    fontWeight: '700',
+                                                }}
+                                            >
+                                                {isCorrectAnswer(q)
+                                                    ? '✓ Correct'
+                                                    : `✗ Correct Answer: ${q.options?.find((x: any) => x.is_correct)?.content ||
+                                                    q.correct_answer
+                                                    }`}
+                                            </Text>
+                                        </View>
+                                    </>
+                                )}
                             </View>
                         ))}
                     </View>
@@ -291,7 +401,7 @@ export default function ReadingExamScreen() {
 
                 {submitted && (
                     <View style={styles.resultCard}>
-                        <Text style={styles.resultTitle}>🎉 Your Score</Text>
+                        <Text style={styles.resultTitle}>Your Score</Text>
                         <Text style={styles.score}>
                             {score} <Text style={styles.total}>/ {exercise.points}</Text>
                         </Text>
@@ -302,7 +412,46 @@ export default function ReadingExamScreen() {
                                     ? 'Well done! Keep improving!'
                                     : 'Good effort! Try again!'}
                         </Text>
+                        <View style={styles.statsCard}>
+                            <Text style={styles.statsTitle}>
+                                Detailed Statistics
+                            </Text>
+
+                            {getStats().map((item, index) => (
+                                <View
+                                    key={index}
+                                    style={styles.statsRow}
+                                >
+                                    <Text style={styles.statsType}>
+                                        {item.title}
+                                    </Text>
+
+                                    <Text style={styles.statsNumber}>
+                                        {item.total}
+                                    </Text>
+
+                                    <Text
+                                        style={[
+                                            styles.statsNumber,
+                                            { color: '#16A34A' },
+                                        ]}
+                                    >
+                                        {item.correct}
+                                    </Text>
+
+                                    <Text
+                                        style={[
+                                            styles.statsNumber,
+                                            { color: '#DC2626' },
+                                        ]}
+                                    >
+                                        {item.wrong}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
                     </View>
+
                 )}
             </ScrollView>
 
@@ -379,7 +528,6 @@ const styles = StyleSheet.create({
         borderRadius: 999,
     },
 
-    /* Progress Count (0/2) bên phải */
     progressCount: {
         minWidth: 50,
         alignItems: 'flex-end',
@@ -483,4 +631,77 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buttonText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+    explainButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 12,
+        paddingVertical: 10,
+        borderRadius: 12,
+        backgroundColor: '#FFF7ED',
+    },
+
+    explainButtonText: {
+        marginLeft: 6,
+        color: '#FF6B00',
+        fontWeight: '700',
+    },
+
+    explainCard: {
+        marginTop: 10,
+        backgroundColor: '#FFF7ED',
+        borderRadius: 14,
+        padding: 14,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FF6B00',
+    },
+
+    explainTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#EA580C',
+        marginBottom: 8,
+    },
+
+    explainText: {
+        fontSize: 15,
+        lineHeight: 24,
+        color: '#475569',
+    },
+    statsCard: {
+        marginTop: 24,
+        width: '100%',
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        padding: 16,
+    },
+
+    statsTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 16,
+        color: '#0F172A',
+    },
+
+    statsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+    },
+
+    statsType: {
+        flex: 3,
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#334155',
+    },
+
+    statsNumber: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 15,
+        fontWeight: '700',
+    },
 });

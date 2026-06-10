@@ -266,3 +266,11 @@ interface ReadingItem {
     attempts?: number | null;
     completedAt?: string | null;
 }
+
+interface StatsItem {
+    title: string;
+    total: number;
+    correct: number;
+    wrong: number;
+    skipped: number;
+};

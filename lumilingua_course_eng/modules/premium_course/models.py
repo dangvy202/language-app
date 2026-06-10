@@ -242,6 +242,7 @@ class QuestionPremium(models.Model):
         decimal_places=2,
         default=0
     )
+    explain_question = models.TextField(null=True, blank=True)
     image_url = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
