@@ -6,18 +6,19 @@ import {
     TouchableOpacity,
     Image,
     Dimensions,
+    TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-
-const { width } = Dimensions.get('window');
+import { getClientEndpoint } from '@/constants/configApi';
+import Loading from '@/component/loading';
 
 export default function ReadingExamScreen() {
     const { id, time_limit } = useLocalSearchParams();
     const router = useRouter();
-
+    const [showFullPassage, setShowFullPassage] = useState(false);
     const [data, setData] = useState<any>(null);
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [submitted, setSubmitted] = useState(false);
@@ -25,29 +26,19 @@ export default function ReadingExamScreen() {
     const [time, setTime] = useState(600);
 
     useEffect(() => {
-        setTimeout(() => {
-            setData({
-                title: 'AI and the Future of Work',
-                image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
-                passage:
-                    'Artificial Intelligence is transforming industries worldwide. Many jobs are being automated, while new opportunities are created in technology, data science, and AI development. The key to thriving in this new era is continuous learning and adaptability.',
-                questions: [
-                    {
-                        id: 1,
-                        question: 'What is AI mainly doing to the workforce?',
-                        options: ['Creating jobs only', 'Automating jobs', 'Removing all jobs', 'No impact'],
-                        correct: 'Automating jobs',
-                    },
-                    {
-                        id: 2,
-                        question: 'Which field is growing due to AI?',
-                        options: ['Agriculture', 'Data Science', 'Fishing', 'Construction only'],
-                        correct: 'Data Science',
-                    },
-                ],
-            });
-        }, 300);
+        fetchReading();
     }, []);
+
+    const fetchReading = async () => {
+        try {
+            const response = await fetch(getClientEndpoint(`reading/${id}/`));
+            const result = await response.json();
+            setData(result);
+            setTime(result.exercises_premium?.[0]?.time_limit || 1800);
+        } catch (e) {
+            console.log(e);
+        }
+    };
 
     useEffect(() => {
         if (submitted) return;
@@ -56,6 +47,12 @@ export default function ReadingExamScreen() {
         }, 1000);
         return () => clearInterval(t);
     }, [submitted]);
+
+    useEffect(() => {
+        if (time === 0 && !submitted) {
+            submit();
+        }
+    }, [time]);
 
     const formatTime = (s: number) => {
         const m = Math.floor(s / 60);
@@ -68,12 +65,42 @@ export default function ReadingExamScreen() {
         setAnswers((p) => ({ ...p, [qid]: option }));
     };
 
+
+    if (!data) {
+        return <Loading />
+    }
+
+    const exercise = data?.exercises_premium?.[0];
+
+    const questionGroups = exercise?.question_groups || [];
+
     const submit = () => {
-        let c = 0;
-        data.questions.forEach((q: any) => {
-            if (answers[q.id] === q.correct) c++;
+        let totalScore = 0;
+
+        questionGroups.forEach((group: any) => {
+            group.questions.forEach(
+                (q: any) => {
+                    const answer =
+                        answers[
+                        q.id_question_premium
+                        ];
+
+                    if (
+                        answer ===
+                        q.options?.find(
+                            (x: any) =>
+                                x.is_correct
+                        )?.content
+                    ) {
+                        totalScore += Number(
+                            q.points
+                        );
+                    }
+                }
+            );
         });
-        setScore(c);
+
+        setScore(totalScore);
         setSubmitted(true);
     };
 
@@ -81,19 +108,15 @@ export default function ReadingExamScreen() {
         setAnswers({});
         setSubmitted(false);
         setScore(0);
-        setTime(600);
+        setTime(exercise?.time_limit || 1800);
     };
 
-    if (!data) {
-        return (
-            <View style={styles.loading}>
-                <Text style={styles.loadingText}>Loading exam...</Text>
-            </View>
-        );
-    }
+
+
+    const totalQuestions = questionGroups.reduce((sum: number, group: any) => sum + group.questions.length, 0);
 
     const answeredCount = Object.keys(answers).length;
-    const progressPercentage = (answeredCount / data.questions.length) * 100;
+    const progressPercentage = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
     return (
         <View style={styles.container}>
@@ -127,14 +150,14 @@ export default function ReadingExamScreen() {
                     {/* RIGHT: Progress Count (0/2) */}
                     <View style={styles.progressCount}>
                         <Text style={styles.progressText}>
-                            {answeredCount} / {data.questions.length}
+                            {answeredCount} / {totalQuestions}
                         </Text>
                     </View>
                 </View>
             </LinearGradient>
 
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <Image source={{ uri: data.image }} style={styles.heroImage} />
+                <Image source={{ uri: data.img_path }} style={styles.heroImage} />
                 <Text style={styles.title}>{data.title}</Text>
 
                 <View style={styles.passageCard}>
@@ -142,44 +165,127 @@ export default function ReadingExamScreen() {
                         <Ionicons name="book-outline" size={22} color="#FF6B00" />
                         <Text style={styles.passageTitle}>Reading Passage</Text>
                     </View>
-                    <Text style={styles.passage}>{data.passage}</Text>
+                    <Text
+                        style={styles.passage}
+                        selectable
+                        numberOfLines={showFullPassage ? undefined : 10}
+                    >
+                        {data.content}
+                    </Text>
+
+                    <TouchableOpacity
+                        onPress={() =>
+                            setShowFullPassage(!showFullPassage)
+                        }
+                    >
+                        <Text style={{ color: '#FF6B00' }}>
+                            {showFullPassage
+                                ? 'Hide Passage ▲'
+                                : 'Show Full Passage ▼'}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
-                {data.questions.map((q: any, index: number) => (
-                    <View key={q.id} style={styles.questionCard}>
-                        <Text style={styles.questionNumber}>Question {index + 1}</Text>
-                        <Text style={styles.question}>{q.question}</Text>
+                {questionGroups.map((group: any) => (
+                    <View
+                        key={group.id_question_premium_group}
+                        style={{ marginBottom: 24 }}
+                    >
+                        <View
+                            style={{
+                                backgroundColor: '#FFF7ED',
+                                padding: 16,
+                                borderRadius: 16,
+                                marginBottom: 12,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    fontSize: 18,
+                                    fontWeight: '700',
+                                    color: '#EA580C',
+                                }}
+                            >
+                                {group.title}
+                            </Text>
 
-                        {q.options.map((op: string) => {
-                            const selected = answers[q.id] === op;
-                            const isCorrect = submitted && op === q.correct;
-                            const isWrong = submitted && selected && op !== q.correct;
+                            <Text
+                                style={{
+                                    marginTop: 8,
+                                    color: '#475569',
+                                }}
+                            >
+                                {group.instruction}
+                            </Text>
+                        </View>
 
-                            return (
-                                <TouchableOpacity
-                                    key={op}
-                                    onPress={() => selectAnswer(q.id, op)}
-                                    style={[
-                                        styles.option,
-                                        selected && !submitted && styles.selectedOption,
-                                        isCorrect && styles.correctOption,
-                                        isWrong && styles.wrongOption,
-                                    ]}
-                                    disabled={submitted}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.optionText,
-                                            isCorrect && styles.correctText,
-                                            isWrong && styles.wrongText,
-                                        ]}
-                                    >
-                                        {op}
-                                    </Text>
-                                    {isCorrect && <Ionicons name="checkmark-circle" size={24} color="#16A34A" />}
-                                </TouchableOpacity>
-                            );
-                        })}
+                        {group.questions.map((q: any) => (
+                            <View
+                                key={q.id_question_premium}
+                                style={styles.questionCard}
+                            >
+                                <Text style={styles.question}>
+                                    {q.content}
+                                </Text>
+
+                                {q.options?.length > 0 ? (
+                                    q.options.map((op: any) => {
+                                        const selected =
+                                            answers[q.id_question_premium] ===
+                                            op.content;
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={
+                                                    op.id_question_premium_option
+                                                }
+                                                onPress={() =>
+                                                    selectAnswer(
+                                                        q.id_question_premium,
+                                                        op.content
+                                                    )
+                                                }
+                                                style={[
+                                                    styles.option,
+                                                    selected &&
+                                                    styles.selectedOption,
+                                                ]}
+                                            >
+                                                <Text
+                                                    style={
+                                                        styles.optionText
+                                                    }
+                                                >
+                                                    {op.content}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })
+                                ) : (
+                                    <TextInput
+                                        value={
+                                            answers[q.id_question_premium] || ''
+                                        }
+                                        onChangeText={(text) =>
+                                            selectAnswer(
+                                                q.id_question_premium,
+                                                text
+                                            )
+                                        }
+                                        placeholderTextColor="#999"
+                                        placeholder="Type your answer..."
+                                        style={{
+                                            borderWidth: 1,
+                                            borderColor: '#CBD5E1',
+                                            borderRadius: 12,
+                                            padding: 14,
+                                            fontSize: 16,
+                                            backgroundColor: '#fff',
+                                        }}
+                                    />
+                                )}
+                            </View>
+                        ))}
                     </View>
                 ))}
 
@@ -187,14 +293,14 @@ export default function ReadingExamScreen() {
                     <View style={styles.resultCard}>
                         <Text style={styles.resultTitle}>🎉 Your Score</Text>
                         <Text style={styles.score}>
-                            {score} <Text style={styles.total}>/ {data.questions.length}</Text>
+                            {score} <Text style={styles.total}>/ {exercise.points}</Text>
                         </Text>
                         <Text style={styles.resultMessage}>
-                            {score === data.questions.length
+                            {score === exercise.points
                                 ? "Perfect! You're a genius! 🔥"
-                                : score >= data.questions.length / 2
-                                ? 'Well done! Keep improving!'
-                                : 'Good effort! Try again!'}
+                                : score >= exercise.points / 2
+                                    ? 'Well done! Keep improving!'
+                                    : 'Good effort! Try again!'}
                         </Text>
                     </View>
                 )}
@@ -203,9 +309,9 @@ export default function ReadingExamScreen() {
             <View style={styles.cta}>
                 {!submitted ? (
                     <TouchableOpacity
-                        style={[styles.button, answeredCount < data.questions.length && styles.buttonDisabled]}
+                        style={[styles.button, answeredCount < totalQuestions && styles.buttonDisabled]}
                         onPress={submit}
-                        disabled={answeredCount < data.questions.length}
+                        disabled={answeredCount < totalQuestions}
                     >
                         <Text style={styles.buttonText}>Submit Exam</Text>
                     </TouchableOpacity>

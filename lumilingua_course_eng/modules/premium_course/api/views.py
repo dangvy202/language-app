@@ -5,9 +5,9 @@ from datetime import date
 
 from modules.premium_course.api.serializers import ReadingSerializer, SaveVocabularyReadingSerializer, \
     QuestionOptionPremiumSerializer, QuestionPremiumSerializer, ExerciseReadingPremiumSerializer, \
-    ExerciseProgressReadingPremiumSerializer, GoalSerializer
+    ExerciseProgressReadingPremiumSerializer, GoalSerializer, QuestionGroupPremiumSerializer
 from modules.premium_course.models import Reading, SaveVocabularyReading, QuestionOptionsPremium, QuestionPremium, \
-    ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals
+    ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals, QuestionGroupPremium
 
 
 class ReadingViewSet(viewsets.ModelViewSet):
@@ -32,6 +32,10 @@ class ExerciseProgressReadingPremiumViewSet(viewsets.ModelViewSet):
 class ExerciseReadingPremiumViewSet(viewsets.ModelViewSet):
     queryset = ExerciseReadingPremium.objects.all()
     serializer_class = ExerciseReadingPremiumSerializer
+
+class QuestionGroupPremiumViewSet(viewsets.ModelViewSet):
+    queryset = QuestionGroupPremium.objects.all()
+    serializer_class = QuestionGroupPremiumSerializer
 
 class QuestionPremiumViewSet(viewsets.ModelViewSet):
     queryset = QuestionPremium.objects.all()

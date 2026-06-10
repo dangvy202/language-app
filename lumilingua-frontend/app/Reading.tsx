@@ -237,7 +237,10 @@ export default function ReadingScreen() {
     });
 
     const completedLessons = lessons.filter(
-        lesson => lesson.score !== null
+        lesson => 
+            lesson.score !== null &&
+            lesson.score !== undefined &&
+            !isNaN(Number(lesson.score))
     );
 
     const excellentCount = completedLessons.filter(
@@ -266,7 +269,7 @@ export default function ReadingScreen() {
                     0
                 ) / completedLessons.length
             ).toFixed(1)
-            : 0;
+            : 'No Data';
 
     useEffect(() => {
         setSelectedSlice({

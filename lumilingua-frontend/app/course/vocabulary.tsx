@@ -9,9 +9,9 @@ import {
     RefreshControl,
     Text,
     TouchableOpacity,
-    View
+    View,
+    Image
 } from 'react-native';
-import { Image } from 'expo-image';
 
 import Notfound from '@/component/404';
 import { getCrmsEndpoint, getCrmsImgEndpoint } from "@/constants/configApi";

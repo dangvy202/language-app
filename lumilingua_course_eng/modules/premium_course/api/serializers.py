@@ -4,7 +4,7 @@ import random
 from modules.course.api.serializers import LevelSerializer
 from modules.course.models import Level
 from modules.premium_course.models import Reading, SaveVocabularyReading, QuestionOptionsPremium, \
-    ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals
+    ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals, QuestionPremium, QuestionGroupPremium
 
 class SaveVocabularyReadingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,47 +18,108 @@ class ExerciseProgressReadingPremiumSerializer(serializers.ModelSerializer):
         fields = ['id_exercise_progress', 'user_cache', 'exercises', 'score', 'attempts', 'is_completed', 'completed_at']
         read_only_fields = ['created_at', 'updated_at']
 
-class ExerciseReadingPremiumSerializer(serializers.ModelSerializer):
+class QuestionOptionPremiumSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ExerciseReadingPremium
-        fields = ['id_reading_exercise', 'name', 'description', 'icon', 'xp_receive', 'balance_learn', 'type', 'difficulty', 'reading', 'time_limit', 'points', 'question_count']
+        model = QuestionOptionsPremium
+        fields = ['id_question_premium_option', 'content', 'is_correct']
         read_only_fields = ['created_at', 'updated_at']
 
 class QuestionPremiumSerializer(serializers.ModelSerializer):
-    options = serializers.SerializerMethodField(read_only=True)
+    options = QuestionOptionPremiumSerializer(
+        source='question_premium_option',
+        many=True,
+        read_only=True
+    )
 
     class Meta:
-        model = QuestionOptionsPremium
-        fields = ['id_question_premium', 'exercise_reading_premium', 'content', 'type', 'words', 'metadata', 'correct_answer', 'points', 'image_url']
-        read_only_fields = ['created_at', 'updated_at']
+        model = QuestionPremium
+        fields = ['id_question_premium', 'content', 'type', 'words', 'metadata', 'correct_answer', 'points', 'image_url', 'options']
 
     def get_options(self, obj):
-        if obj.type in ['multiple_choice', 'fill_blank']:
-            options = QuestionOptionsPremium.objects.filter(question=obj)
-            return QuestionOptionPremiumSerializer(options, many=True).data
+        if obj.type in [
+            'multiple_choice',
+            'fill_blank',
+            'true_false_notgiven',
+            'summary_completion',
+            'sentence_completion'
+        ]:
+            options = QuestionOptionsPremium.objects.filter(
+                question_premium=obj
+            )
+
+            return QuestionOptionPremiumSerializer(
+                options,
+                many=True
+            ).data
+
         return []
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        if instance.type == "matching" and instance.metadata:
-            pairs = instance.metadata.get("pairs", [])
 
-            left = [{"id": p["id"], "text": p["left"]} for p in pairs]
-            right = [{"id": p["id"], "text": p["right"]} for p in pairs]
+        # Matching Heading
+        if instance.type == "matching_heading":
+            headings = instance.metadata.get("headings", []).copy()
+            random.shuffle(headings)
 
-            random.shuffle(right)
+            data["headings"] = headings
 
-            data["left"] = left
-            data["right"] = right
+        # Matching Information
+        elif instance.type == "matching_information":
+            paragraphs = instance.metadata.get("paragraphs", [])
 
-            # Not response meta data raw
-            data.pop("metadata", None)
+            data["paragraphs"] = paragraphs
+
+        # Matching Features
+        elif instance.type == "matching_features":
+            features = instance.metadata.get("features", []).copy()
+            random.shuffle(features)
+
+            data["features"] = features
+
+        # Matching Sentence Endings
+        elif instance.type == "matching_sentence_endings":
+            endings = instance.metadata.get("endings", []).copy()
+            random.shuffle(endings)
+
+            data["endings"] = endings
+
+        # Table Completion
+        elif instance.type == "table_completion":
+            data["table"] = instance.metadata
+
+        # Flow Chart Completion
+        elif instance.type == "flow_chart_completion":
+            data["flow_chart"] = instance.metadata
+
+        # Summary Completion
+        elif instance.type == "summary_completion":
+            data["summary"] = instance.metadata
+
         return data
 
-class QuestionOptionPremiumSerializer(serializers.ModelSerializer):
+class QuestionGroupPremiumSerializer(serializers.ModelSerializer):
+    questions = QuestionPremiumSerializer(
+        many=True,
+        read_only=True
+    )
+
     class Meta:
-        model = QuestionOptionsPremium
-        fields = ['id_question_premium_option', 'question_premium', 'content', 'is_correct']
+        model = QuestionGroupPremium
+        fields = ['id_question_premium_group', 'title', 'instruction', 'type', 'metadata', 'order_no', 'questions']
+        read_only_fields = ['created_at', 'updated_at']
+
+
+class ExerciseReadingPremiumSerializer(serializers.ModelSerializer):
+    question_groups = QuestionGroupPremiumSerializer(
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = ExerciseReadingPremium
+        fields = ['id_reading_exercise', 'name', 'description', 'icon', 'xp_receive', 'balance_learn', 'type',
+                  'difficulty', 'time_limit', 'points', 'question_count', 'question_groups']
         read_only_fields = ['created_at', 'updated_at']
 
 class GoalSerializer(serializers.ModelSerializer):

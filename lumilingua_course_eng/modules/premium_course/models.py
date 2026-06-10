@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 
 def validate_exercise_type(value):
-    valid_types = ['multiple_choice', 'sentence_order', 'matching', 'fill_blank', 'all', 'true_false_notgiven']
+    valid_types = ['multiple_choice', 'matching_heading', 'matching_information', 'sentence_completion', 'summary_completion', 'table_completion', 'flow_chart_completion', 'matching_features', 'matching_sentence_endings', 'fill_blank', 'all', 'true_false_notgiven']
     if value not in valid_types:
         raise ValidationError(f'Type must be one of: {", ".join(valid_types)}')
 
@@ -14,7 +14,7 @@ def validate_difficulty(value):
 
 
 def validate_question_type(value):
-    valid_types = ['multiple_choice', 'sentence_order', 'matching', 'fill_blank', 'true_false_notgiven']
+    valid_types = ['multiple_choice', 'matching_heading', 'matching_information', 'sentence_completion', 'summary_completion', 'table_completion', 'flow_chart_completion', 'matching_features', 'matching_sentence_endings', 'fill_blank', 'true_false_notgiven']
     if value not in valid_types:
         raise ValidationError(f'Type must be one of: {", ".join(valid_types)}')
 
@@ -81,7 +81,7 @@ class ExerciseReadingPremium(models.Model):
     type = models.CharField(
         max_length=50,
         validators=[validate_exercise_type],
-        help_text="Type exercise: multiple_choice, sentence_order, matching, fill_blank, all",
+        help_text="Type exercise: 'multiple_choice', 'matching_heading', 'matching_information', 'sentence_completion', 'summary_completion', 'table_completion', 'flow_chart_completion', 'matching_features', 'matching_sentence_endings', 'fill_blank', 'all', 'true_false_notgiven'",
         null=False,
         blank=False
     )
@@ -163,19 +163,64 @@ class Reading(models.Model):
             models.UniqueConstraint(fields=['title'], name='unique_title')
         ]
 
+class QuestionGroupPremium(models.Model):
+    id_question_premium_group = models.AutoField(primary_key=True)
+
+    exercise_reading_premium = models.ForeignKey(
+        ExerciseReadingPremium,
+        on_delete=models.CASCADE,
+        db_column='id_reading_exercise',
+        to_field='id_reading_exercise',
+        related_name='question_groups'
+    )
+    title = models.TextField()
+    instruction = models.TextField()
+    type = models.CharField(
+        max_length=50,
+        validators=[validate_question_type]
+    )
+
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        default=dict
+    )
+    order_no = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_question_group_premium"
+        managed = False
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'exercise_reading_premium',
+                    'order_no'
+                ],
+                name='uq_exercise_group_order'
+            )
+        ]
+
 class QuestionPremium(models.Model):
     id_question_premium = models.AutoField(primary_key=True)
     exercise_reading_premium = models.ForeignKey(
         'ExerciseReadingPremium',
         on_delete=models.CASCADE,
-        db_column='id_exercise',
+        db_column='id_reading_exercise',
         related_name='question_premium_exercise'
+    )
+    question_group = models.ForeignKey(
+        QuestionGroupPremium,
+        on_delete=models.CASCADE,
+        db_column='id_question_premium_group',
+        related_name='questions'
     )
     content = models.TextField(null=False, blank=False)
     type = models.CharField(
         max_length=50,
         validators=[validate_question_type],
-        help_text="Type exercise: multiple_choice, sentence_order, matching, fill_blank, true_false_notgiven",
+        help_text="Type exercise: 'multiple_choice', 'matching_heading', 'matching_information', 'sentence_completion', 'summary_completion', 'table_completion', 'flow_chart_completion', 'matching_features', 'matching_sentence_endings', 'fill_blank', 'true_false_notgiven'",
         null=False,
         blank=False
     )
@@ -192,7 +237,11 @@ class QuestionPremium(models.Model):
         help_text='{"pairs":[{ "id": 1, "left": "Dog", "right": "Chó" },{ "id": 2, "left": "Cat", "right": "Mèo" },{ "id": 3, "left": "Bird", "right": "Chim" }]}'
     )
     correct_answer = models.TextField(null=True, blank=False)
-    points = models.IntegerField(default=0)
+    points = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
     image_url = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
