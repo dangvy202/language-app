@@ -6,7 +6,9 @@ import {
     TouchableOpacity,
     Image,
     Dimensions,
+    KeyboardAvoidingView,
     TextInput,
+    Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -150,327 +152,333 @@ export default function ReadingExamScreen() {
     };
 
     return (
-        <View style={styles.container}>
-            {/* HEADER */}
-            <LinearGradient colors={['#1E2937', '#334155']} style={styles.header}>
-                <View style={styles.headerContent}>
-                    {/* LEFT: Back + Timer */}
-                    <View style={styles.headerLeft}>
-                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={26} color="#fff" />
-                        </TouchableOpacity>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <View style={styles.container}>
+                {/* HEADER */}
+                <LinearGradient colors={['#1E2937', '#334155']} style={styles.header}>
+                    <View style={styles.headerContent}>
+                        {/* LEFT: Back + Timer */}
+                        <View style={styles.headerLeft}>
+                            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                                <Ionicons name="arrow-back" size={26} color="#fff" />
+                            </TouchableOpacity>
 
-                        <View style={styles.timerBox}>
-                            <Ionicons name="time-outline" size={20} color="#FF6B00" />
-                            <Text style={styles.timer}>{formatTime(time)}</Text>
+                            <View style={styles.timerBox}>
+                                <Ionicons name="time-outline" size={20} color="#FF6B00" />
+                                <Text style={styles.timer}>{formatTime(time)}</Text>
+                            </View>
+                        </View>
+
+                        {/* CENTER: Progress Bar */}
+                        <View style={styles.progressContainer}>
+                            <View style={styles.progressBar}>
+                                <View
+                                    style={[
+                                        styles.progressFill,
+                                        { width: `${progressPercentage}%` },
+                                    ]}
+                                />
+                            </View>
+                        </View>
+
+                        {/* RIGHT: Progress Count (0/2) */}
+                        <View style={styles.progressCount}>
+                            <Text style={styles.progressText}>
+                                {answeredCount} / {totalQuestions}
+                            </Text>
                         </View>
                     </View>
+                </LinearGradient>
 
-                    {/* CENTER: Progress Bar */}
-                    <View style={styles.progressContainer}>
-                        <View style={styles.progressBar}>
-                            <View
-                                style={[
-                                    styles.progressFill,
-                                    { width: `${progressPercentage}%` },
-                                ]}
-                            />
+                <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                    <Image source={{ uri: data.img_path }} style={styles.heroImage} />
+                    <Text style={styles.title}>{data.title}</Text>
+
+                    <View style={styles.passageCard}>
+                        <View style={styles.passageHeader}>
+                            <Ionicons name="book-outline" size={22} color="#FF6B00" />
+                            <Text style={styles.passageTitle}>Reading Passage</Text>
                         </View>
-                    </View>
-
-                    {/* RIGHT: Progress Count (0/2) */}
-                    <View style={styles.progressCount}>
-                        <Text style={styles.progressText}>
-                            {answeredCount} / {totalQuestions}
-                        </Text>
-                    </View>
-                </View>
-            </LinearGradient>
-
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <Image source={{ uri: data.img_path }} style={styles.heroImage} />
-                <Text style={styles.title}>{data.title}</Text>
-
-                <View style={styles.passageCard}>
-                    <View style={styles.passageHeader}>
-                        <Ionicons name="book-outline" size={22} color="#FF6B00" />
-                        <Text style={styles.passageTitle}>Reading Passage</Text>
-                    </View>
-                    <Text
-                        style={styles.passage}
-                        selectable
-                        numberOfLines={showFullPassage ? undefined : 10}
-                    >
-                        {data.content}
-                    </Text>
-
-                    <TouchableOpacity
-                        onPress={() =>
-                            setShowFullPassage(!showFullPassage)
-                        }
-                    >
-                        <Text style={{ color: '#FF6B00' }}>
-                            {showFullPassage
-                                ? 'Hide Passage ▲'
-                                : 'Show Full Passage ▼'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                {questionGroups.map((group: any) => (
-                    <View
-                        key={group.id_question_premium_group}
-                        style={{ marginBottom: 24 }}
-                    >
-                        <View
-                            style={{
-                                backgroundColor: '#FFF7ED',
-                                padding: 16,
-                                borderRadius: 16,
-                                marginBottom: 12,
-                            }}
+                        <Text
+                            style={styles.passage}
+                            selectable
+                            numberOfLines={showFullPassage ? undefined : 10}
                         >
-                            <Text
-                                style={{
-                                    fontSize: 18,
-                                    fontWeight: '700',
-                                    color: '#EA580C',
-                                }}
-                            >
-                                {group.title}
-                            </Text>
+                            {data.content}
+                        </Text>
 
-                            <Text
-                                style={{
-                                    marginTop: 8,
-                                    color: '#475569',
-                                }}
-                            >
-                                {group.instruction}
+                        <TouchableOpacity
+                            onPress={() =>
+                                setShowFullPassage(!showFullPassage)
+                            }
+                        >
+                            <Text style={{ color: '#FF6B00' }}>
+                                {showFullPassage
+                                    ? 'Hide Passage ▲'
+                                    : 'Show Full Passage ▼'}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
+                    </View>
 
-                        {group.questions.map((q: any) => (
+                    {questionGroups.map((group: any) => (
+                        <View
+                            key={group.id_question_premium_group}
+                            style={{ marginBottom: 24 }}
+                        >
                             <View
-                                key={q.id_question_premium}
-                                style={styles.questionCard}
+                                style={{
+                                    backgroundColor: '#FFF7ED',
+                                    padding: 16,
+                                    borderRadius: 16,
+                                    marginBottom: 12,
+                                }}
                             >
-                                <Text style={styles.question}>
-                                    {q.content}
+                                <Text
+                                    style={{
+                                        fontSize: 18,
+                                        fontWeight: '700',
+                                        color: '#EA580C',
+                                    }}
+                                >
+                                    {group.title}
                                 </Text>
 
-                                {q.options?.length > 0 ? (
-                                    q.options.map((op: any) => {
-                                        const selected = answers[q.id_question_premium] === op.content;
-                                        const isCorrect = op.is_correct;
-                                        const isWrong = selected && !op.is_correct;
-                                        return (
-                                            <TouchableOpacity
-                                                key={
-                                                    op.id_question_premium_option
-                                                }
-                                                onPress={() =>
-                                                    selectAnswer(
-                                                        q.id_question_premium,
-                                                        op.content
-                                                    )
-                                                }
-                                                style={[
-                                                    styles.option,
-                                                    !submitted &&
-                                                    selected &&
-                                                    styles.selectedOption,
+                                <Text
+                                    style={{
+                                        marginTop: 8,
+                                        color: '#475569',
+                                    }}
+                                >
+                                    {group.instruction}
+                                </Text>
+                            </View>
 
-                                                    submitted &&
-                                                    isCorrect &&
-                                                    styles.correctOption,
+                            {group.questions.map((q: any) => (
+                                <View
+                                    key={q.id_question_premium}
+                                    style={styles.questionCard}
+                                >
+                                    <Text style={styles.question}>
+                                        {q.content}
+                                    </Text>
 
-                                                    submitted &&
-                                                    isWrong &&
-                                                    styles.wrongOption,
-                                                ]}
-                                            >
-                                                <Text
-                                                    style={[
-                                                        styles.optionText,
-                                                        submitted && isCorrect && styles.correctText,
-                                                        submitted && isWrong && styles.wrongText,
-                                                    ]}
-                                                >
-                                                    {op.content}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        );
-                                    })
-                                ) : (
-                                    <TextInput
-                                        value={
-                                            answers[q.id_question_premium] || ''
-                                        }
-                                        onChangeText={(text) =>
-                                            selectAnswer(
-                                                q.id_question_premium,
-                                                text
-                                            )
-                                        }
-                                        placeholderTextColor="#999"
-                                        placeholder="Type your answer..."
-                                        style={{
-                                            borderWidth: 1,
-                                            borderColor: '#CBD5E1',
-                                            borderRadius: 12,
-                                            padding: 14,
-                                            fontSize: 16,
-                                            backgroundColor: '#fff',
-                                        }}
-                                    />
-                                )}
-                                {submitted && (
-                                    <>
-                                        {q.explain_question && (
-                                            <>
+                                    {q.options?.length > 0 ? (
+                                        q.options.map((op: any) => {
+                                            const selected = answers[q.id_question_premium] === op.content;
+                                            const isCorrect = op.is_correct;
+                                            const isWrong = selected && !op.is_correct;
+                                            return (
                                                 <TouchableOpacity
+                                                    key={
+                                                        op.id_question_premium_option
+                                                    }
                                                     onPress={() =>
-                                                        setExpandedExplain(
-                                                            expandedExplain === q.id_question_premium
-                                                                ? null
-                                                                : q.id_question_premium
+                                                        selectAnswer(
+                                                            q.id_question_premium,
+                                                            op.content
                                                         )
                                                     }
-                                                    style={styles.explainButton}
+                                                    style={[
+                                                        styles.option,
+                                                        !submitted &&
+                                                        selected &&
+                                                        styles.selectedOption,
+
+                                                        submitted &&
+                                                        isCorrect &&
+                                                        styles.correctOption,
+
+                                                        submitted &&
+                                                        isWrong &&
+                                                        styles.wrongOption,
+                                                    ]}
                                                 >
-                                                    <Ionicons
-                                                        name={
-                                                            expandedExplain === q.id_question_premium
-                                                                ? 'chevron-up'
-                                                                : 'chevron-down'
-                                                        }
-                                                        size={18}
-                                                        color="#FF6B00"
-                                                    />
-                                                    <Text style={styles.explainButtonText}>
-                                                        Explanation
+                                                    <Text
+                                                        style={[
+                                                            styles.optionText,
+                                                            submitted && isCorrect && styles.correctText,
+                                                            submitted && isWrong && styles.wrongText,
+                                                        ]}
+                                                    >
+                                                        {op.content}
                                                     </Text>
                                                 </TouchableOpacity>
-
-                                                {expandedExplain === q.id_question_premium && (
-                                                    <View style={styles.explainCard}>
-                                                        <Text style={styles.explainTitle}>
-                                                            💡 Explanation
-                                                        </Text>
-
-                                                        <Text style={styles.explainText}>
-                                                            {q.explain_question}
-                                                        </Text>
-                                                    </View>
-                                                )}
-                                            </>
-                                        )}
-
-                                        <View
+                                            );
+                                        })
+                                    ) : (
+                                        <TextInput
+                                            value={
+                                                answers[q.id_question_premium] || ''
+                                            }
+                                            onChangeText={(text) =>
+                                                selectAnswer(
+                                                    q.id_question_premium,
+                                                    text
+                                                )
+                                            }
+                                            placeholderTextColor="#999"
+                                            placeholder="Type your answer..."
                                             style={{
-                                                marginTop: 10,
-                                                padding: 12,
+                                                borderWidth: 1,
+                                                borderColor: '#CBD5E1',
                                                 borderRadius: 12,
-                                                backgroundColor: isCorrectAnswer(q)
-                                                    ? '#DCFCE7'
-                                                    : '#FEE2E2',
+                                                padding: 14,
+                                                fontSize: 16,
+                                                backgroundColor: '#fff',
                                             }}
-                                        >
-                                            <Text
+                                        />
+                                    )}
+                                    {submitted && (
+                                        <>
+                                            {q.explain_question && (
+                                                <>
+                                                    <TouchableOpacity
+                                                        onPress={() =>
+                                                            setExpandedExplain(
+                                                                expandedExplain === q.id_question_premium
+                                                                    ? null
+                                                                    : q.id_question_premium
+                                                            )
+                                                        }
+                                                        style={styles.explainButton}
+                                                    >
+                                                        <Ionicons
+                                                            name={
+                                                                expandedExplain === q.id_question_premium
+                                                                    ? 'chevron-up'
+                                                                    : 'chevron-down'
+                                                            }
+                                                            size={18}
+                                                            color="#FF6B00"
+                                                        />
+                                                        <Text style={styles.explainButtonText}>
+                                                            Explanation
+                                                        </Text>
+                                                    </TouchableOpacity>
+
+                                                    {expandedExplain === q.id_question_premium && (
+                                                        <View style={styles.explainCard}>
+                                                            <Text style={styles.explainTitle}>
+                                                                💡 Explanation
+                                                            </Text>
+
+                                                            <Text style={styles.explainText}>
+                                                                {q.explain_question}
+                                                            </Text>
+                                                        </View>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            <View
                                                 style={{
-                                                    color: isCorrectAnswer(q)
-                                                        ? '#166534'
-                                                        : '#991B1B',
-                                                    fontWeight: '700',
+                                                    marginTop: 10,
+                                                    padding: 12,
+                                                    borderRadius: 12,
+                                                    backgroundColor: isCorrectAnswer(q)
+                                                        ? '#DCFCE7'
+                                                        : '#FEE2E2',
                                                 }}
                                             >
-                                                {isCorrectAnswer(q)
-                                                    ? '✓ Correct'
-                                                    : `✗ Correct Answer: ${q.options?.find((x: any) => x.is_correct)?.content ||
-                                                    q.correct_answer
-                                                    }`}
-                                            </Text>
-                                        </View>
-                                    </>
-                                )}
-                            </View>
-                        ))}
-                    </View>
-                ))}
-
-                {submitted && (
-                    <View style={styles.resultCard}>
-                        <Text style={styles.resultTitle}>Your Score</Text>
-                        <Text style={styles.score}>
-                            {score} <Text style={styles.total}>/ {exercise.points}</Text>
-                        </Text>
-                        <Text style={styles.resultMessage}>
-                            {score === exercise.points
-                                ? "Perfect! You're a genius! 🔥"
-                                : score >= exercise.points / 2
-                                    ? 'Well done! Keep improving!'
-                                    : 'Good effort! Try again!'}
-                        </Text>
-                        <View style={styles.statsCard}>
-                            <Text style={styles.statsTitle}>
-                                Detailed Statistics
-                            </Text>
-
-                            {getStats().map((item, index) => (
-                                <View
-                                    key={index}
-                                    style={styles.statsRow}
-                                >
-                                    <Text style={styles.statsType}>
-                                        {item.title}
-                                    </Text>
-
-                                    <Text style={styles.statsNumber}>
-                                        {item.total}
-                                    </Text>
-
-                                    <Text
-                                        style={[
-                                            styles.statsNumber,
-                                            { color: '#16A34A' },
-                                        ]}
-                                    >
-                                        {item.correct}
-                                    </Text>
-
-                                    <Text
-                                        style={[
-                                            styles.statsNumber,
-                                            { color: '#DC2626' },
-                                        ]}
-                                    >
-                                        {item.wrong}
-                                    </Text>
+                                                <Text
+                                                    style={{
+                                                        color: isCorrectAnswer(q)
+                                                            ? '#166534'
+                                                            : '#991B1B',
+                                                        fontWeight: '700',
+                                                    }}
+                                                >
+                                                    {isCorrectAnswer(q)
+                                                        ? '✓ Correct'
+                                                        : `✗ Correct Answer: ${q.options?.find((x: any) => x.is_correct)?.content ||
+                                                        q.correct_answer
+                                                        }`}
+                                                </Text>
+                                            </View>
+                                        </>
+                                    )}
                                 </View>
                             ))}
                         </View>
-                    </View>
+                    ))}
 
-                )}
-            </ScrollView>
+                    {submitted && (
+                        <View style={styles.resultCard}>
+                            <Text style={styles.resultTitle}>Your Score</Text>
+                            <Text style={styles.score}>
+                                {score} <Text style={styles.total}>/ {exercise.points}</Text>
+                            </Text>
+                            <Text style={styles.resultMessage}>
+                                {score === exercise.points
+                                    ? "Perfect! You're a genius! 🔥"
+                                    : score >= exercise.points / 2
+                                        ? 'Well done! Keep improving!'
+                                        : 'Good effort! Try again!'}
+                            </Text>
+                            <View style={styles.statsCard}>
+                                <Text style={styles.statsTitle}>
+                                    Detailed Statistics
+                                </Text>
 
-            <View style={styles.cta}>
-                {!submitted ? (
-                    <TouchableOpacity
-                        style={[styles.button, answeredCount < totalQuestions && styles.buttonDisabled]}
-                        onPress={submit}
-                        disabled={answeredCount < totalQuestions}
-                    >
-                        <Text style={styles.buttonText}>Submit Exam</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity style={styles.retryButton} onPress={retry}>
-                        <Text style={styles.buttonText}>Try Again</Text>
-                    </TouchableOpacity>
-                )}
+                                {getStats().map((item, index) => (
+                                    <View
+                                        key={index}
+                                        style={styles.statsRow}
+                                    >
+                                        <Text style={styles.statsType}>
+                                            {item.title}
+                                        </Text>
+
+                                        <Text style={styles.statsNumber}>
+                                            {item.total}
+                                        </Text>
+
+                                        <Text
+                                            style={[
+                                                styles.statsNumber,
+                                                { color: '#16A34A' },
+                                            ]}
+                                        >
+                                            {item.correct}
+                                        </Text>
+
+                                        <Text
+                                            style={[
+                                                styles.statsNumber,
+                                                { color: '#DC2626' },
+                                            ]}
+                                        >
+                                            {item.wrong}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+
+                    )}
+                </ScrollView>
+
+                <View style={styles.cta}>
+                    {!submitted ? (
+                        <TouchableOpacity
+                            style={[styles.button, answeredCount < totalQuestions && styles.buttonDisabled]}
+                            onPress={submit}
+                            disabled={answeredCount < totalQuestions}
+                        >
+                            <Text style={styles.buttonText}>Submit Exam</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity style={styles.retryButton} onPress={retry}>
+                            <Text style={styles.buttonText}>Try Again</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-        </View>
+        </KeyboardAvoidingView>
+
     );
 }
 
