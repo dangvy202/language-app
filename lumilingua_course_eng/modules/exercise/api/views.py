@@ -29,8 +29,11 @@ class ExerciseProgressViewSet(viewsets.ModelViewSet):
         if not id_user:
             return Response({"error", "Missing user"}, status=status.HTTP_400_BAD_REQUEST)
 
+        if not id_exercise:
+            return Response({"error": "Missing exercise"}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            exercise_progress = ExerciseProgress.objects.get(user_cache_id=id_user, exercises_id=id_exercise,)
+            exercise_progress = ExerciseProgress.objects.get(user_cache_id=id_user, exercises_id=id_exercise)
             created = False
         except ExerciseProgress.DoesNotExist:
             exercise_progress = None

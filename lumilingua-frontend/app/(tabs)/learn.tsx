@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react'
 
 import { getCrmsEndpoint, getCrmsImgEndpoint } from '@/constants/configApi';
 import { useUserCache } from '@/hook/useUserCache';
@@ -282,6 +284,38 @@ export default function Learn() {
     };
 
     const currentGoal = inProgressGoals?.[0];
+
+    const loadHomeData = async () => {
+        try {
+            const profile = await fetchUserProfile();
+            setUserProfile(profile);
+
+            if (userCache?.length > 0) {
+                const categoryId = userCache[0].category_level;
+                const userId = userCache[0].id_user_cache;
+
+                const [levelData, rankData] = await Promise.all([
+                    getLevelByCategoryId(categoryId),
+                    getRankByUserId(userId),
+                ]);
+
+                setCategoryLevel(levelData);
+                setRank(rankData);
+            }
+
+            await loadGoals();
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+
+            console.log("Learn Focus");
+            loadHomeData();
+        }, [userCache])
+    );
 
     return (
         <SafeAreaView style={styles.container}>

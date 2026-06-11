@@ -60,7 +60,11 @@ class ExerciseProgressReadingPremium(models.Model):
         db_column='id_reading_exercise',
         related_name='progress_exercise_premium'
     )
-    score = models.IntegerField(default=0)
+    score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
     attempts = models.IntegerField(default=1)
     is_completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField()

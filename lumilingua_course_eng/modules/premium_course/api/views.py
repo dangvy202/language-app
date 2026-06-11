@@ -8,6 +8,7 @@ from modules.premium_course.api.serializers import ReadingSerializer, SaveVocabu
     ExerciseProgressReadingPremiumSerializer, GoalSerializer, QuestionGroupPremiumSerializer
 from modules.premium_course.models import Reading, SaveVocabularyReading, QuestionOptionsPremium, QuestionPremium, \
     ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals, QuestionGroupPremium
+from modules.progress.models import UserCache, CategoryLevel
 
 
 class ReadingViewSet(viewsets.ModelViewSet):
@@ -28,6 +29,66 @@ class ExerciseProgressReadingPremiumViewSet(viewsets.ModelViewSet):
         if user_cache:
             queryset = queryset.filter(user_cache=user_cache)
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        id_user = request.data.get('id_user')
+        id_reading_exercise = request.data.get('id_reading_exercise')
+
+        if not id_user:
+            return Response({"error", "Missing user"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not id_reading_exercise:
+            return Response({"error": "Missing exercise"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exercise_progress_reading_premium = ExerciseProgressReadingPremium.objects.get(user_cache_id=id_user, exercises_id=id_reading_exercise)
+            created = False
+        except ExerciseProgressReadingPremium.DoesNotExist:
+            exercise_progress_reading_premium = None
+            created = True
+
+        if created:
+            exercise_progress_reading_premium = ExerciseProgressReadingPremium.objects.create(
+                user_cache_id=id_user,
+                exercises_id=id_reading_exercise,
+                score=request.data.get('score'),
+                is_completed=True,
+                completed_at=request.data.get('completed_at')
+            )
+
+            exercises_reading_premium = ExerciseReadingPremium.objects.get(id_reading_exercise=id_reading_exercise)
+            user_cache = UserCache.objects.get(id_user_cache=id_user)
+            category_level = list(CategoryLevel.objects.all())
+
+            left = 0
+            right = len(category_level) - 1
+
+            target = user_cache.gain_xp + exercises_reading_premium.xp_receive
+            best_level = category_level[0]
+
+            while left <= right:
+                mid = left + (right - left) // 2
+                level = category_level[mid]
+
+                if target >= level.xp_level:
+                    best_level = level
+                    left = mid + 1
+                else:
+                    right = mid - 1
+
+            user_cache.gain_xp = target
+            user_cache.category_level = best_level
+            user_cache.save(update_fields=['gain_xp', 'category_level'])
+        else:
+            exercise_progress_reading_premium.score = request.data.get('score')
+            exercise_progress_reading_premium.attempts = exercise_progress_reading_premium.attempts + 1
+            exercise_progress_reading_premium.is_completed = True
+            exercise_progress_reading_premium.completed_at = request.data.get('completed_at')
+            exercise_progress_reading_premium.save(
+                update_fields=['score', 'attempts', 'is_completed', 'completed_at'])
+
+        serializer = self.get_serializer(exercise_progress_reading_premium)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 class ExerciseReadingPremiumViewSet(viewsets.ModelViewSet):
     queryset = ExerciseReadingPremium.objects.all()

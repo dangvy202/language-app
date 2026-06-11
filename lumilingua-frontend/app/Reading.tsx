@@ -11,6 +11,8 @@ import { getCrmsEndpoint } from '@/constants/configApi';
 import { useUserCache } from '@/hook/useUserCache';
 import { getProgressReadingPremium } from '@/services/apiLearn';
 import { PieChart } from "react-native-gifted-charts";
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 export default function ReadingScreen() {
     const [selectedSlice, setSelectedSlice] = useState({
@@ -201,16 +203,18 @@ export default function ReadingScreen() {
         loadReading();
     }, [loadingLogin]);
 
-    useEffect(() => {
-        if (
-            loadingLogin ||
-            !userCache?.[0]?.id_user_cache
-        ) {
-            return;
-        }
+    useFocusEffect(
+        useCallback(() => {
+            if (
+                loadingLogin ||
+                !userCache?.[0]?.id_user_cache
+            ) {
+                return;
+            }
 
-        loadData();
-    }, [loadingLogin, userCache]);
+            loadData();
+        }, [loadingLogin, userCache])
+    );
 
     const filteredLessons = lessons.filter((item) => {
 

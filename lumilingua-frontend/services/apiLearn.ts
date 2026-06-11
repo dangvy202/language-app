@@ -91,3 +91,30 @@ export const getProgressReadingPremium = async (
     const data = await response.json();
     return data;
 };
+
+
+export const submitExerciseProgressReadingPremium = async ({
+  id_user,
+  id_reading_exercise,
+  score,
+  completed_at,
+}: {
+  id_user: number;
+  id_reading_exercise: number;
+  score: number;
+  completed_at: string;
+}) => {
+  const endpoint = getClientEndpoint("exercise_progress_reading_premium/");
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id_user, id_reading_exercise, score, completed_at }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Submit progress reading premium failed');
+  }
+
+  return response.json();
+};

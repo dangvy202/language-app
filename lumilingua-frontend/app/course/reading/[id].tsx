@@ -9,6 +9,7 @@ import {
     KeyboardAvoidingView,
     TextInput,
     Platform,
+    Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,9 +18,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getClientEndpoint } from '@/constants/configApi';
 import Loading from '@/component/loading';
 import { StatsItem } from '@/interfaces/interfaces';
+import { submitExerciseProgressReadingPremium } from '@/services/apiLearn';
+import { useUserCache } from '@/hook/useUserCache';
 
 export default function ReadingExamScreen() {
     const { id, time_limit } = useLocalSearchParams();
+    const { cache: userCache, loadingCache, cacheError } = useUserCache();
     const router = useRouter();
     const [showFullPassage, setShowFullPassage] = useState(false);
     const [data, setData] = useState<any>(null);
@@ -78,7 +82,12 @@ export default function ReadingExamScreen() {
 
     const questionGroups = exercise?.question_groups || [];
 
-    const submit = () => {
+    const submit = async () => {
+        if (!userCache || userCache.length === 0) {
+            router.push('/Login');
+            return;
+        }
+        
         let totalScore = 0;
 
         questionGroups.forEach((group: any) => {
@@ -91,6 +100,18 @@ export default function ReadingExamScreen() {
 
         setScore(totalScore);
         setSubmitted(true);
+
+        
+        try {
+            await submitExerciseProgressReadingPremium({
+                id_user: Number(userCache?.[0]?.id_user_cache),
+                id_reading_exercise: Number(id),
+                score: totalScore,
+                completed_at: new Date().toISOString(),
+            });
+        } catch (error) {
+            console.log('Submit progress reading premium failed:', error);
+        }
     };
 
     const retry = () => {
