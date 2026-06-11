@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getClientEndpoint } from '@/constants/configApi';
 import Loading from '@/component/loading';
 import { StatsItem } from '@/interfaces/interfaces';
-import { submitExerciseProgressReadingPremium } from '@/services/apiLearn';
+import { submitExerciseProgressReadingPremium, updateReadingGoal } from '@/services/apiLearn';
 import { useUserCache } from '@/hook/useUserCache';
 
 export default function ReadingExamScreen() {
@@ -42,7 +42,7 @@ export default function ReadingExamScreen() {
             const response = await fetch(getClientEndpoint(`reading/${id}/`));
             const result = await response.json();
             setData(result);
-            setTime(result.exercises_premium?.[0]?.time_limit || 1800);
+            setTime(result.exercises_premium?.[0]?.time_limit);
         } catch (e) {
             console.log(e);
         }
@@ -109,6 +109,7 @@ export default function ReadingExamScreen() {
                 score: totalScore,
                 completed_at: new Date().toISOString(),
             });
+            await updateReadingGoal(Number(userCache?.[0]?.id_user_cache), Number(data?.exercises_premium?.[0]?.xp_receive));
         } catch (error) {
             console.log('Submit progress reading premium failed:', error);
         }

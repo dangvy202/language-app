@@ -118,3 +118,37 @@ export const submitExerciseProgressReadingPremium = async ({
 
   return response.json();
 };
+
+export const updateReadingGoal = async (userCacheId: number, xp_receive: number) => {
+    try {
+        const response = await fetch(
+            getClientEndpoint(
+                `goal/?user_cache=${userCacheId}&is_completed=false`
+            )
+        );
+        const goals = await response.json();
+        if (!goals.length) {
+            return;
+        }
+        const goal = goals[0];
+        const newActualReading = Number(goal.actual_reading || 0) + 1;
+        
+        console.log("check exp =", xp_receive)
+        const update = await fetch(
+            getClientEndpoint(`goal/${goal.id_goal}/`),
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    actual_reading: newActualReading,
+                    actual_xp: xp_receive
+                }),
+            }
+        );
+        console.log("check update this = ", update)
+    } catch (error) {
+        console.log('Update reading goal failed:', error);
+    }
+};

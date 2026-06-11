@@ -293,16 +293,16 @@ export default function ReadingScreen() {
         });
     };
 
-    const handleReviewLesson = (lesson: any) => {
-        router.push({
-            pathname: '/course/reading/[id]',
-            params: {
-                id: lesson.exercises_premium?.[0]?.id_reading_exercise,
-                time_limit: lesson.exercises_premium?.[0]?.time_limit,
-                mode: 'review',        // mode review
-            },
-        });
-    };
+    // const handleReviewLesson = (lesson: any) => {
+    //     router.push({
+    //         pathname: '/course/reading/[id]',
+    //         params: {
+    //             id: lesson.exercises_premium?.[0]?.id_reading_exercise,
+    //             time_limit: lesson.exercises_premium?.[0]?.time_limit,
+    //             mode: 'review',        // mode review
+    //         },
+    //     });
+    // };
 
     const chartData = [
         {
@@ -753,7 +753,7 @@ export default function ReadingScreen() {
                                         </Text>
                                     </TouchableOpacity>
 
-                                    {lesson.completed && (
+                                    {/* {lesson.completed && (
                                         <TouchableOpacity
                                             style={styles.reviewButton}
                                             onPress={() => handleReviewLesson(lesson)}
@@ -761,7 +761,7 @@ export default function ReadingScreen() {
                                             <Ionicons name="eye-outline" size={20} color="#fff" />
                                             <Text style={styles.reviewButtonText}>Review</Text>
                                         </TouchableOpacity>
-                                    )}
+                                    )} */}
                                 </View>
                             </View>
                         </TouchableOpacity>
