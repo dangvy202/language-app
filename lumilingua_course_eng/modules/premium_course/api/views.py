@@ -5,10 +5,109 @@ from datetime import date
 
 from modules.premium_course.api.serializers import ReadingSerializer, SaveVocabularyReadingSerializer, \
     QuestionOptionPremiumSerializer, QuestionPremiumSerializer, ExerciseReadingPremiumSerializer, \
-    ExerciseProgressReadingPremiumSerializer, GoalSerializer, QuestionGroupPremiumSerializer
+    ExerciseProgressReadingPremiumSerializer, GoalSerializer, QuestionGroupPremiumSerializer, ListeningSerializer, \
+    ExerciseProgressListeningPremiumSerializer, ExerciseListeningPremiumSerializer, \
+    QuestionGroupListeningPremiumSerializer, QuestionListeningPremiumSerializer, \
+    QuestionOptionListeningPremiumSerializer
 from modules.premium_course.models import Reading, SaveVocabularyReading, QuestionOptionsPremium, QuestionPremium, \
-    ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals, QuestionGroupPremium
+    ExerciseReadingPremium, ExerciseProgressReadingPremium, Goals, QuestionGroupPremium, Listening, \
+    ExerciseProgressListeningPremium, ExerciseListeningPremium, QuestionGroupListeningPremium, QuestionListeningPremium, \
+    QuestionOptionsListeningPremium
 from modules.progress.models import UserCache, CategoryLevel
+
+class ListeningViewSet(viewsets.ModelViewSet):
+    queryset = Listening.objects.all()
+    serializer_class = ListeningSerializer
+
+class ExerciseProgressListeningPremiumViewSet(viewsets.ModelViewSet):
+    queryset = ExerciseProgressListeningPremium.objects.all()
+    serializer_class = ExerciseProgressListeningPremiumSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_cache = self.request.query_params.get('user_cache')
+        if user_cache:
+            queryset = queryset.filter(user_cache=user_cache)
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        id_user = request.data.get('id_user')
+        id_exercise_progress_listening = request.data.get('id_exercise_progress_listening')
+
+        if not id_user:
+            return Response({"error", "Missing user"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not id_exercise_progress_listening:
+            return Response({"error": "Missing exercise"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exercise_progress_listening_premium = ExerciseProgressListeningPremium.objects.get(user_cache_id=id_user, exercises_id=id_exercise_progress_listening)
+            created = False
+        except ExerciseProgressListeningPremium.DoesNotExist:
+            exercise_progress_listening_premium = None
+            created = True
+
+        if created:
+            exercise_progress_listening_premium = ExerciseProgressListeningPremium.objects.create(
+                user_cache_id=id_user,
+                exercises_id=id_exercise_progress_listening,
+                score=request.data.get('score'),
+                is_completed=True,
+                completed_at=request.data.get('completed_at')
+            )
+
+            exercises_listening_premium = ExerciseListeningPremium.objects.get(id_listening_exercise=id_exercise_progress_listening)
+            user_cache = UserCache.objects.get(id_user_cache=id_user)
+            category_level = list(CategoryLevel.objects.all())
+
+            left = 0
+            right = len(category_level) - 1
+
+            target = user_cache.gain_xp + exercises_listening_premium.xp_receive
+            best_level = category_level[0]
+
+            while left <= right:
+                mid = left + (right - left) // 2
+                level = category_level[mid]
+
+                if target >= level.xp_level:
+                    best_level = level
+                    left = mid + 1
+                else:
+                    right = mid - 1
+
+            user_cache.gain_xp = target
+            user_cache.category_level = best_level
+            user_cache.save(update_fields=['gain_xp', 'category_level'])
+        else:
+            exercise_progress_listening_premium.score = request.data.get('score')
+            exercise_progress_listening_premium.attempts = exercise_progress_listening_premium.attempts + 1
+            exercise_progress_listening_premium.is_completed = True
+            exercise_progress_listening_premium.completed_at = request.data.get('completed_at')
+            exercise_progress_listening_premium.save(
+                update_fields=['score', 'attempts', 'is_completed', 'completed_at'])
+
+        serializer = self.get_serializer(exercise_progress_listening_premium)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+class ExerciseListeningPremiumViewSet(viewsets.ModelViewSet):
+    queryset = ExerciseListeningPremium.objects.all()
+    serializer_class = ExerciseListeningPremiumSerializer
+
+class QuestionGroupListeningPremiumViewSet(viewsets.ModelViewSet):
+    queryset = QuestionGroupListeningPremium.objects.all()
+    serializer_class = QuestionGroupListeningPremiumSerializer
+
+class QuestionListeningPremiumViewSet(viewsets.ModelViewSet):
+    queryset = QuestionListeningPremium.objects.all()
+    serializer_class = QuestionListeningPremiumSerializer
+
+class QuestionOptionListeningPremiumViewSet(viewsets.ModelViewSet):
+    queryset = QuestionOptionsListeningPremium.objects.all()
+    serializer_class = QuestionOptionListeningPremiumSerializer
+
+
+
 
 
 class ReadingViewSet(viewsets.ModelViewSet):

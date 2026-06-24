@@ -271,3 +271,210 @@ class QuestionOptionsPremium(models.Model):
     class Meta:
         db_table = "tbl_question_premium_options"
         managed = False
+
+class Listening(models.Model):
+    id_listening = models.AutoField(primary_key=True)
+    title = models.TextField(null=False, blank=False)
+    description = models.TextField()
+    audio_path = models.FileField(
+        upload_to='listening/audio/',
+        null=False,
+        blank=False
+    )
+    transcript = models.TextField(null=False, blank=False)
+    duration = models.IntegerField()
+    level = models.ForeignKey(
+        'course.Level',
+        on_delete=models.CASCADE,
+        db_column='id_level',
+        to_field='id_level',
+        related_name='listening_level'
+    )
+    img_path = models.ImageField(upload_to='listening/', null=False, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_listening"
+        managed = False
+        ordering = ['title']
+        indexes = [
+            models.Index(fields=['title'], name='idx_title_listening'),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['title'], name='unique_title_listening')
+        ]
+
+class ExerciseListeningPremium(models.Model):
+    id_listening_exercise = models.AutoField(primary_key=True)
+    name = models.TextField()
+    description = models.TextField()
+    icon = models.TextField()
+    xp_receive = models.IntegerField()
+    balance_learn = models.IntegerField()
+    type = models.CharField(
+        max_length=50,
+        validators=[validate_exercise_type],
+        help_text="Type exercise: 'multiple_choice', 'matching_heading', 'matching_information', 'sentence_completion', 'summary_completion', 'table_completion', 'flow_chart_completion', 'matching_features', 'matching_sentence_endings', 'fill_blank', 'all', 'true_false_notgiven'",
+        null=False,
+        blank=False
+    )
+    difficulty = models.CharField(
+        max_length=20,
+        validators=[validate_difficulty],
+        help_text="Difficulty: easy, medium, hard",
+        blank=False,
+        null=False,
+    )
+    listening = models.ForeignKey(
+        'Listening',
+        on_delete=models.CASCADE,
+        db_column='id_listening',
+        to_field='id_listening',
+        related_name='exercise_listening'
+    )
+    time_limit = models.IntegerField()
+    points = models.IntegerField(default=0)
+    question_count = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_exercises_listening_premium"
+        managed = False
+
+class ExerciseProgressListeningPremium(models.Model):
+    id_exercise_progress_listening = models.AutoField(primary_key=True)
+    user_cache = models.ForeignKey(
+        'progress.UserCache',
+        on_delete=models.CASCADE,
+        db_column='id_user_cache',
+        related_name='user_exercise_progress_listening_premium',
+        to_field = 'id_user_cache',
+    )
+    exercises = models.ForeignKey(
+        'ExerciseListeningPremium',
+        on_delete=models.CASCADE,
+        db_column='id_listening_premium',
+        related_name='progress_exercise_listening_premium'
+    )
+    score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+    attempts = models.IntegerField(default=1)
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_exercises_progress_listening_premium"
+        managed = False
+
+class QuestionGroupListeningPremium(models.Model):
+    id_question_listening_premium_group = models.AutoField(primary_key=True)
+
+    exercise_listening_premium = models.ForeignKey(
+        ExerciseListeningPremium,
+        on_delete=models.CASCADE,
+        db_column='id_listening_exercise',
+        to_field='id_listening_exercise',
+        related_name='question_listening_exercise_groups'
+    )
+    title = models.TextField()
+    instruction = models.TextField()
+    type = models.CharField(
+        max_length=50,
+        validators=[validate_question_type]
+    )
+
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        default=dict
+    )
+    order_no = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_question_listening_group_premium"
+        managed = False
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'exercise_listening_premium',
+                    'order_no'
+                ],
+                name='uq_exercise_listening_group_order'
+            )
+        ]
+
+class QuestionListeningPremium(models.Model):
+    id_question_listening_premium = models.AutoField(primary_key=True)
+    exercise_listening_premium = models.ForeignKey(
+        ExerciseListeningPremium,
+        on_delete=models.CASCADE,
+        db_column='id_listening_exercise',
+        to_field='id_listening_exercise',
+        related_name='question_listening_exercise'
+    )
+    question_listening_group = models.ForeignKey(
+        QuestionGroupListeningPremium,
+        on_delete=models.CASCADE,
+        db_column='id_question_listening_premium_group',
+        related_name='questions'
+    )
+    content = models.TextField(null=False, blank=False)
+    type = models.CharField(
+        max_length=50,
+        validators=[validate_question_type],
+        help_text="Type exercise: 'multiple_choice', 'matching_heading', 'matching_information', 'sentence_completion', 'summary_completion', 'table_completion', 'flow_chart_completion', 'matching_features', 'matching_sentence_endings', 'fill_blank', 'true_false_notgiven'",
+        null=False,
+        blank=False
+    )
+    words = models.JSONField(
+        null=True,
+        blank=True,
+        default=list,
+        help_text="User sort order: (example['element 1', 'element 2',...])"
+    )
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        default=list,
+        help_text='{"pairs":[{ "id": 1, "left": "Dog", "right": "Chó" },{ "id": 2, "left": "Cat", "right": "Mèo" },{ "id": 3, "left": "Bird", "right": "Chim" }]}'
+    )
+    correct_answer = models.TextField(null=True, blank=False)
+    points = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+    explain_question = models.TextField(null=True, blank=True)
+    image_url = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_questions_listening_premium"
+        managed = False
+
+class QuestionOptionsListeningPremium(models.Model):
+    id_question_listening_premium_option = models.AutoField(primary_key=True)
+    question_premium = models.ForeignKey(
+        'QuestionListeningPremium',
+        on_delete=models.CASCADE,
+        db_column='id_question_listening_premium',
+        related_name='question_listening_premium_option'
+    )
+    content = models.TextField(null=False, blank=False)
+    is_correct = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tbl_question_listening_premium_options"
+        managed = False
