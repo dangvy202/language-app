@@ -122,7 +122,7 @@ class ExerciseReadingPremiumSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExerciseReadingPremium
         fields = ['id_reading_exercise', 'name', 'description', 'icon', 'xp_receive', 'balance_learn', 'type',
-                  'difficulty', 'time_limit', 'points', 'question_count', 'question_groups']
+                  'difficulty', 'time_limit', 'points', 'question_count', 'question_groups', 'reading']
         read_only_fields = ['created_at', 'updated_at']
 
 class GoalSerializer(serializers.ModelSerializer):
@@ -254,7 +254,7 @@ class ExerciseListeningPremiumSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExerciseListeningPremium
         fields = ['id_listening_exercise', 'name', 'description', 'icon', 'xp_receive', 'balance_learn', 'type',
-                  'difficulty', 'time_limit', 'points', 'question_count', 'question_groups']
+                  'difficulty', 'time_limit', 'points', 'question_count', 'question_groups', 'listening']
         read_only_fields = ['created_at', 'updated_at']
 
 class ListeningSerializer(serializers.ModelSerializer):

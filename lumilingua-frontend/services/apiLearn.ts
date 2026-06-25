@@ -92,6 +92,28 @@ export const getProgressReadingPremium = async (
     return data;
 };
 
+export const getProgressListeningPremium = async (
+    userCacheId: number
+) => {
+    const endpoint = getClientEndpoint(
+        `exercise_progress_listening_premium/?user_cache=${userCacheId}`
+    );
+
+    const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            "Failed to fetch exercise progress reading"
+        );
+    }
+    const data = await response.json();
+    return data;
+};
 
 export const submitExerciseProgressReadingPremium = async ({
   id_user,

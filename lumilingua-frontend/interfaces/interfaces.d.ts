@@ -267,6 +267,39 @@ interface ReadingItem {
     completedAt?: string | null;
 }
 
+interface ListeningItem {
+    id_listening: number;
+    title: string;
+    description: string;
+    audio_path: string;
+    transcript: string;
+    duration: number | null;
+    img_path: string;
+    level: number;
+    options: {
+        rank: string;
+        level_name: string;
+        description: string;
+    }[];
+    exercise_listening_premium: {
+        id_listening_exercise: number,
+        name: string,
+        description: string,
+        icon: string,
+        xp_receive: number,
+        balance_learn: number,
+        type: string,
+        difficulty: string,
+        time_limit: number,
+        points: number,
+        question_count: number
+    }[];
+    completed?: boolean;
+    score?: number | null;
+    attempts?: number | null;
+    completedAt?: string | null;
+}
+
 interface StatsItem {
     title: string;
     total: number;

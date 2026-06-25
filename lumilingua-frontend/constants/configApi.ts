@@ -1,10 +1,10 @@
 import Constants from 'expo-constants';
 
 const API_CONFIG = {
-  CRMS_BASE_URL: 'https://usage-mat-algorithms-clips.trycloudflare.com/api',
-  CLIENT_BASE_URL: 'https://scholarships-choosing-holland-mortality.trycloudflare.com/api',
-  CRMS_IMG_URL: 'https://usage-mat-algorithms-clips.trycloudflare.com',
-  CRMS_WEBSOCKET: 'https://usage-mat-algorithms-clips.trycloudflare.com/ws',
+  CRMS_BASE_URL: 'https://stranger-toner-par-ontario.trycloudflare.com/api',
+  CLIENT_BASE_URL: 'https://veterinary-railroad-retrieval-quad.trycloudflare.com/api',
+  CRMS_IMG_URL: 'https://stranger-toner-par-ontario.trycloudflare.com',
+  CRMS_WEBSOCKET: 'https://stranger-toner-par-ontario.trycloudflare.com/ws',
 };
 
 export const {

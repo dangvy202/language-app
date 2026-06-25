@@ -311,8 +311,6 @@ export default function Learn() {
 
     useFocusEffect(
         useCallback(() => {
-
-            console.log("Learn Focus");
             loadHomeData();
         }, [userCache])
     );
